@@ -5,8 +5,15 @@ Equipe :
 * Mathis BAUDRILLARD (Big Data)
 * Robin FOURN (Cybersécurité)
 * Louis FONTANIE (Cybersécurité)
-* Jules FERMAUT (IOT)
+* Loïc LECERRE (Cybersécurité)
 * Clément Jalouzet (Big Data)
+* Tom GYTHIEL (Cybersécurité)
+
+# Problématique :
+**Comment analyser en temps réel des courses de Formule 1 afin de permettre aux spectateurs de comprendre les subtilités des performances et des stratégies ?**
+
+La Formule 1 est un sport hautement technique et stratégique, avec une quantité énorme de données générées durant chaque course. Bien que les diffusions télévisées fournissent des informations de base, elles ne permettent pas aux spectateurs de saisir pleinement les subtilités des performances et des stratégies. Les spectateurs, qu'ils soient novices ou experts, cherchent des outils plus complets pour analyser les courses en temps réel. Une plateforme interactive pourrait combler ce manque en offrant des analyses détaillées et des visualisations dynamiques.
+
 
 # Lien utiles
 ## API
