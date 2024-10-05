@@ -1,85 +1,87 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import Link from "next/link";
 
-const LoginForm = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [twoFaToken, setTwoFaToken] = useState('');
-  const [isTwoFaRequired, setIsTwoFaRequired] = useState(false);
-  const [twoFaSecret, setTwoFaSecret] = useState('');
+const Login: React.FC = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleLogin = async (e: { preventDefault: () => void; }) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
-    // Step 1: Login and retrieve 2FA secret
-    const res = await fetch('http://localhost:8000/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ username, password }),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      setTwoFaSecret(data.two_fa_secret);
-      setIsTwoFaRequired(true);
-    } else {
-      alert('Login failed');
+    // Logique de connexion
+    if (!email || !password) {
+      setError("Veuillez remplir tous les champs.");
+      return;
     }
-  };
 
-  const handleVerify2FA = async (e: { preventDefault: () => void;}) => {
-    e.preventDefault();
-
-    // Step 2: Verify 2FA token
-    const res = await fetch('http://localhost:8000/verify-2fa/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, token: twoFaToken }),
-    });
-
-    if (res.ok) {
-      alert('2FA verification successful');
-      // Redirect or perform further actions
-    } else {
-      alert('Invalid 2FA token');
-    }
+    console.log("Tentative de connexion avec", { email, password });
   };
 
   return (
-    <div>
-      {!isTwoFaRequired ? (
+    <div
+      className="min-h-screen flex flex-col items-center justify-center py-6"
+      style={{ background: "var(--background)", color: "var(--foreground)" }}
+    >
+      <div
+        className="p-8 rounded-lg shadow-lg w-full max-w-md"
+        style={{ background: "#1c1c1e", color: "#e0e0e0" }}
+      >
+        <h1 className="text-3xl font-bold text-center mb-4">Se connecter</h1>
+
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+
         <form onSubmit={handleLogin}>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button type="submit">Login</button>
+          <div className="mb-4">
+            <label htmlFor="email" className="block mb-2">
+              Adresse e-mail
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Entrez votre email"
+              style={{ background: "#2b2b2d", color: "#ffffff" }}
+            />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="password" className="block mb-2">
+              Mot de passe
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Entrez votre mot de passe"
+              style={{ background: "#2b2b2d", color: "#ffffff" }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full p-3 rounded bg-gray-700 text-e0e0e0 hover:bg-red-600 hover:text-white transition-colors"
+          >
+            Connexion
+          </button>
         </form>
-      ) : (
-        <form onSubmit={handleVerify2FA}>
-          <input
-            type="text"
-            placeholder="2FA Token"
-            value={twoFaToken}
-            onChange={(e) => setTwoFaToken(e.target.value)}
-            required
-          />
-          <button type="submit">Verify 2FA</button>
-        </form>
-      )}
+
+        <p className="text-center mt-4">
+          Vous n'avez pas de compte ?{" "}
+          <Link href="/register" className="text-blue-400 hover:underline">
+            Inscrivez-vous
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };
 
-export default LoginForm;
+export default Login;

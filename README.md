@@ -27,7 +27,8 @@ OpenF1 API : https://openf1.org/#api-methods
 * NextJS
 * typewriter : Effet de texte frapper au clavier
  `npm i typewriter-effect`
-* Django : `pip insrall django`
+* Django : `pip insrall django` (pas nécessaire pour le moment)
 * FastApi : `pip install fastapi uvicorn`
  `pip install fastapi uvicorn passlib python-jose pyotp`
+* Firebase : `npm install firebase`
 

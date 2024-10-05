@@ -43,8 +43,8 @@ const Home: React.FC = () => {
             href="/blog"
             className="p-6 border border-red-500 rounded-lg text-center text-red-500 hover:bg-red-500 hover:text-white transition"
           >
-            <h3 className="text-lg font-semibold">Blog &rarr;</h3>
-            <p>Regarder les dernière prédiction.</p>
+            <h3 className="text-lg font-semibold">Analyse &rarr;</h3>
+            <p>Regarder les dernières analyses.</p>
           </a>
         </div>
       </main>
