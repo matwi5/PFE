@@ -8,7 +8,7 @@ interface HeaderProps {
 
   const Header: React.FC<HeaderProps> = ({ title }) => {
   return (
-    <header className="bg-blue-600 text-white py-4">
+    <header className="bg-red-600 text-white py-4">
       <div className="container mx-auto px-4 flex justify-between items-center">
         <h1 className="text-xl font-bold">{title}</h1>
         <nav>

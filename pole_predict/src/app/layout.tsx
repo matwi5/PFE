@@ -1,5 +1,6 @@
 import React from 'react';
 import Header from './components/Header'; // Importation du composant Header
+import Footer from './components/Footer'
 import './globals.css'; // Importation des styles globaux
 
 interface LayoutProps {
@@ -10,14 +11,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <html lang="fr">
       <head>
+      <link rel="icon" href="/favicon.ico" />
         <title>Mon Site F1</title>
       </head>
       <body>
-        <Header title="Bienvenue sur le site F1" /> {/* En-tête partagé */}
+        <Header title="PolePredict" /> {/* En-tête partagé */}
         <main>{children}</main> {/* Contenu dynamique des pages */}
-        <footer>
-          <p>&copy; 2024 Mon Site F1. Tous droits réservés.</p>
-        </footer>
+        <Footer></Footer>
       </body>
     </html>
   );

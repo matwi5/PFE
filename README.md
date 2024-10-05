@@ -18,3 +18,16 @@ La Formule 1 est un sport hautement technique et stratégique, avec une quantit�
 # Lien utiles
 ## API
 OpenF1 API : https://openf1.org/#api-methods
+
+# Fonctionnement
+
+# Installation 
+## Pré-requis 
+* NodeJS
+* NextJS
+* typewriter : Effet de texte frapper au clavier
+ `npm i typewriter-effect`
+* Django : `pip insrall django`
+* FastApi : `pip install fastapi uvicorn`
+ `pip install fastapi uvicorn passlib python-jose pyotp`
+

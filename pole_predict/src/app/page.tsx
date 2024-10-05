@@ -12,7 +12,7 @@ const Home: React.FC = () => {
           <Typewriter
             onInit={(typewriter) => {
               typewriter
-                .typeString("Mon site de prédiction F1")
+                .typeString("Le site de prédiction F1")
                 .callFunction(() => {
                   console.log("String typed out!");
                 })
@@ -27,24 +27,24 @@ const Home: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <a
             href="/about"
-            className="p-6 border border-blue-500 rounded-lg text-center text-blue-500 hover:bg-blue-500 hover:text-white transition"
+            className="p-6 border border-red-500 rounded-lg text-center text-red-500 hover:bg-red-500 hover:text-white transition"
           >
             <h3 className="text-lg font-semibold">À propos &rarr;</h3>
             <p>En savoir plus sur notre projet et notre équipe.</p>
           </a>
           <a
             href="/contact"
-            className="p-6 border border-blue-500 rounded-lg text-center text-blue-500 hover:bg-blue-500 hover:text-white transition"
+            className="p-6 border border-red-500 rounded-lg text-center text-red-500 hover:bg-red-500 hover:text-white transition"
           >
             <h3 className="text-lg font-semibold">Contact &rarr;</h3>
             <p>Nous contacter pour plus d'informations.</p>
           </a>
           <a
             href="/blog"
-            className="p-6 border border-blue-500 rounded-lg text-center text-blue-500 hover:bg-blue-500 hover:text-white transition"
+            className="p-6 border border-red-500 rounded-lg text-center text-red-500 hover:bg-red-500 hover:text-white transition"
           >
             <h3 className="text-lg font-semibold">Blog &rarr;</h3>
-            <p>Lire nos derniers articles sur la F1.</p>
+            <p>Regarder les dernière prédiction.</p>
           </a>
         </div>
       </main>
