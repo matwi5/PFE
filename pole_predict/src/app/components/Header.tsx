@@ -1,14 +1,27 @@
+"use client"
+
 import Link from 'next/link';
+import { useContext } from 'react';
+import { signOut } from 'firebase/auth';
+import UserContext from '../../context/UserContext'; // Importer le contexte utilisateur
+import { auth } from '../../firebaseConfig'; // Importer l'authentification Firebase
 
 interface HeaderProps {
   title: string;
-  user?: { // Optionnel pour l'utilisateur
-    avatarUrl?: string;
-    name: string;
-  };
 }
 
-const Header: React.FC<HeaderProps> = ({ title, user }) => {
+const Header: React.FC<HeaderProps> = ({ title }) => {
+  const { user, loading } = useContext(UserContext);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth); // Déconnexion de Firebase
+      console.log("Déconnexion réussie !");
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion :", error);
+    }
+  };
+
   return (
     <header className="bg-red-600 text-white py-4">
       <div className="container mx-auto px-4 flex justify-between items-center">
@@ -28,14 +41,17 @@ const Header: React.FC<HeaderProps> = ({ title, user }) => {
         </nav>
         
         <div className="flex items-center space-x-4">
-          {user ? (
+          {loading ? (
+            <span>Chargement...</span> // Afficher le message pendant le chargement
+          ) : user ? (
             <div className="flex items-center space-x-2">
-              <img 
-                src={user.avatarUrl || "/default-avatar.png"} 
-                alt={user.name} 
-                className="w-8 h-8 rounded-full object-cover" 
-              />
-              <span>{user.name}</span>
+              <span>{user.username}</span> {/* Afficher le nom d'utilisateur */}
+              <button
+                onClick={handleSignOut}
+                className="bg-white text-red-600 px-4 py-2 rounded hover:bg-red-100 transition"
+              >
+                Se déconnecter
+              </button>
             </div>
           ) : (
             <Link href="/login" className="hover:text-blue-300">

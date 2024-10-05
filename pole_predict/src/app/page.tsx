@@ -1,10 +1,13 @@
-// src/app/page.tsx
-"use client"; // Ajout pour marquer ce composant comme Client Component
+"use client"; // Composant client
 
-import React, { useState, useEffect } from "react";
+import React, { useContext } from "react";
 import Typewriter from "typewriter-effect";
+import UserContext from "../context/UserContext"; // Importer le UserContext
 
 const Home: React.FC = () => {
+  // Utilisation du contexte utilisateur
+  const { user, loading } = useContext(UserContext);
+
   return (
     <div className="container mx-auto px-4">
       <main className="min-h-screen flex flex-col justify-center items-center">
@@ -24,7 +27,28 @@ const Home: React.FC = () => {
           Découvrez les analyses et les prédictions en temps réel pour les
           courses de Formule 1.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        {/* Si l'utilisateur est encore en train de charger, on montre un message de chargement */}
+        {loading ? (
+          <p>Chargement...</p>
+        ) : user ? (
+          // Si l'utilisateur est connecté, afficher son username
+          <div className="p-4 border border-green-500 rounded-lg text-center text-green-500">
+            <h3 className="text-lg font-semibold">Bienvenue, {user.username} !</h3>
+            <p>Vous êtes connecté.</p>
+          </div>
+        ) : (
+          // Si l'utilisateur n'est pas connecté, afficher un bouton "Se connecter"
+          <a
+            href="/login"
+            className="p-4 border border-red-500 rounded-lg text-center text-red-500 hover:bg-red-500 hover:text-white transition"
+          >
+            <h3 className="text-lg font-semibold">Se connecter &rarr;</h3>
+            <p>Accédez à votre compte pour plus de fonctionnalités.</p>
+          </a>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
           <a
             href="/about"
             className="p-6 border border-red-500 rounded-lg text-center text-red-500 hover:bg-red-500 hover:text-white transition"

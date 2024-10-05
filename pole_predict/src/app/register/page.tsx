@@ -5,6 +5,7 @@ import { auth, db } from "../../firebaseConfig"; // Ton fichier de configuration
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore"; // Importation de getDoc
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const RegisterForm = () => {
   const [email, setEmail] = useState("");
@@ -12,6 +13,8 @@ const RegisterForm = () => {
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState(""); // État pour les messages d'erreur
+
+  const router = useRouter();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,10 +43,13 @@ const RegisterForm = () => {
       });
 
       console.log("Utilisateur enregistré avec succès !");
+      router.push("/");
     } catch (error) {
       console.error("Erreur lors de l'inscription :", error);
       setError("Erreur lors de l'inscription, veuillez réessayer.");
     }
+
+    
   };
 
   return (
