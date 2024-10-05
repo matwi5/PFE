@@ -48,21 +48,19 @@ const RegisterForm = () => {
       console.error("Erreur lors de l'inscription :", error);
       setError("Erreur lors de l'inscription, veuillez réessayer.");
     }
-
-    
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center py-6" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
       <div className="p-8 rounded-lg shadow-lg w-full max-w-md" style={{ background: '#1c1c1e', color: '#e0e0e0' }}>
-        <h1 className="text-3xl font-bold text-center mb-4">S'inscrire</h1>
+        <h1 className="text-3xl font-bold text-center mb-4">S&apos;inscrire</h1>
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>} {/* Affichage des erreurs */}
 
         <form onSubmit={handleRegister}>
           <div className="mb-4">
             <label htmlFor="username" className="block mb-2">
-              Nom d'utilisateur
+              Nom d&apos;utilisateur
             </label>
             <input
               type="text"
@@ -124,7 +122,7 @@ const RegisterForm = () => {
             type="submit"
             className="w-full p-3 rounded bg-gray-700 text-e0e0e0 hover:bg-red-600 hover:text-white transition-colors"
           >
-            S'inscrire
+            S&apos;inscrire
           </button>
         </form>
 

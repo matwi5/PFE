@@ -61,7 +61,7 @@ const Home: React.FC = () => {
             className="p-6 border border-red-500 rounded-lg text-center text-red-500 hover:bg-red-500 hover:text-white transition"
           >
             <h3 className="text-lg font-semibold">Contact &rarr;</h3>
-            <p>Nous contacter pour plus d'informations.</p>
+            <p>Nous contacter pour plus d&apos;informations.</p> {/* Correction effectuée ici */}
           </a>
           <a
             href="/blog"
