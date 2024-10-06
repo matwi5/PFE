@@ -27,7 +27,7 @@ jobs:
         node-version: '18.19.0'
         cache: 'npm'
     - run: |
-        cd userapi
+        cd pole_predict
         npm install
         npm run build --if-present
         npm run test --if-present
