@@ -17,14 +17,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: '18.19.0'
         cache: 'npm'
+        # Définit le répertoire de travail où se trouve le fichier package-lock.json pour la mise en cache
+        cache-dependency-path: pole_predict/package-lock.json
+
+    # Change le répertoire pour l'installation des dépendances
     - run: npm install
-      working-directory: pole_predict # Spécifie le répertoire pour l'installation
+      working-directory: pole_predict
+
+    # Si tu as une étape de build
     - run: npm run build --if-present
-      working-directory: pole_predict # Spécifie le répertoire pour la compilation
+      working-directory: pole_predict
+
+    # Étape de tests
     - run: npm run test --if-present
-      working-directory: pole_predict # Spécifie le répertoire pour les tests
+      working-directory: pole_predict
