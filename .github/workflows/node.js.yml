@@ -19,12 +19,12 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v3
       with:
         node-version: '18.19.0'
         cache: 'npm'
         # Définit le répertoire de travail où se trouve le fichier package-lock.json pour la mise en cache
-        cache-dependency-path: pole_predict/
+        cache-dependency-path: pole_predict/package-lock.json
 
     - name: npm install, build, and test
       run: |
