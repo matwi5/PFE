@@ -19,12 +19,12 @@ interface Driver {
 }
 
 const DriverCard: React.FC<{ driver: Driver }> = ({ driver }) => (
-    <div className="border border-gray-300 rounded-lg p-4 flex flex-col items-center">
+    <div className="border border-gray-300 rounded-lg p-4 flex flex-col items-center transition-colors duration-200 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800">
       <img src={driver.headshot_url} alt={`${driver.full_name} headshot`} className="w-32 h-32 rounded-full mb-4" />
       <h2 className="text-lg font-semibold">{driver.full_name}</h2>
-      <p className="text-gray-600">Équipe: {driver.team_name}</p>
+      {/* <p className="text-gray-600">Équipe: {driver.team_name}</p>
       <p className="text-gray-600">Numéro: {driver.driver_number}</p>
-      <p className="text-gray-600">Pays: {driver.country_code}</p>
+      <p className="text-gray-600">Pays: {driver.country_code}</p> */}
     </div>
   )
   
@@ -71,13 +71,13 @@ const DriversPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4">
-      <main className="min-h-screen flex flex-col items-center">
+      <main className="min-h-screen flex flex-col items-center mt-4 mb-4">
         <h1 className="text-5xl font-bold mb-4">Pilotes de F1</h1>
         <p className="text-xl mb-8">
           Découvrez les pilotes de Formule 1 les plus récents.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {drivers.map((driver) => (
             <Dialog key={driver.driver_number}>
               <DialogTrigger asChild>
