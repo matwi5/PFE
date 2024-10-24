@@ -1,4 +1,8 @@
+/* eslint-disable */
+
 import axios from 'axios';
+import { db } from "../firebaseConfig"; // Ton fichier de configuration Firebase
+import { collection, setDoc, doc } from "firebase/firestore"; 
 
 export const fetchDrivers = async () => {
   try {
@@ -31,11 +35,21 @@ export const fetchDrivers = async () => {
     // Trier les pilotes par driver_number en ordre croissant
     uniqueDrivers.sort((a, b) => a.driver_number - b.driver_number);
 
+    // Enregistrer chaque pilote dans Firebase
+    const driversCollection = collection(db, "drivers");
+    uniqueDrivers.forEach(async (driver) => {
+      const driverDoc = doc(driversCollection, driver.driver_number.toString());
+      await setDoc(driverDoc, driver); // Sauvegarder les données du pilote dans Firebase
+    });
+
+    console.log("Données des pilotes sauvegardées dans Firebase");
     return uniqueDrivers;
+
   } catch (error) {
     throw new Error(`Failed to fetch drivers: ${error}`);
   }
 };
+
 
 
 

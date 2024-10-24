@@ -20,9 +20,20 @@ La Formule 1 est un sport hautement technique et stratégique, avec une quantit�
 OpenF1 API : https://openf1.org/#api-methods
 
 # Fonctionnement
+aller dans le dossier `pole_predict`
+
+Si les dépendance sont déjà installer sur votre PC : `npm run dev`  
+
+Sinon : `docker build -t <app_name> .`
+Ensuite :`docker run -p 3000:3000 <app_name>`
+
+Docker créer un build de l'application donc est plus stable et se rapproche de la réalité.
+
+
+ 
 
 # Installation 
-## Pré-requis 
+## Pré-requis (si pas Docker)
 * NodeJS
 * NextJS
 * typewriter : Effet de texte frapper au clavier
@@ -31,4 +42,8 @@ OpenF1 API : https://openf1.org/#api-methods
 * FastApi : `pip install fastapi uvicorn`
  `pip install fastapi uvicorn passlib python-jose pyotp`
 * Firebase : `npm install firebase`
+* rechart : `npm install rechart`
+* shadcn : https://ui.shadcn.com/docs/installation/next
+
+
 
