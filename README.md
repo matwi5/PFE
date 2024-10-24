@@ -20,6 +20,10 @@ La Formule 1 est un sport hautement technique et stratégique, avec une quantit�
 OpenF1 API : https://openf1.org/#api-methods
 
 # Fonctionnement
+Go to pole_predict directory 
+
+run command : `npm run dev` if you have dependency install 
+ 
 
 # Installation 
 ## Pré-requis 

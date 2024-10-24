@@ -1,7 +1,11 @@
+/* eslint-disable */
+
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { fetchDrivers } from "@/lib/openF1api";
+/*import { fetchDrivers } from "@/lib/openF1api";*/
+import { db } from "@/firebaseConfig"; // Ton fichier de configuration Firebase
+import { collection, getDocs } from "firebase/firestore"; 
 import Link from "next/link";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 
@@ -53,7 +57,7 @@ const DriverCard: React.FC<{ driver: Driver }> = ({ driver }) => (
     </div>
   )
 
-const DriversPage: React.FC = () => {
+/**const DriversPage: React.FC = () => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
 
   useEffect(() => {
@@ -67,7 +71,26 @@ const DriversPage: React.FC = () => {
     };
 
     getDrivers();
-  }, []);
+  }, []);**/
+
+  const DriversPage: React.FC = () => {
+    const [drivers, setDrivers] = useState<Driver[]>([]);
+  
+    useEffect(() => {
+      const fetchDriversFromDB = async () => {
+        try {
+          const driversCollection = collection(db, "drivers");
+          const driversSnapshot = await getDocs(driversCollection);
+          const driversData = driversSnapshot.docs.map(doc => doc.data() as Driver);
+          
+          setDrivers(driversData);
+        } catch (error) {
+          console.error("Error fetching drivers from Firebase:", error);
+        }
+      };
+  
+      fetchDriversFromDB();
+    }, []);
 
   return (
     <div className="container mx-auto px-4">
@@ -77,7 +100,7 @@ const DriversPage: React.FC = () => {
           Découvrez les pilotes de Formule 1 les plus récents.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {drivers.map((driver) => (
             <Dialog key={driver.driver_number}>
               <DialogTrigger asChild>
