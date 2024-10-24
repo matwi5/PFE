@@ -83,7 +83,7 @@ const AnalysisPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <Table>
-                <TableCaption>Statistiques des pilotes de Formule 1</TableCaption>
+                <TableCaption>Statistiques dummy des pilotes de Formule 1</TableCaption>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nom</TableHead>
