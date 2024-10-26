@@ -11,11 +11,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+// velaur chercher dans la collection des users
 interface UserProfile {
   username: string
   email: string
   avatarUrl: string
-  bio: string
+  phone : string
   favoriteDriver: string
 }
 
@@ -68,8 +69,8 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="bio">Biographie</Label>
-            <Input id="bio" value={profile.bio} readOnly />
+            <Label htmlFor="phone">Téléphone</Label>
+            <Input id="bio" value={profile.phone} readOnly />
           </div>
           <div>
             <Label htmlFor="favoriteDriver">Pilote favori</Label>
