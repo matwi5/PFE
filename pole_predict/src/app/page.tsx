@@ -1,77 +1,90 @@
-"use client"; // Composant client
+"use client";
 
 import React, { useContext } from "react";
 import Typewriter from "typewriter-effect";
-import UserContext from "../context/UserContext"; // Importer le UserContext
+import UserContext from "../context/UserContext";
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { ArrowRight, Info, Phone, BarChart } from "lucide-react"
 
 const Home: React.FC = () => {
-  // Utilisation du contexte utilisateur
   const { user, loading } = useContext(UserContext);
 
   return (
-    <div className="container mx-auto px-4">
-      <main className="min-h-screen flex flex-col justify-center items-center">
-        <h1 className="text-5xl font-bold mb-4 flex items-center">
+    <div className="container mx-auto px-4 py-8">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl md:text-6xl font-bold mb-4">
           <Typewriter
-            onInit={(typewriter) => {
-              typewriter
-                .typeString("Le site de prédiction F1")
-                .callFunction(() => {
-                  console.log("String typed out!");
-                })
-                .start();
+            options={{
+              strings: ['Le site de prédiction F1', 'Anticipez les résultats', 'Analysez les performances'],
+              autoStart: true,
+              loop: true,
             }}
           />
         </h1>
-        <p className="text-xl mb-8">
-          Découvrez les analyses et les prédictions en temps réel pour les
-          courses de Formule 1.
+        <p className="text-xl mb-8 text-muted-foreground">
+          Découvrez les analyses et les prédictions en temps réel pour les courses de Formule 1.
         </p>
-
-        {/* Si l'utilisateur est encore en train de charger, on montre un message de chargement */}
+        
         {loading ? (
-          <p>Chargement...</p>
+          <div className="animate-pulse bg-muted h-12 w-48 mx-auto rounded"></div>
         ) : user ? (
-          // Si l'utilisateur est connecté, afficher son username
-          <div className="p-4 border border-green-500 rounded-lg text-center text-green-500">
-            <h3 className="text-lg font-semibold">Bienvenue, {user.username} !</h3>
-            <p>Vous êtes connecté.</p>
-          </div>
+          <Card className="max-w-sm mx-auto bg-green-500 text-white">
+            <CardHeader>
+              <CardTitle>Bienvenue, {user.username} !</CardTitle>
+              <CardDescription className="text-white">Vous êtes connecté.</CardDescription>
+            </CardHeader>
+          </Card>
         ) : (
-          // Si l'utilisateur n'est pas connecté, afficher un bouton "Se connecter"
-          <a
-            href="/login"
-            className="p-4 border border-red-500 rounded-lg text-center text-red-500 hover:bg-red-500 hover:text-white transition"
-          >
-            <h3 className="text-lg font-semibold">Se connecter &rarr;</h3>
-            <p>Accédez à votre compte pour plus de fonctionnalités.</p>
-          </a>
+          <Button asChild size="lg">
+            <a href="/login">
+              Se connecter <ArrowRight className="ml-2 h-4 w-4" />
+            </a>
+          </Button>
         )}
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-          <a
-            href="/about"
-            className="p-6 border border-red-500 rounded-lg text-center text-red-500 hover:bg-red-500 hover:text-white transition"
-          >
-            <h3 className="text-lg font-semibold">À propos &rarr;</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Info className="mr-2" /> À propos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <p>En savoir plus sur notre projet et notre équipe.</p>
-          </a>
-          <a
-            href="/contact"
-            className="p-6 border border-red-500 rounded-lg text-center text-red-500 hover:bg-red-500 hover:text-white transition"
-          >
-            <h3 className="text-lg font-semibold">Contact &rarr;</h3>
-            <p>Nous contacter pour plus d&apos;informations.</p> {/* Correction effectuée ici */}
-          </a>
-          <a
-            href="/analyse"
-            className="p-6 border border-red-500 rounded-lg text-center text-red-500 hover:bg-red-500 hover:text-white transition"
-          >
-            <h3 className="text-lg font-semibold">Analyse &rarr;</h3>
+            <Button variant="outline" className="mt-4" asChild>
+              <a href="/about">En savoir plus <ArrowRight className="ml-2 h-4 w-4" /></a>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Phone className="mr-2" /> Contact
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Nous contacter pour plus d&apos;informations.</p>
+            <Button variant="outline" className="mt-4" asChild>
+              <a href="/contact">Nous contacter <ArrowRight className="ml-2 h-4 w-4" /></a>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <BarChart className="mr-2" /> Analyse
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <p>Regarder les dernières analyses.</p>
-          </a>
-        </div>
-      </main>
+            <Button variant="outline" className="mt-4" asChild>
+              <a href="/analyse">Voir les analyses <ArrowRight className="ml-2 h-4 w-4" /></a>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
