@@ -17,7 +17,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </head>
       <body className="min-h-screen flex flex-col">
         <UserProvider> {/* Contexte utilisateur global */}
-          <Header title="PolePredict" /> {/* En-tête partagé */}
+          <Header title="PolePredict"/> {/* En-tête partagé */}
           <main className="flex-grow">{children}</main> {/* Contenu dynamique des pages */}
           <Footer /> {/* Pied de page partagé */}
         </UserProvider>
