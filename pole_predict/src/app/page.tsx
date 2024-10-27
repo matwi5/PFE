@@ -1,17 +1,29 @@
 "use client";
 
-import React, { useContext } from "react";
+import React, { useContext } from "react"; // Ajout de useRef et useEffect
 import Typewriter from "typewriter-effect";
 import UserContext from "../context/UserContext";
-import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { ArrowRight, Info, Phone, BarChart } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { ArrowRight, Info, Phone, BarChart } from "lucide-react";
+import { Car3d } from "./components/Car3d";
+import { Environment, OrbitControls } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
 
 const Home: React.FC = () => {
   const { user, loading } = useContext(UserContext);
 
+
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="mt-5 h-500 w-100">
+        <Canvas>
+          <Environment preset="studio" />
+          <OrbitControls enableZoom={false} enablePan={false} enableRotate={false} />
+          <perspectiveCamera /> {/* Ajustez la position ici */}
+          <Car3d />
+        </Canvas>
+      </div>
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-6xl font-bold mb-4">
           <Typewriter
