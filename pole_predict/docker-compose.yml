@@ -2,9 +2,9 @@ version: '3.8'
 
 services:
   app:
-    image: delfosse99/mon-app-f1:latest  # Remplacez par votre image d'application
+    image: delfosse99/mon-app-f1:latest  
     ports:
-      - "8080:8080"  # Remplacez par le port de votre application
+      - "8080:8080"  # Remplacez par le port de application (voir les param de dev et start dnas le package.json)
     networks:
       - monitoring
 
