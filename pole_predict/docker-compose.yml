@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app:
+    image: delfosse99/mon-app-f1:latest  # Remplacez par votre image d'application
+    ports:
+      - "8080:8080"  # Remplacez par le port de votre application
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml  # Configuration de Prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin  # Mot de passe Grafana (à changer en production)
+
+networks:
+  monitoring:
+    driver: bridge
