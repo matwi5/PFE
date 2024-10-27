@@ -56,7 +56,7 @@ const RegisterForm = () => {
     <div className="min-h-screen flex flex-col items-center justify-center py-6 bg-gray-100 dark:bg-gray-900">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">S'inscrire</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">S&apos;inscrire</CardTitle>
           <CardDescription className="text-center">
             Créez votre compte pour accéder à toutes les fonctionnalités
           </CardDescription>
@@ -70,7 +70,7 @@ const RegisterForm = () => {
           <form onSubmit={handleRegister}>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Nom d'utilisateur</Label>
+                <Label htmlFor="username">Nom d&apos;utilisateur</Label>
                 <Input
                   id="username"
                   type="text"
@@ -115,7 +115,7 @@ const RegisterForm = () => {
               </div>
             </div>
             <Button type="submit" className="w-full mt-6 bg-red-600 hover:bg-red-700">
-              <UserPlus className="mr-2 h-4 w-4" /> S'inscrire
+              <UserPlus className="mr-2 h-4 w-4" /> S&apos;inscrire
             </Button>
           </form>
         </CardContent>

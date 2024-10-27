@@ -16,7 +16,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mt-5 h-500 w-100">
+      <div className="mb-5 h-500 w-100">
         <Canvas>
           <Environment preset="studio" />
           <OrbitControls enableZoom={false} enablePan={false} enableRotate={false} />
