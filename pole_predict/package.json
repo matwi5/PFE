@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "next-dev": "next dev -p 8080",
+    "dev": "concurrently \"npm run next-dev\" \"npm run fastapi-dev\"",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 8080",
     "lint": "next lint",
-    "test": "jest"
+    "test": "jest",
+    "fastapi-dev": "pip3 install -r requirements.txt && python3 -m uvicorn src.api.index:app --reload"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.1",
@@ -21,6 +23,7 @@
     "chart.js": "^4.4.5",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "concurrently": "^9.0.1",
     "firebase": "^10.14.0",
     "framer-motion": "^11.11.1",
     "lucide-react": "^0.451.0",

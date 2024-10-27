@@ -25,7 +25,7 @@ WORKDIR /app
 COPY --from=builder /app/ .
 
 # Exposer le port sur lequel l'application écoutera
-EXPOSE 3000
+EXPOSE 8080
 
 # Démarrer l'application
 CMD ["npm", "start"]
