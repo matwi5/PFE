@@ -17,7 +17,8 @@ La Formule 1 est un sport hautement technique et stratégique, avec une quantit�
 
 # Lien utiles
 ## API
-OpenF1 API : https://openf1.org/#api-methods
+* OpenF1 API : https://openf1.org/#api-methods
+* shadcn : https://ui.shadcn.com/docs/installation/next
 
 # Fonctionnement
 aller dans le dossier `pole_predict`
@@ -26,9 +27,9 @@ aller dans le dossier `pole_predict`
 `npm install` puis `npm run dev`
 Si les dépendance sont déjà installer sur votre PC : `npm run dev`  
 
-## Build
+## Build et Production
 Sinon : `docker build -t <app_name> .`
-Ensuite :`docker run -p 3000:3000 <app_name>`
+Ensuite :`docker run -p 8080:8080 <app_name>` (ne changer pas les port svp)
 
 Docker créer un build de l'application donc est plus stable et se rapproche de la réalité.
 
@@ -43,11 +44,8 @@ Arreter le docker-compose : `docker-compose down`
 Mettre en veille : `docker-compose stop`
 
 
-##
- 
-
 # Installation 
-## Pré-requis (si pas Docker)
+## Pré-requis (si pas Docker ou pas npm install)
 * NodeJS
 * NextJS
 * typewriter : Effet de texte frapper au clavier
@@ -56,7 +54,7 @@ Mettre en veille : `docker-compose stop`
  `pip install fastapi uvicorn passlib python-jose pyotp`
 * Firebase : `npm install firebase`
 * rechart : `npm install rechart`
-* shadcn : https://ui.shadcn.com/docs/installation/next
+ 
 
 
 

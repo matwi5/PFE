@@ -24,7 +24,7 @@ const LoginForm = () => {
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("Utilisateur connecté :", userCredential.user);
+      console.log("Utilisateur connecté :", userCredential.user.uid); //Enlever le uid si vous voulez voir toutes les données utilisateur
       router.push("/");
     } catch (error) {
       console.error("Erreur lors de la connexion :", error);
