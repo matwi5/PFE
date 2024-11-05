@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 import { db } from "../firebaseConfig"; // Ton fichier de configuration Firebase
-import { collection, setDoc, doc } from "firebase/firestore"; 
+import { collection, addDoc } from "firebase/firestore"; 
 
 export const fetchDrivers = async () => {
   try {
@@ -16,7 +16,7 @@ export const fetchDrivers = async () => {
       // Vérifier si le pilote a une photo
       if (driver.headshot_url) {
         // Vérifier si le pilote est déjà dans le Map
-        if (!uniqueDriversMap.has(driver.full_name)) {
+        if (!uniqueDriversMap.has(driver.driver_number)) {
           // Ajouter le pilote s'il n'existe pas encore
           uniqueDriversMap.set(driver.full_name, driver);
         } else {
@@ -38,8 +38,7 @@ export const fetchDrivers = async () => {
     // Enregistrer chaque pilote dans Firebase
     const driversCollection = collection(db, "drivers");
     uniqueDrivers.forEach(async (driver) => {
-      const driverDoc = doc(driversCollection, driver.driver_number.toString());
-      await setDoc(driverDoc, driver); // Sauvegarder les données du pilote dans Firebase
+      await addDoc(driversCollection, driver); // Sauvegarder les données du pilote dans Firebase
     });
 
     console.log("Données des pilotes sauvegardées dans Firebase");

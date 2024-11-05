@@ -110,13 +110,6 @@ export function Car3d(props: GroupProps) {
         <mesh castShadow receiveShadow geometry={nodes.Object_8.geometry} material={materials.Steer} />
         <mesh castShadow receiveShadow geometry={nodes.Object_9.geometry} material={materials.Steer} />
       </group>
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Plane001.geometry}
-        material={materials['Material.001']}
-        position={[0, 5.491, 0]}
-      />
     </group>
   );
 }

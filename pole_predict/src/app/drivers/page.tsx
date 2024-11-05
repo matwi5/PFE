@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-/*import { fetchDrivers } from "@/lib/openF1api";*/
+import { fetchDrivers } from "@/lib/openF1api";
 import { db } from "@/firebaseConfig"; // Ton fichier de configuration Firebase
 import { collection, getDocs } from "firebase/firestore"; 
 import Link from "next/link";
@@ -75,6 +75,30 @@ const DriverCard: React.FC<{ driver: Driver }> = ({ driver }) => (
 
   const DriversPage: React.FC = () => {
     const [drivers, setDrivers] = useState<Driver[]>([]);
+
+    /**useEffect(() => {
+      const getDrivers = async () => {
+        try {
+          const driversCollection = collection(db, "drivers");
+          const driversSnapshot = await getDocs(driversCollection);
+          
+          if (driversSnapshot.empty) {
+            // Si la collection est vide, importer les pilotes
+            const data = await fetchDrivers();
+            setDrivers(data);
+          } else {
+            // Charger les pilotes existants
+            const driversData = driversSnapshot.docs.map(doc => doc.data() as Driver);
+            setDrivers(driversData);
+          }
+        } catch (error) {
+          console.error("Error fetching drivers:", error);
+        }
+      };
+    
+      getDrivers();
+    }, []);**/
+    
   
     useEffect(() => {
       const fetchDriversFromDB = async () => {

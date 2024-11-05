@@ -18,6 +18,7 @@ const RegisterForm = () => {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
+  const [favoriteDriver, setFavoriteriver] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const router = useRouter();

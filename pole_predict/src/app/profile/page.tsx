@@ -17,6 +17,7 @@ interface UserProfile {
   email: string
   avatarUrl: string
   phone : string
+  points : number
   favoriteDriver: string
 }
 
@@ -70,7 +71,11 @@ export default function ProfilePage() {
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="phone">Téléphone</Label>
-            <Input id="bio" value={profile.phone} readOnly />
+            <Input id="phone" value={profile.phone} readOnly />
+          </div>
+          <div>
+            <Label htmlFor="points">Points totals</Label>
+            <Input id="points" value={profile.points} readOnly />
           </div>
           <div>
             <Label htmlFor="favoriteDriver">Pilote favori</Label>
