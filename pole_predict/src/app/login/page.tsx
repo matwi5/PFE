@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { auth } from "../../firebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -24,11 +24,25 @@ const LoginForm = () => {
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("Utilisateur connecté :", userCredential.user.uid); //Enlever le uid si vous voulez voir toutes les données utilisateur
+      console.log("Utilisateur connecté :", userCredential.user.uid);
       router.push("/");
     } catch (error) {
       console.error("Erreur lors de la connexion :", error);
       setError("Adresse email ou mot de passe incorrect.");
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError("");
+    const provider = new GoogleAuthProvider();
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      console.log("Utilisateur connecté avec Google :", result.user.uid);
+      router.push("/");
+    } catch (error) {
+      console.error("Erreur lors de la connexion avec Google :", error);
+      setError("Échec de la connexion avec Google. Veuillez réessayer.");
     }
   };
 
@@ -76,6 +90,11 @@ const LoginForm = () => {
               <LogIn className="mr-2 h-4 w-4" /> Se connecter
             </Button>
           </form>
+          <div className="mt-4">
+            <Button onClick={handleGoogleLogin} className="w-full bg-blue-500 hover:bg-blue-600">
+              <LogIn className="mr-2 h-4 w-4" /> Se connecter avec Google
+            </Button>
+          </div>
         </CardContent>
         <CardFooter>
           <p className="text-center w-full">

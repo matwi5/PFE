@@ -9,49 +9,56 @@ const teamMembers = [
     role: "Architecte Cloud",
     image: "/images/Miraj.png",
     description: "Passionné de F1 depuis toujours, Miraj est notre expert en analyses de courses.",
-    skills: ["AWS", "Stratégie cloud", "Developpement cloud"]
+    skills: ["AWS", "Stratégie cloud", "Developpement cloud"],
+    linkedin: "https://www.linkedin.com/in/miraj-remtoula-9ba585219"
   },
   {
     name: "Mathis",
     role: "Développeur alogorithme IA",
     image: "/placeholder.svg?height=128&width=128",
     description: "Sophie est responsable du développement et de la maintenance de notre plateforme de prédictions.",
-    skills: ["Machine Learning", "Fine-tunning", "Python" , "Histoire de la F1"]
+    skills: ["Machine Learning", "Fine-tunning", "Python" , "Histoire de la F1"],
+    linkedin: ""
   },
   {
     name: "Louis",
     role: "Expert cybersécurité",
     image: "/placeholder.svg?height=128&width=128",
     description: "Lucas utilise des modèles statistiques avancés pour affiner nos prédictions de course.",
-    skills: ["OWASP", "Gestion des risques", "Visualisation de données"]
+    skills: ["OWASP", "Gestion des risques", "Visualisation de données"],
+    linkedin: ""
   },
   {
     name: "Clément",
     role: "Expert Big Data",
     image: "/placeholder.svg?height=128&width=128",
     description: "Lucas utilise des modèles statistiques avancés pour affiner nos prédictions de course.",
-    skills: ["OWASP", "Gestion des risques", "Visualisation de données"]
+    skills: ["OWASP", "Gestion des risques", "Visualisation de données"],
+    linkedin: ""
   },
   {
     name: "Loïc",
     role: "Expert cybersécurité",
     image: "/placeholder.svg?height=128&width=128",
     description: "Lucas utilise des modèles statistiques avancés pour affiner nos prédictions de course.",
-    skills: ["OWASP", "Gestion des risques", "Visualisation de données"]
+    skills: ["OWASP", "Gestion des risques", "Visualisation de données"],
+    linkedin: ""
   },
   {
     name: "Louis",
     role: "Expert cybersécurité",
     image: "/placeholder.svg?height=128&width=128",
     description: "Lucas utilise des modèles statistiques avancés pour affiner nos prédictions de course.",
-    skills: ["OWASP", "Gestion des risques", "Visualisation de données"]
+    skills: ["OWASP", "Gestion des risques", "Visualisation de données"],
+    linkedin: ""
   },
   {
     name: "Robin",
     role: "Expert cybersécurité",
     image: "/placeholder.svg?height=128&width=128",
     description: "Lucas utilise des modèles statistiques avancés pour affiner nos prédictions de course.",
-    skills: ["OWASP", "Gestion des risques", "Visualisation de données"]
+    skills: ["OWASP", "Gestion des risques", "Visualisation de données"],
+    linkedin: ""
   }
 ];
 
@@ -64,6 +71,12 @@ const About: React.FC = () => {
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {teamMembers.map((member) => (
+          <a 
+          key={member.name}
+            href={member.linkedin || "#"} // Utilise un # si aucun lien LinkedIn n'est disponible
+            target="_blank"
+            rel="noopener noreferrer"
+            className="no-underline">
           <Card key={member.name} className="hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="text-center">
               <Image
@@ -85,6 +98,7 @@ const About: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+          </a>
         ))}
       </div>
     </div>
