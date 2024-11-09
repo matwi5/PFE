@@ -53,6 +53,10 @@ export default function ProfilePage() {
     return <div className="flex justify-center items-center h-screen">Utilisateur non trouvé</div>
   }
 
+  const handleEditClick = () => {
+    router.push(`profile/edit`); // Ajoute "/edit" à l'URL actuelle
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-2xl mx-auto">
@@ -74,7 +78,7 @@ export default function ProfilePage() {
             <Input id="phone" value={profile.phone} readOnly />
           </div>
           <div>
-            <Label htmlFor="points">Points totals</Label>
+            <Label htmlFor="points">VerstaCoins</Label>
             <Input id="points" value={profile.points} readOnly />
           </div>
           <div>
@@ -83,7 +87,7 @@ export default function ProfilePage() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full">Modifier le profil</Button>
+          <Button className="w-full" onClick={handleEditClick}>Modifier le profil</Button>
         </CardFooter>
       </Card>
     </div>

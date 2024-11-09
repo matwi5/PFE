@@ -11,7 +11,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { ArrowRight, Info, Phone, BarChart } from "lucide-react";
+import { ArrowRight, Info, BarChart, Medal } from "lucide-react";
 import { Car3d } from "./components/Car3d";
 import HexagonChart from "./components/HexagonChart";
 import { Environment, OrbitControls } from "@react-three/drei";
@@ -22,6 +22,7 @@ const Home: React.FC = () => {
   const [stats, setStats] = useState([60, 70, 50, 80, 40, 60]);
   const [stats2, setStats2] = useState([40, 70, 80, 50, 100, 60]);
 
+  /* eslint-disable */
   useEffect(() => {
     const interval = setInterval(() => {
       setStats(stats.map((stat) => Math.floor(Math.random() * 100)));
@@ -30,7 +31,8 @@ const Home: React.FC = () => {
 
     return () => clearInterval(interval);
   }, []);
-
+  /* eslint-enable */
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-center items-center space-x-6 mb-5 -mt-32">
@@ -111,14 +113,14 @@ const Home: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Phone className="mr-2" /> Contact
+              <Medal className="mr-2" /> Prédiction
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Nous contacter pour plus d&apos;informations.</p>
+            <p>Nos prédictions en temps réel.</p>
             <Button variant="outline" className="mt-4" asChild>
-              <a href="/contact">
-                Nous contacter <ArrowRight className="ml-2 h-4 w-4" />
+              <a href="/prediction">
+                Voir les prédictions <ArrowRight className="ml-2 h-4 w-4" />
               </a>
             </Button>
           </CardContent>

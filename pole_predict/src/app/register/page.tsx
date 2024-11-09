@@ -18,7 +18,7 @@ const RegisterForm = () => {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
-  const [favoriteDriver, setFavoriteDriver] = useState("");
+  /**const [favoriteDriver, setFavoriteDriver] = useState("");*/
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const router = useRouter();
@@ -79,7 +79,7 @@ const RegisterForm = () => {
           username: user.displayName,
           email: user.email,
           phone: "", // Optional: ask for phone after Google sign-up
-          points: 0,
+          verstacoins: 0,
           createdAt: new Date(),
         });
       }
