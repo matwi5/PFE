@@ -87,7 +87,9 @@ export default function ProfilePage() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full" onClick={handleEditClick}>Modifier le profil</Button>
+          <Button className="w-full" onClick={handleEditClick
+            
+          }>Modifier le profil</Button>
         </CardFooter>
       </Card>
     </div>

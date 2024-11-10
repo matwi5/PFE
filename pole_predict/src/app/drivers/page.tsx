@@ -75,6 +75,7 @@ const DriverCard: React.FC<{ driver: Driver }> = ({ driver }) => (
 
   const DriversPage: React.FC = () => {
     const [drivers, setDrivers] = useState<Driver[]>([]);
+    const [error, setError] = useState('');
 
     /**useEffect(() => {
       const getDrivers = async () => {
@@ -100,7 +101,7 @@ const DriverCard: React.FC<{ driver: Driver }> = ({ driver }) => (
     }, []);**/
     
   
-    useEffect(() => {
+    /**useEffect(() => {
       const fetchDriversFromDB = async () => {
         try {
           const driversCollection = collection(db, "drivers");
@@ -114,6 +115,23 @@ const DriverCard: React.FC<{ driver: Driver }> = ({ driver }) => (
       };
   
       fetchDriversFromDB();
+    }, []);*/
+
+    useEffect(() => {
+      const fetchDrivers = async () => {
+        try {
+          const response = await fetch('/api/drivers'); // Appel à la route API que nous avons créée
+          if (!response.ok) throw new Error('Erreur lors de la récupération des pilotes');
+          
+          const data = await response.json();
+          setDrivers(data.data);
+        } catch (error) {
+          setError("Impossible de récupérer les données des pilotes.");
+          console.error("Erreur lors de la récupération des pilotes :", error);
+        }
+      };
+  
+      fetchDrivers();
     }, []);
 
   return (
