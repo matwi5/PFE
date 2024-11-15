@@ -19,6 +19,8 @@ interface Prediction {
   pole: string
   winner: string
   fastestLap: string
+  meeting_key: number
+  session_key: number
 }
 
 export default function PredictionPage() {
@@ -59,35 +61,41 @@ export default function PredictionPage() {
     try {
       const sessionQuery = query(collection(db, "sessions"), orderBy("date_start", "desc"), limit(1));
       const sessionSnapshot = await getDocs(sessionQuery);
-      const sessionNames = sessionSnapshot.docs
-      .map(doc => doc.data().session_name)
-
+  
       if (!sessionSnapshot.empty) {
-        setLatestSession(sessionNames);
+        const sessionDoc = sessionSnapshot.docs[0];
+        setLatestSession({
+          id: sessionDoc.id,
+          ...sessionDoc.data(), // Ajoute toutes les données du document
+        });
       } else {
         console.error("Aucune session récente trouvée.");
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération de la session:", error);
+      console.error("Erreur lors de la récupération de la session :", error);
     }
   };
+  
 
   const fetchLatestMeeting = async () => {
     try {
       const meetingQuery = query(collection(db, "meetings"), orderBy("date_start", "desc"), limit(1));
       const meetingSnapshot = await getDocs(meetingQuery);
-      const meetingName = meetingSnapshot.docs
-      .map(doc=> doc.data().meeting_name);
-
+  
       if (!meetingSnapshot.empty) {
-        setLatestMeeting(meetingName);
+        const meetingDoc = meetingSnapshot.docs[0]; // Récupère le premier document
+        setLatestMeeting({
+          id: meetingDoc.id,
+          ...meetingDoc.data(), // Ajoute toutes les données du document
+        });
       } else {
-        console.error("Aucun meeting récent trouvée.");
+        console.error("Aucun meeting récent trouvé.");
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération de la session:", error);
+      console.error("Erreur lors de la récupération du meeting :", error);
     }
   };
+  
 
   
 
@@ -108,36 +116,49 @@ export default function PredictionPage() {
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
-
+    e.preventDefault();
+    if (!user) return;
+  
+    if (!latestMeeting?.id || !latestSession?.id) {
+      toast({
+        title: "Erreur",
+        description: "Meeting ou session non trouvés. Veuillez réessayer.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
     try {
       const docRef = await addDoc(collection(db, 'predictions'), {
         userId: user.uid,
+        meetingId: latestMeeting.id, // Ajout de l'ID du meeting
+        sessionId: latestSession.id, // Ajout de l'ID de la session
         ...newPrediction,
-        createdAt: new Date()
-      })
-      
+        createdAt: new Date(),
+      });
+  
       setPredictions([{
         id: docRef.id,
         userId: user.uid,
-        ...newPrediction
-      }, ...predictions])
-      
-      setNewPrediction({ pole: "", winner: "", fastestLap: "" })
+        meeting_key: latestMeeting.id,
+        session_key: latestSession.id,
+        ...newPrediction,
+      }, ...predictions]);
+  
+      setNewPrediction({ pole: "", winner: "", fastestLap: "" });
       toast({
         title: "Prédiction soumise",
         description: "Votre prédiction a été enregistrée avec succès.",
-      })
+      });
     } catch (error) {
-      console.error("Erreur lors de l'ajout de la prédiction:", error)
+      console.error("Erreur lors de l'ajout de la prédiction:", error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'enregistrement de votre prédiction.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Chargement...</div>
@@ -145,8 +166,8 @@ export default function PredictionPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Prédictions pour {latestMeeting || "la prochaine course"} </h1>
-      <h2 className="text-3xl font-bold mb-8 text-center"> Session : {latestSession || "Unknown"}</h2>
+      <h1 className="text-3xl font-bold mb-8 text-center">Prédictions pour {latestMeeting?.meeting_name || "la prochaine course"} </h1>
+      <h2 className="text-3xl font-bold mb-8 text-center"> Session : {latestSession?.session_name || "Unknown"}</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
