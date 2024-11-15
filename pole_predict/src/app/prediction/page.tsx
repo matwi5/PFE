@@ -21,22 +21,23 @@ interface Prediction {
   fastestLap: string
 }
 
-const drivers = [
-  "Max Verstappen", "Lewis Hamilton", "Charles Leclerc", "Lando Norris", "Sergio Perez",
-  "Carlos Sainz", "Fernando Alonso", "George Russell", "Valtteri Bottas", "Pierre Gasly"
-]
-
 export default function PredictionPage() {
   const [user, setUser] = useState<User | null>(null)
+  const [latestSession, setLatestSession] = useState<any>(null);
+  const [latestMeeting, setLatestMeeting] = useState<any>(null);
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [newPrediction, setNewPrediction] = useState({ pole: "", winner: "", fastestLap: "" })
   const [loading, setLoading] = useState(true)
+  const [drivers, setDrivers] = useState<string[]>([])
   const router = useRouter()
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         setUser(user)
+        await fetchDrivers();
+        await fetchLatestMeeting();
+        await fetchLatestSession();
       } else {
         router.push('/login')
       }
@@ -44,6 +45,51 @@ export default function PredictionPage() {
 
     return () => unsubscribe()
   }, [router])
+
+  const fetchDrivers = async () => {
+    const driversCollection = collection(db, "drivers")
+    const driverDocs = await getDocs(driversCollection)
+    const driverNames = driverDocs.docs
+    .map(doc => doc.data().full_name)
+    .sort((a, b) => a.localeCompare(b))
+    setDrivers(driverNames)
+  }
+
+  const fetchLatestSession = async () => {
+    try {
+      const sessionQuery = query(collection(db, "sessions"), orderBy("date_start", "desc"), limit(1));
+      const sessionSnapshot = await getDocs(sessionQuery);
+      const sessionNames = sessionSnapshot.docs
+      .map(doc => doc.data().session_name)
+
+      if (!sessionSnapshot.empty) {
+        setLatestSession(sessionNames);
+      } else {
+        console.error("Aucune session récente trouvée.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la session:", error);
+    }
+  };
+
+  const fetchLatestMeeting = async () => {
+    try {
+      const meetingQuery = query(collection(db, "meetings"), orderBy("date_start", "desc"), limit(1));
+      const meetingSnapshot = await getDocs(meetingQuery);
+      const meetingName = meetingSnapshot.docs
+      .map(doc=> doc.data().meeting_name);
+
+      if (!meetingSnapshot.empty) {
+        setLatestMeeting(meetingName);
+      } else {
+        console.error("Aucun meeting récent trouvée.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la session:", error);
+    }
+  };
+
+  
 
   useEffect(() => {
     const fetchPredictions = async () => {
@@ -57,8 +103,8 @@ export default function PredictionPage() {
       setPredictions(fetchedPredictions)
       setLoading(false)
     }
-
-    fetchPredictions()
+    
+    fetchPredictions();
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,7 +145,8 @@ export default function PredictionPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Prédictions pour le Grand Prix de Monaco</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">Prédictions pour {latestMeeting || "la prochaine course"} </h1>
+      <h2 className="text-3xl font-bold mb-8 text-center"> Session : {latestSession || "Unknown"}</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
