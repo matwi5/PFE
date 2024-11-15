@@ -67,7 +67,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
                   <User className="text-center" /> Profile  
                 </DropdownMenuItem>
                 </Link>
-                <Link href="/profile/prediction">
+                <Link href="/profile/predictions">
                 <DropdownMenuItem>
                   <User className="text-center" /> Mes prédictions  
                 </DropdownMenuItem>
