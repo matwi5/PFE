@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { auth, db } from '../../../firebaseConfig'
-import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore'
 import { User } from 'firebase/auth'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -22,14 +22,10 @@ interface UserProfile {
   favoriteDriver: string
 }
 
-const drivers = [
-  "Max Verstappen", "Lewis Hamilton", "Charles Leclerc", "Lando Norris", "Sergio Perez",
-  "Carlos Sainz", "Fernando Alonso", "George Russell", "Valtteri Bottas", "Pierre Gasly"
-]
-
 export default function EditProfilePage() {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [drivers, setDrivers] = useState<string[]>([]) // Nouveau state pour les pilotes
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const router = useRouter()
@@ -43,6 +39,7 @@ export default function EditProfilePage() {
         if (docSnap.exists()) {
           setProfile(docSnap.data() as UserProfile)
         }
+        await fetchDrivers() // Récupération des pilotes lors de la connexion de l'utilisateur
       } else {
         router.push('/login')
       }
@@ -51,6 +48,16 @@ export default function EditProfilePage() {
 
     return () => unsubscribe()
   }, [router])
+
+  // Fonction pour récupérer les pilotes depuis Firebase
+  const fetchDrivers = async () => {
+    const driversCollection = collection(db, "drivers")
+    const driverDocs = await getDocs(driversCollection)
+    const driverNames = driverDocs.docs
+    .map(doc => doc.data().full_name)
+    .sort((a, b) => a.localeCompare(b))
+    setDrivers(driverNames)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -1,20 +1,25 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { auth, db } from '../../firebaseConfig'
+import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore'
+import { User } from 'firebase/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Trophy, Users, TrendingUp } from 'lucide-react'
+import { toast } from "@/hooks/use-toast"
 
-// Données factices
-const fakePredictions = [
-  { id: 1, user: "JohnF1", pole: "Max Verstappen", winner: "Lewis Hamilton", fastestLap: "Charles Leclerc" },
-  { id: 2, user: "MariaRacer", pole: "Charles Leclerc", winner: "Max Verstappen", fastestLap: "Lando Norris" },
-  { id: 3, user: "F1Fanatic", pole: "Lewis Hamilton", winner: "Max Verstappen", fastestLap: "Max Verstappen" },
-]
+interface Prediction {
+  id: string
+  userId: string
+  pole: string
+  winner: string
+  fastestLap: string
+}
 
 const drivers = [
   "Max Verstappen", "Lewis Hamilton", "Charles Leclerc", "Lando Norris", "Sergio Perez",
@@ -22,13 +27,74 @@ const drivers = [
 ]
 
 export default function PredictionPage() {
-  const [predictions, setPredictions] = useState(fakePredictions)
-  const [newPrediction, setNewPrediction] = useState({ user: "", pole: "", winner: "", fastestLap: "" })
+  const [user, setUser] = useState<User | null>(null)
+  const [predictions, setPredictions] = useState<Prediction[]>([])
+  const [newPrediction, setNewPrediction] = useState({ pole: "", winner: "", fastestLap: "" })
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setUser(user)
+      } else {
+        router.push('/login')
+      }
+    })
+
+    return () => unsubscribe()
+  }, [router])
+
+  useEffect(() => {
+    const fetchPredictions = async () => {
+      const predictionsCollection = collection(db, 'predictions')
+      const q = query(predictionsCollection, orderBy('createdAt', 'desc'), limit(10))
+      const querySnapshot = await getDocs(q)
+      const fetchedPredictions = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Prediction))
+      setPredictions(fetchedPredictions)
+      setLoading(false)
+    }
+
+    fetchPredictions()
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setPredictions([...predictions, { id: predictions.length + 1, ...newPrediction }])
-    setNewPrediction({ user: "", pole: "", winner: "", fastestLap: "" })
+    if (!user) return
+
+    try {
+      const docRef = await addDoc(collection(db, 'predictions'), {
+        userId: user.uid,
+        ...newPrediction,
+        createdAt: new Date()
+      })
+      
+      setPredictions([{
+        id: docRef.id,
+        userId: user.uid,
+        ...newPrediction
+      }, ...predictions])
+      
+      setNewPrediction({ pole: "", winner: "", fastestLap: "" })
+      toast({
+        title: "Prédiction soumise",
+        description: "Votre prédiction a été enregistrée avec succès.",
+      })
+    } catch (error) {
+      console.error("Erreur lors de l'ajout de la prédiction:", error)
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'enregistrement de votre prédiction.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Chargement...</div>
   }
 
   return (
@@ -51,7 +117,7 @@ export default function PredictionPage() {
             <Trophy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Max Verstappen</div>
+            <div className="text-2xl font-bold">{predictions[0]?.pole || "N/A"}</div>
           </CardContent>
         </Card>
         <Card>
@@ -60,7 +126,7 @@ export default function PredictionPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Lewis Hamilton</div>
+            <div className="text-2xl font-bold">{predictions[0]?.winner || "N/A"}</div>
           </CardContent>
         </Card>
       </div>
@@ -74,7 +140,6 @@ export default function PredictionPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Utilisateur</TableHead>
                 <TableHead>Pole Position</TableHead>
                 <TableHead>Vainqueur</TableHead>
                 <TableHead>Tour le plus rapide</TableHead>
@@ -83,7 +148,6 @@ export default function PredictionPage() {
             <TableBody>
               {predictions.map((prediction) => (
                 <TableRow key={prediction.id}>
-                  <TableCell>{prediction.user}</TableCell>
                   <TableCell>{prediction.pole}</TableCell>
                   <TableCell>{prediction.winner}</TableCell>
                   <TableCell>{prediction.fastestLap}</TableCell>
@@ -101,16 +165,7 @@ export default function PredictionPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="user">Nom d&apos;utilisateur</Label>
-                <Input
-                  id="user"
-                  value={newPrediction.user}
-                  onChange={(e) => setNewPrediction({ ...newPrediction, user: e.target.value })}
-                  required
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="pole">Pole Position</Label>
                 <Select
