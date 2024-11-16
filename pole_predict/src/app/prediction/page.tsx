@@ -26,8 +26,10 @@ interface Prediction {
 export default function PredictionPage() {
   const [user, setUser] = useState<User | null>(null)
   const [hasPredicted, setHasPredicted] = useState(false);
+  /* eslint-disable */
   const [latestSession, setLatestSession] = useState<any>(null);
   const [latestMeeting, setLatestMeeting] = useState<any>(null);
+  /* eslint-enable */
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [newPrediction, setNewPrediction] = useState({ pole: "", winner: "", fastestLap: "" })
   const [loading, setLoading] = useState(true)
