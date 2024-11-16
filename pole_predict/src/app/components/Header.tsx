@@ -43,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
               <Link href="/about" className="hover:text-blue-200 transition-colors">À propos</Link>
             </li>
             <li>
-              <Link href="/contact" className="hover:text-blue-200 transition-colors">Contact</Link>
+              <Link href="/prediction" className="hover:text-blue-200 transition-colors">Prediction</Link>
             </li>
             <li>
               <Link href="/drivers" className="hover:text-blue-200 transition-colors">Pilotes</Link>
@@ -65,6 +65,11 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
                 <Link href="/profile">
                 <DropdownMenuItem>
                   <User className="text-center" /> Profile  
+                </DropdownMenuItem>
+                </Link>
+                <Link href="/profile/predictions">
+                <DropdownMenuItem>
+                  <User className="text-center" /> Mes prédictions  
                 </DropdownMenuItem>
                 </Link>
                 <DropdownMenuItem onClick={handleSignOut}>

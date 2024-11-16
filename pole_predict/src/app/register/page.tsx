@@ -1,29 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { auth, db } from "../../firebaseConfig"; // Ton fichier de configuration Firebase
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore"; // Importation de getDoc
+import { auth, db, googleProvider } from "../../firebaseConfig";
+import { createUserWithEmailAndPassword, sendEmailVerification, signInWithPopup } from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { UserPlus, GlobeLockIcon } from "lucide-react";
 
 const RegisterForm = () => {
-  //élements dans la BDD
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
-  const [error, setError] = useState(""); // État pour les messages d'erreur
-
+  /**const [favoriteDriver, setFavoriteDriver] = useState("");*/
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const router = useRouter();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); // Réinitialiser les messages d'erreur
+    setError("");
+    setMessage("");
 
     try {
-      // Vérifier si l'utilisateur existe déjà dans Firestore
-      const userDocRef = doc(db, "users", email); // On utilise l'email comme identifiant
+      const userDocRef = doc(db, "users", email);
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists()) {
@@ -31,109 +37,145 @@ const RegisterForm = () => {
         return;
       }
 
-      // Création de l'utilisateur dans Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Ajout de l'utilisateur à la base de données Firestore
+      // Save user information to Firestore
       await setDoc(doc(db, "users", user.uid), {
         username: username,
         email: email,
         phone: phone,
+        points: 0,
         createdAt: new Date(),
       });
 
-      console.log("Utilisateur enregistré avec succès !");
-      router.push("/");
+      // Send verification email
+      await sendEmailVerification(user);
+      setMessage("Un e-mail de vérification a été envoyé. Veuillez vérifier votre boîte de réception.");
+
+      // Redirect after a few seconds
+      setTimeout(() => router.push("/login"), 5000);
     } catch (error) {
       console.error("Erreur lors de l'inscription :", error);
       setError("Erreur lors de l'inscription, veuillez réessayer.");
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    setError("");
+    setMessage("");
+
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      // Check if user already exists in Firestore
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      // If the user is new, add them to Firestore
+      if (!userDoc.exists()) {
+        await setDoc(userDocRef, {
+          username: user.displayName,
+          email: user.email,
+          phone: "", // Optional: ask for phone after Google sign-up
+          verstacoins: 0,
+          createdAt: new Date(),
+        });
+      }
+
+      // Redirect to dashboard or any other page after sign-up
+      router.push("/");
+    } catch (error) {
+      console.error("Erreur lors de l'inscription avec Google :", error);
+      setError("Échec de l'inscription avec Google. Veuillez réessayer.");
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-6" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
-      <div className="p-8 rounded-lg shadow-lg w-full max-w-md" style={{ background: '#1c1c1e', color: '#e0e0e0' }}>
-        <h1 className="text-3xl font-bold text-center mb-4">S&apos;inscrire</h1>
-
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>} {/* Affichage des erreurs */}
-
-        <form onSubmit={handleRegister}>
-          <div className="mb-4">
-            <label htmlFor="username" className="block mb-2">
-              Nom d&apos;utilisateur
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full p-3 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Entrez votre nom d'utilisateur"
-              style={{ background: '#2b2b2d', color: '#ffffff' }}
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label htmlFor="email" className="block mb-2">
-              Adresse e-mail
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Entrez votre email"
-              style={{ background: '#2b2b2d', color: '#ffffff' }}
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label htmlFor="phone" className="block mb-2">
-              Numéro de téléphone
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full p-3 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Entrez votre numéro de téléphone"
-              style={{ background: '#2b2b2d', color: '#ffffff' }}
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label htmlFor="password" className="block mb-2">
-              Mot de passe
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Entrez votre mot de passe"
-              style={{ background: '#2b2b2d', color: '#ffffff' }}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full p-3 rounded bg-gray-700 text-e0e0e0 hover:bg-red-600 hover:text-white transition-colors"
-          >
-            S&apos;inscrire
-          </button>
-        </form>
-
-        <p className="text-center mt-4">
-          Vous avez déjà un compte ?{' '}
-          <Link href="/login" className="text-blue-400 hover:underline">
-            Connectez-vous
-          </Link>
-        </p>
-      </div>
+    <div className="min-h-screen flex flex-col items-center justify-center py-6 bg-gray-100 dark:bg-gray-900">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">S&apos;inscrire</CardTitle>
+          <CardDescription className="text-center">
+            Créez votre compte pour accéder à toutes les fonctionnalités
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {message && (
+            <Alert variant="default" className="mb-4">
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
+          )}
+          <form onSubmit={handleRegister}>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="username">Nom d&apos;utilisateur</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Entrez votre nom d'utilisateur"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Adresse e-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="exemple@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Numéro de téléphone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Entrez votre numéro de téléphone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Mot de passe</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <Button type="submit" className="w-full mt-6 bg-red-600 hover:bg-red-700">
+              <UserPlus className="mr-2 h-4 w-4" /> S&apos;inscrire
+            </Button>
+          </form>
+          <Button onClick={handleGoogleSignUp} className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+            <GlobeLockIcon className="mr-2 h-4 w-4" /> S&apos;inscrire avec Google
+          </Button>
+        </CardContent>
+        <CardFooter>
+          <p className="text-center w-full">
+            Vous avez déjà un compte ?{' '}
+            <Link href="/login" className="text-red-600 hover:underline">
+              Connectez-vous
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

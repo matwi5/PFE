@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-/*import { fetchDrivers } from "@/lib/openF1api";*/
+import { fetchDrivers } from "@/lib/openF1api";
 import { db } from "@/firebaseConfig"; // Ton fichier de configuration Firebase
 import { collection, getDocs } from "firebase/firestore"; 
 import Link from "next/link";
@@ -75,8 +75,33 @@ const DriverCard: React.FC<{ driver: Driver }> = ({ driver }) => (
 
   const DriversPage: React.FC = () => {
     const [drivers, setDrivers] = useState<Driver[]>([]);
+    const [error, setError] = useState('');
+
+    /**useEffect(() => {
+      const getDrivers = async () => {
+        try {
+          const driversCollection = collection(db, "drivers");
+          const driversSnapshot = await getDocs(driversCollection);
+          
+          if (driversSnapshot.empty) {
+            // Si la collection est vide, importer les pilotes
+            const data = await fetchDrivers();
+            setDrivers(data);
+          } else {
+            // Charger les pilotes existants
+            const driversData = driversSnapshot.docs.map(doc => doc.data() as Driver);
+            setDrivers(driversData);
+          }
+        } catch (error) {
+          console.error("Error fetching drivers:", error);
+        }
+      };
+    
+      getDrivers();
+    }, []);**/
+    
   
-    useEffect(() => {
+    /**useEffect(() => {
       const fetchDriversFromDB = async () => {
         try {
           const driversCollection = collection(db, "drivers");
@@ -90,6 +115,23 @@ const DriverCard: React.FC<{ driver: Driver }> = ({ driver }) => (
       };
   
       fetchDriversFromDB();
+    }, []);*/
+
+    useEffect(() => {
+      const fetchDrivers = async () => {
+        try {
+          const response = await fetch('/api/drivers'); // Appel à la route API que nous avons créée
+          if (!response.ok) throw new Error('Erreur lors de la récupération des pilotes');
+          
+          const data = await response.json();
+          setDrivers(data.data);
+        } catch (error) {
+          setError("Impossible de récupérer les données des pilotes.");
+          console.error("Erreur lors de la récupération des pilotes :", error);
+        }
+      };
+  
+      fetchDrivers();
     }, []);
 
   return (

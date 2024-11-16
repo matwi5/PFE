@@ -17,33 +17,44 @@ La Formule 1 est un sport hautement technique et stratégique, avec une quantit�
 
 # Lien utiles
 ## API
-OpenF1 API : https://openf1.org/#api-methods
+* OpenF1 API : https://openf1.org/#api-methods
+* shadcn : https://ui.shadcn.com/docs/installation/next
 
 # Fonctionnement
 aller dans le dossier `pole_predict`
 
+## Test et developpement
+`npm install` puis `npm run dev`
 Si les dépendance sont déjà installer sur votre PC : `npm run dev`  
 
+## Build et Production
 Sinon : `docker build -t <app_name> .`
-Ensuite :`docker run -p 3000:3000 <app_name>`
+Ensuite :`docker run -p 8080:8080 <app_name>` (ne changer pas les port svp)
 
 Docker créer un build de l'application donc est plus stable et se rapproche de la réalité.
 
+## Monitoring 
+Permet de verifier le traffic des API 
+Un fichier docker-compose est dispo pour lancer les outils nécessaires Prometheus et Grapahan (potentiellement ELK Stach pour moniitorer les log mais pour plus tard).
 
- 
+**Attention** l'image prise pour lancer l'appli est celui sur DockerHub donc faudra faire un repo commun pour les images de l'appli.
+
+Lancer le docker-compose : `docker-compose up -d`
+Arreter le docker-compose : `docker-compose down`
+Mettre en veille : `docker-compose stop`
+
 
 # Installation 
-## Pré-requis (si pas Docker)
+## Pré-requis (si pas Docker ou pas npm install)
 * NodeJS
 * NextJS
 * typewriter : Effet de texte frapper au clavier
  `npm i typewriter-effect`
-* Django : `pip insrall django` (pas nécessaire pour le moment)
 * FastApi : `pip install fastapi uvicorn`
  `pip install fastapi uvicorn passlib python-jose pyotp`
 * Firebase : `npm install firebase`
 * rechart : `npm install rechart`
-* shadcn : https://ui.shadcn.com/docs/installation/next
+ 
 
 
 

@@ -17,6 +17,7 @@ interface UserProfile {
   email: string
   avatarUrl: string
   phone : string
+  points : number
   favoriteDriver: string
 }
 
@@ -52,6 +53,10 @@ export default function ProfilePage() {
     return <div className="flex justify-center items-center h-screen">Utilisateur non trouvé</div>
   }
 
+  const handleEditClick = () => {
+    router.push(`profile/edit`); // Ajoute "/edit" à l'URL actuelle
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-2xl mx-auto">
@@ -70,7 +75,11 @@ export default function ProfilePage() {
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="phone">Téléphone</Label>
-            <Input id="bio" value={profile.phone} readOnly />
+            <Input id="phone" value={profile.phone} readOnly />
+          </div>
+          <div>
+            <Label htmlFor="points">VerstaCoins</Label>
+            <Input id="points" value={profile.points} readOnly />
           </div>
           <div>
             <Label htmlFor="favoriteDriver">Pilote favori</Label>
@@ -78,7 +87,9 @@ export default function ProfilePage() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full">Modifier le profil</Button>
+          <Button className="w-full" onClick={handleEditClick
+            
+          }>Modifier le profil</Button>
         </CardFooter>
       </Card>
     </div>
