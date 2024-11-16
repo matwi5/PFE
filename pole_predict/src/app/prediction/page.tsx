@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { auth, db } from '../../firebaseConfig'
-import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore'
+import { collection, addDoc, getDocs, query, orderBy, limit, where} from 'firebase/firestore'
 import { User } from 'firebase/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -25,6 +25,7 @@ interface Prediction {
 
 export default function PredictionPage() {
   const [user, setUser] = useState<User | null>(null)
+  const [hasPredicted, setHasPredicted] = useState(false);
   const [latestSession, setLatestSession] = useState<any>(null);
   const [latestMeeting, setLatestMeeting] = useState<any>(null);
   const [predictions, setPredictions] = useState<Prediction[]>([])
@@ -113,7 +114,25 @@ export default function PredictionPage() {
     }
     
     fetchPredictions();
-  }, [])
+  }, []);
+
+  useEffect(() => {
+    const checkUserPrediction = async () => {
+      if (!user || !latestSession?.id) return;
+  
+      const predictionsCollection = collection(db, 'predictions');
+      const q = query(
+        predictionsCollection,
+        where("userId", "==", user.uid),
+        where("sessionId", "==", latestSession.id)
+      );
+      const querySnapshot = await getDocs(q);
+  
+      setHasPredicted(!querySnapshot.empty);
+    };
+  
+    checkUserPrediction();
+  }, [user, latestSession]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,7 +148,26 @@ export default function PredictionPage() {
     }
   
     try {
-      const docRef = await addDoc(collection(db, 'predictions'), {
+      // Vérifiez si une prédiction existe déjà pour cet utilisateur et cette session
+      const predictionsCollection = collection(db, 'predictions');
+      const q = query(
+        predictionsCollection,
+        where("userId", "==", user.uid),
+        where("sessionId", "==", latestSession.id)
+      );
+      const querySnapshot = await getDocs(q);
+  
+      if (!querySnapshot.empty) {
+        toast({
+          title: "Prédiction existante",
+          description: "Vous avez déjà soumis une prédiction pour cette session.",
+          variant: "destructive",
+        });
+        return;
+      }
+  
+      // Ajouter une nouvelle prédiction
+      const docRef = await addDoc(predictionsCollection, {
         userId: user.uid,
         meetingId: latestMeeting.id, // Ajout de l'ID du meeting
         sessionId: latestSession.id, // Ajout de l'ID de la session
@@ -146,6 +184,7 @@ export default function PredictionPage() {
       }, ...predictions]);
   
       setNewPrediction({ pole: "", winner: "", fastestLap: "" });
+  
       toast({
         title: "Prédiction soumise",
         description: "Votre prédiction a été enregistrée avec succès.",
@@ -159,6 +198,7 @@ export default function PredictionPage() {
       });
     }
   };
+  
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Chargement...</div>
@@ -202,7 +242,7 @@ export default function PredictionPage() {
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Prédictions actuelles</CardTitle>
-          <CardDescription>Voici les prédictions des utilisateurs pour la prochaine course.</CardDescription>
+          <CardDescription>Voici les dernières prédictions des utilisateurs pour la prochaine course.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -214,7 +254,7 @@ export default function PredictionPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {predictions.map((prediction) => (
+              {predictions.slice(0, 5).map((prediction) => (
                 <TableRow key={prediction.id}>
                   <TableCell>{prediction.pole}</TableCell>
                   <TableCell>{prediction.winner}</TableCell>
@@ -232,6 +272,11 @@ export default function PredictionPage() {
           <CardDescription>Remplissez le formulaire pour ajouter votre prédiction.</CardDescription>
         </CardHeader>
         <CardContent>
+        {hasPredicted ? (
+      <p className="text-center text-red-500">
+        Vous avez déjà soumis une prédiction pour cette session.
+      </p>
+    ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
@@ -291,6 +336,7 @@ export default function PredictionPage() {
             </div>
             <Button type="submit" className="w-full">Soumettre la prédiction</Button>
           </form>
+    )}
         </CardContent>
       </Card>
     </div>
