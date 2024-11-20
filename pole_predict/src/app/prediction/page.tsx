@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { auth, db } from '../../firebaseConfig'
-import { collection, addDoc, getDocs, query, orderBy, limit, where} from 'firebase/firestore'
+import { collection, addDoc, getDocs, query, orderBy, limit, where, doc, getDoc, updateDoc } from 'firebase/firestore'
 import { User } from 'firebase/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import { Trophy, Users, TrendingUp } from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
 
@@ -21,28 +22,36 @@ interface Prediction {
   fastestLap: string
   meeting_key: number
   session_key: number
+  points: number
 }
 
 export default function PredictionPage() {
   const [user, setUser] = useState<User | null>(null)
-  const [hasPredicted, setHasPredicted] = useState(false);
-  /* eslint-disable */
-  const [latestSession, setLatestSession] = useState<any>(null);
-  const [latestMeeting, setLatestMeeting] = useState<any>(null);
-  /* eslint-enable */
+  const [hasPredicted, setHasPredicted] = useState(false)
+  const [latestSession, setLatestSession] = useState<any>(null)
+  const [latestMeeting, setLatestMeeting] = useState<any>(null)
   const [predictions, setPredictions] = useState<Prediction[]>([])
-  const [newPrediction, setNewPrediction] = useState({ pole: "", winner: "", fastestLap: "" })
+  const [newPrediction, setNewPrediction] = useState({ pole: "", winner: "", fastestLap: "", points: 1 })
   const [loading, setLoading] = useState(true)
   const [drivers, setDrivers] = useState<string[]>([])
+  const [userPoints, setUserPoints] = useState<number | null>(null)
+  const [trends, setTrends] = useState({
+    pole: "N/A",
+    winner: "N/A",
+    fastestLap: "N/A",
+  });
+  
   const router = useRouter()
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         setUser(user)
-        await fetchDrivers();
-        await fetchLatestMeeting();
-        await fetchLatestSession();
+        await fetchDrivers()
+        await fetchLatestMeeting()
+        await fetchLatestSession()
+        await fetchUserPoints(user.uid)
+        await checkUserPrediction(user.uid)
       } else {
         router.push('/login')
       }
@@ -51,56 +60,123 @@ export default function PredictionPage() {
     return () => unsubscribe()
   }, [router])
 
+  const fetchUserPoints = async (userId: string) => {
+    try {
+      const userDocRef = doc(db, "users", userId)
+      const userDocSnap = await getDoc(userDocRef)
+      
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data()
+        const points = userData.points || 0
+        console.log("Points de l'utilisateur récupérés:", points)
+        setUserPoints(points)
+      } else {
+        console.log("Aucun document utilisateur trouvé")
+        setUserPoints(0)
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des points de l'utilisateur:", error)
+      setUserPoints(0)
+    }
+  }
+
   const fetchDrivers = async () => {
     const driversCollection = collection(db, "drivers")
     const driverDocs = await getDocs(driversCollection)
     const driverNames = driverDocs.docs
-    .map(doc => doc.data().full_name)
-    .sort((a, b) => a.localeCompare(b))
+      .map(doc => doc.data().full_name)
+      .sort((a, b) => a.localeCompare(b))
     setDrivers(driverNames)
   }
 
   const fetchLatestSession = async () => {
     try {
-      const sessionQuery = query(collection(db, "sessions"), orderBy("date_start", "desc"), limit(1));
-      const sessionSnapshot = await getDocs(sessionQuery);
+      const sessionQuery = query(collection(db, "sessions"), orderBy("date_start", "desc"), limit(1))
+      const sessionSnapshot = await getDocs(sessionQuery)
   
       if (!sessionSnapshot.empty) {
-        const sessionDoc = sessionSnapshot.docs[0];
+        const sessionDoc = sessionSnapshot.docs[0]
         setLatestSession({
           id: sessionDoc.id,
-          ...sessionDoc.data(), // Ajoute toutes les données du document
-        });
+          ...sessionDoc.data(),
+        })
       } else {
-        console.error("Aucune session récente trouvée.");
+        console.error("Aucune session récente trouvée.")
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération de la session :", error);
+      console.error("Erreur lors de la récupération de la session :", error)
     }
-  };
-  
+  }
 
   const fetchLatestMeeting = async () => {
     try {
-      const meetingQuery = query(collection(db, "meetings"), orderBy("date_start", "desc"), limit(1));
-      const meetingSnapshot = await getDocs(meetingQuery);
+      const meetingQuery = query(collection(db, "meetings"), orderBy("date_start", "desc"), limit(1))
+      const meetingSnapshot = await getDocs(meetingQuery)
   
       if (!meetingSnapshot.empty) {
-        const meetingDoc = meetingSnapshot.docs[0]; // Récupère le premier document
+        const meetingDoc = meetingSnapshot.docs[0]
         setLatestMeeting({
           id: meetingDoc.id,
-          ...meetingDoc.data(), // Ajoute toutes les données du document
-        });
+          ...meetingDoc.data(),
+        })
       } else {
-        console.error("Aucun meeting récent trouvé.");
+        console.error("Aucun meeting récent trouvé.")
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération du meeting :", error);
+      console.error("Erreur lors de la récupération du meeting :", error)
     }
-  };
-  
+  }
 
+  useEffect(() => {
+    if (predictions.length > 0) {
+      calculateTrends(predictions);
+    }
+  }, [predictions]);
   
+  const calculateTrends = (predictions: Prediction[]) => {
+    const trendCounts = {
+      pole: {} as Record<string, number>,
+      winner: {} as Record<string, number>,
+      fastestLap: {} as Record<string, number>,
+    };
+  
+    predictions.forEach(prediction => {
+      trendCounts.pole[prediction.pole] = (trendCounts.pole[prediction.pole] || 0) + 1;
+      trendCounts.winner[prediction.winner] = (trendCounts.winner[prediction.winner] || 0) + 1;
+      trendCounts.fastestLap[prediction.fastestLap] = (trendCounts.fastestLap[prediction.fastestLap] || 0) + 1;
+    });
+  
+    const getMostFrequent = (counts: Record<string, number>) => {
+      return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, "");
+    };
+  
+    const poleTrend = getMostFrequent(trendCounts.pole);
+    const winnerTrend = getMostFrequent(trendCounts.winner);
+    const fastestLapTrend = getMostFrequent(trendCounts.fastestLap);
+  
+    console.log("Trends - Pole:", poleTrend, "Winner:", winnerTrend, "Fastest Lap:", fastestLapTrend);
+  
+    // Mettre à jour l'état pour les afficher dans la vue
+    setTrends({
+      pole: poleTrend,
+      winner: winnerTrend,
+      fastestLap: fastestLapTrend,
+    });
+  };
+
+  const checkUserPrediction = async (userId: string) => {
+    if (!latestSession?.id) return
+  
+    const predictionsCollection = collection(db, 'predictions')
+    const q = query(
+      predictionsCollection,
+      where("userId", "==", userId),
+      where("sessionId", "==", latestSession.id)
+    )
+    const querySnapshot = await getDocs(q)
+  
+    setHasPredicted(!querySnapshot.empty)
+  }
 
   useEffect(() => {
     const fetchPredictions = async () => {
@@ -115,94 +191,100 @@ export default function PredictionPage() {
       setLoading(false)
     }
     
-    fetchPredictions();
-  }, []);
-
-  useEffect(() => {
-    const checkUserPrediction = async () => {
-      if (!user || !latestSession?.id) return;
-  
-      const predictionsCollection = collection(db, 'predictions');
-      const q = query(
-        predictionsCollection,
-        where("userId", "==", user.uid),
-        where("sessionId", "==", latestSession.id)
-      );
-      const querySnapshot = await getDocs(q);
-  
-      setHasPredicted(!querySnapshot.empty);
-    };
-  
-    checkUserPrediction();
-  }, [user, latestSession]);
+    fetchPredictions()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-  
+    e.preventDefault()
+    if (!user || userPoints === null) return
+
     if (!latestMeeting?.id || !latestSession?.id) {
       toast({
         title: "Erreur",
         description: "Meeting ou session non trouvés. Veuillez réessayer.",
         variant: "destructive",
-      });
-      return;
+      })
+      return
     }
-  
+
+    if (newPrediction.points < 1 || newPrediction.points > userPoints) {
+      toast({
+        title: "Erreur",
+        description: `Vous devez miser entre 1 et ${userPoints} points.`,
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
-      // Vérifiez si une prédiction existe déjà pour cet utilisateur et cette session
-      const predictionsCollection = collection(db, 'predictions');
+      // Check for existing prediction
+      const predictionsCollection = collection(db, 'predictions')
       const q = query(
         predictionsCollection,
         where("userId", "==", user.uid),
         where("sessionId", "==", latestSession.id)
-      );
-      const querySnapshot = await getDocs(q);
-  
+      )
+      const querySnapshot = await getDocs(q)
+
       if (!querySnapshot.empty) {
         toast({
           title: "Prédiction existante",
           description: "Vous avez déjà soumis une prédiction pour cette session.",
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
-  
-      // Ajouter une nouvelle prédiction
+
+      // Add new prediction
       const docRef = await addDoc(predictionsCollection, {
         userId: user.uid,
-        meetingId: latestMeeting.id, // Ajout de l'ID du meeting
-        sessionId: latestSession.id, // Ajout de l'ID de la session
+        meetingId: latestMeeting.id,
+        sessionId: latestSession.id,
         ...newPrediction,
         createdAt: new Date(),
-      });
-  
+      })
+
       setPredictions([{
         id: docRef.id,
         userId: user.uid,
         meeting_key: latestMeeting.id,
         session_key: latestSession.id,
         ...newPrediction,
-      }, ...predictions]);
-  
-      setNewPrediction({ pole: "", winner: "", fastestLap: "" });
-  
+      }, ...predictions])
+
+      // Update user points
+      await updateUserPoints(user.uid, userPoints - newPrediction.points)
+
+      setNewPrediction({ pole: "", winner: "", fastestLap: "", points: 1 })
+      setHasPredicted(true)
+
       toast({
         title: "Prédiction soumise",
-        description: "Votre prédiction a été enregistrée avec succès.",
-      });
+        description: `Votre prédiction a été enregistrée avec succès. Vous avez misé ${newPrediction.points} points.`,
+      })
     } catch (error) {
-      console.error("Erreur lors de l'ajout de la prédiction:", error);
+      console.error("Erreur lors de l'ajout de la prédiction:", error)
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'enregistrement de votre prédiction.",
         variant: "destructive",
-      });
+      })
     }
-  };
-  
+  }
 
-  if (loading) {
+  const updateUserPoints = async (userId: string, newPoints: number) => {
+    try {
+      await updateDoc(doc(db, "users", userId), {
+        points: newPoints
+      })
+      setUserPoints(newPoints)
+      console.log("Points de l'utilisateur mis à jour:", newPoints)
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour des points de l'utilisateur:", error)
+    }
+  }
+
+  if (loading || userPoints === null) {
     return <div className="flex justify-center items-center h-screen">Chargement...</div>
   }
 
@@ -227,7 +309,7 @@ export default function PredictionPage() {
             <Trophy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{predictions[0]?.pole || "N/A"}</div>
+            <div className="text-2xl font-bold">{trends.pole || "N/A"}</div>
           </CardContent>
         </Card>
         <Card>
@@ -236,7 +318,7 @@ export default function PredictionPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{predictions[0]?.winner || "N/A"}</div>
+            <div className="text-2xl font-bold">{trends.winner || "N/A"}</div>
           </CardContent>
         </Card>
       </div>
@@ -253,6 +335,7 @@ export default function PredictionPage() {
                 <TableHead>Pole Position</TableHead>
                 <TableHead>Vainqueur</TableHead>
                 <TableHead>Tour le plus rapide</TableHead>
+                <TableHead>Points misés</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -261,6 +344,7 @@ export default function PredictionPage() {
                   <TableCell>{prediction.pole}</TableCell>
                   <TableCell>{prediction.winner}</TableCell>
                   <TableCell>{prediction.fastestLap}</TableCell>
+                  <TableCell>{prediction.points}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -275,12 +359,12 @@ export default function PredictionPage() {
         </CardHeader>
         <CardContent>
         {hasPredicted ? (
-      <p className="text-center text-red-500">
-        Vous avez déjà soumis une prédiction pour cette session.
-      </p>
-    ) : (
+          <p className="text-center text-red-500">
+            Vous avez déjà soumis une prédiction pour cette session.
+          </p>
+        ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="pole">Pole Position</Label>
                 <Select
@@ -335,10 +419,22 @@ export default function PredictionPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="points">Points à miser (max: {userPoints})</Label>
+                <Input
+                  id="points"
+                  type="number"
+                  min={1}
+                  max={userPoints}
+                  value={newPrediction.points}
+                  onChange={(e) => setNewPrediction({ ...newPrediction, points: parseInt(e.target.value) })}
+                  required
+                />
+              </div>
             </div>
             <Button type="submit" className="w-full">Soumettre la prédiction</Button>
           </form>
-    )}
+        )}
         </CardContent>
       </Card>
     </div>

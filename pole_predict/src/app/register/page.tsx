@@ -45,7 +45,7 @@ const RegisterForm = () => {
         username: username,
         email: email,
         phone: phone,
-        points: 0,
+        points: 100,
         createdAt: new Date(),
       });
 
@@ -79,7 +79,7 @@ const RegisterForm = () => {
           username: user.displayName,
           email: user.email,
           phone: "", // Optional: ask for phone after Google sign-up
-          verstacoins: 0,
+          points: 100,
           createdAt: new Date(),
         });
       }
