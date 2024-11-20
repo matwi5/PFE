@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu, User, LogOut } from 'lucide-react';
+import { Menu, User, LogOut, TrendingUpDown } from 'lucide-react';
 
 interface HeaderProps {
   title: string;
@@ -69,7 +69,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
                 </Link>
                 <Link href="/profile/predictions">
                 <DropdownMenuItem>
-                  <User className="text-center" /> Mes prédictions  
+                  <TrendingUpDown className="text-center" /> Mes prédictions  
                 </DropdownMenuItem>
                 </Link>
                 <DropdownMenuItem onClick={handleSignOut}>
