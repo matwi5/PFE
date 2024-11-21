@@ -43,7 +43,8 @@
     "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.169.0",
-    "typewriter-effect": "^2.21.0"
+    "typewriter-effect": "^2.21.0",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.25.7",

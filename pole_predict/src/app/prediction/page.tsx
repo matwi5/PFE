@@ -18,6 +18,7 @@ import { toast } from "@/hooks/use-toast"
 interface Prediction {
   id: string
   userId: string
+  username: string
   pole: string
   winner: string
   fastestLap: string
@@ -36,6 +37,7 @@ export default function PredictionPage() {
   const [loading, setLoading] = useState(true)
   const [drivers, setDrivers] = useState<string[]>([])
   const [userPoints, setUserPoints] = useState<number | null>(null)
+  const [userName, setUserName] = useState<string>("")
   const [trends, setTrends] = useState({
     pole: "N/A",
     winner: "N/A",
@@ -69,8 +71,10 @@ export default function PredictionPage() {
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data()
         const points = userData.points || 0
+        const name = userData.username || ""
         console.log("Points de l'utilisateur récupérés:", points)
         setUserPoints(points)
+        setUserName(name)
       } else {
         console.log("Aucun document utilisateur trouvé")
         setUserPoints(0)
@@ -239,6 +243,7 @@ export default function PredictionPage() {
       // Add new prediction
       const docRef = await addDoc(predictionsCollection, {
         userId: user.uid,
+        username: userName,
         meetingId: latestMeeting.id,
         sessionId: latestSession.id,
         ...newPrediction,
@@ -248,6 +253,7 @@ export default function PredictionPage() {
       setPredictions([{
         id: docRef.id,
         userId: user.uid,
+        username: userName,
         meeting_key: latestMeeting.id,
         session_key: latestSession.id,
         ...newPrediction,
@@ -333,6 +339,7 @@ export default function PredictionPage() {
           <Table>
             <TableHeader>
               <TableRow>
+              <TableHead>User</TableHead>
                 <TableHead>Pole Position</TableHead>
                 <TableHead>Vainqueur</TableHead>
                 <TableHead>Tour le plus rapide</TableHead>
@@ -342,6 +349,7 @@ export default function PredictionPage() {
             <TableBody>
               {predictions.slice(0, 5).map((prediction) => (
                 <TableRow key={prediction.id}>
+                  <TableCell>{prediction.username}</TableCell>
                   <TableCell>{prediction.pole}</TableCell>
                   <TableCell>{prediction.winner}</TableCell>
                   <TableCell>{prediction.fastestLap}</TableCell>

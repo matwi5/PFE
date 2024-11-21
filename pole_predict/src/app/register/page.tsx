@@ -18,7 +18,7 @@ const RegisterForm = () => {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
-  /**const [favoriteDriver, setFavoriteDriver] = useState("");*/
+  const [favoriteDriver, setFavoriteDriver] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const router = useRouter();
@@ -46,6 +46,7 @@ const RegisterForm = () => {
         email: email,
         phone: phone,
         points: 100,
+        favoriteDriver:favoriteDriver,
         createdAt: new Date(),
       });
 
