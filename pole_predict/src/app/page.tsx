@@ -36,7 +36,7 @@ const Home: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-center items-center space-x-6 mb-5 -mt-32">
-        <div className="flex-shrink-0 w-75 h-75 mt-32">
+        <div className="hidden lg:block flex-shrink-0 w-75 h-75 mt-32">
           <HexagonChart stats={stats} />
         </div>
         <div className="w-[400px] h-[400px]">
@@ -51,7 +51,7 @@ const Home: React.FC = () => {
             <Car3d />
           </Canvas>
         </div>
-        <div className="flex-shrink-0 w-75 h-75 mt-32">
+        <div className="hidden lg:block flex-shrink-0 w-75 h-75 mt-32">
           <HexagonChart stats={stats2} /> {/*peut être changer par un autre diagramme si on developpe le comosant*/}
         </div>
       </div>
