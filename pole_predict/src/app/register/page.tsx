@@ -18,7 +18,9 @@ const RegisterForm = () => {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
+  /* eslint-disable */
   const [favoriteDriver, setFavoriteDriver] = useState("");
+  /* eslint-enable */
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const router = useRouter();
