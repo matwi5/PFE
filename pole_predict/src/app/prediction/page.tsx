@@ -185,19 +185,33 @@ export default function PredictionPage() {
 
   useEffect(() => {
     const fetchPredictions = async () => {
-      const predictionsCollection = collection(db, 'predictions')
-      const q = query(predictionsCollection, orderBy('createdAt', 'desc'), limit(10))
-      const querySnapshot = await getDocs(q)
-      const fetchedPredictions = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Prediction))
-      setPredictions(fetchedPredictions)
-      setLoading(false)
-    }
-    
-    fetchPredictions()
-  }, [])
+      if (!latestSession?.id) return; // Assurez-vous qu'une session est sélectionnée
+  
+      try {
+        const predictionsCollection = collection(db, 'predictions');
+        const q = query(
+          predictionsCollection,
+          where('sessionId', '==', latestSession.id), // Filtre par sessionId
+          orderBy('createdAt', 'desc'),
+          limit(10)
+        );
+  
+        const querySnapshot = await getDocs(q);
+        const fetchedPredictions = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        } as Prediction));
+  
+        setPredictions(fetchedPredictions);
+        setLoading(false);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des prédictions:', error);
+        setLoading(false);
+      }
+    };
+  
+    fetchPredictions();
+  }, [latestSession]); // Déclenche uniquement lorsque la session change
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
