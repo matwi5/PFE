@@ -1,4 +1,3 @@
-/* eslint-disable */
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -22,8 +21,8 @@ interface Prediction {
   pole: string
   winner: string
   fastestLap: string
-  meeting_key: number
-  session_key: number
+  meetingId: string
+  sessionId: string
   points: number
 }
 
@@ -42,7 +41,7 @@ export default function PredictionPage() {
     pole: "N/A",
     winner: "N/A",
     fastestLap: "N/A",
-  });
+  })
   
   const router = useRouter()
 
@@ -54,7 +53,6 @@ export default function PredictionPage() {
         await fetchLatestMeeting()
         await fetchLatestSession()
         await fetchUserPoints(user.uid)
-        await checkUserPrediction(user.uid)
       } else {
         router.push('/login')
       }
@@ -62,6 +60,13 @@ export default function PredictionPage() {
 
     return () => unsubscribe()
   }, [router])
+
+  useEffect(() => {
+    if (latestSession?.id && user) {
+      fetchPredictions()
+      checkUserPrediction(user.uid)
+    }
+  }, [latestSession, user])
 
   const fetchUserPoints = async (userId: string) => {
     try {
@@ -72,7 +77,6 @@ export default function PredictionPage() {
         const userData = userDocSnap.data()
         const points = userData.points || 0
         const name = userData.username || ""
-        console.log("Points de l'utilisateur récupérés:", points)
         setUserPoints(points)
         setUserName(name)
       } else {
@@ -132,42 +136,29 @@ export default function PredictionPage() {
     }
   }
 
-  useEffect(() => {
-    if (predictions.length > 0) {
-      calculateTrends(predictions);
-    }
-  }, [predictions]);
-  
   const calculateTrends = (predictions: Prediction[]) => {
     const trendCounts = {
       pole: {} as Record<string, number>,
       winner: {} as Record<string, number>,
       fastestLap: {} as Record<string, number>,
-    };
+    }
   
     predictions.forEach(prediction => {
-      trendCounts.pole[prediction.pole] = (trendCounts.pole[prediction.pole] || 0) + 1;
-      trendCounts.winner[prediction.winner] = (trendCounts.winner[prediction.winner] || 0) + 1;
-      trendCounts.fastestLap[prediction.fastestLap] = (trendCounts.fastestLap[prediction.fastestLap] || 0) + 1;
-    });
+      trendCounts.pole[prediction.pole] = (trendCounts.pole[prediction.pole] || 0) + 1
+      trendCounts.winner[prediction.winner] = (trendCounts.winner[prediction.winner] || 0) + 1
+      trendCounts.fastestLap[prediction.fastestLap] = (trendCounts.fastestLap[prediction.fastestLap] || 0) + 1
+    })
   
     const getMostFrequent = (counts: Record<string, number>) => {
-      return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, "");
-    };
+      return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, "")
+    }
   
-    const poleTrend = getMostFrequent(trendCounts.pole);
-    const winnerTrend = getMostFrequent(trendCounts.winner);
-    const fastestLapTrend = getMostFrequent(trendCounts.fastestLap);
-  
-    console.log("Trends - Pole:", poleTrend, "Winner:", winnerTrend, "Fastest Lap:", fastestLapTrend);
-  
-    // Mettre à jour l'état pour les afficher dans la vue
     setTrends({
-      pole: poleTrend,
-      winner: winnerTrend,
-      fastestLap: fastestLapTrend,
-    });
-  };
+      pole: getMostFrequent(trendCounts.pole) || "N/A",
+      winner: getMostFrequent(trendCounts.winner) || "N/A",
+      fastestLap: getMostFrequent(trendCounts.fastestLap) || "N/A",
+    })
+  }
 
   const checkUserPrediction = async (userId: string) => {
     if (!latestSession?.id) return
@@ -183,35 +174,33 @@ export default function PredictionPage() {
     setHasPredicted(!querySnapshot.empty)
   }
 
-  useEffect(() => {
-    const fetchPredictions = async () => {
-      if (!latestSession?.id) return; // Assurez-vous qu'une session est sélectionnée
-  
-      try {
-        const predictionsCollection = collection(db, 'predictions');
-        const q = query(
-          predictionsCollection,
-          where('sessionId', '==', latestSession.id), // Filtre par sessionId
-          orderBy('createdAt', 'desc'),
-          limit(10)
-        );
-  
-        const querySnapshot = await getDocs(q);
-        const fetchedPredictions = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        } as Prediction));
-  
-        setPredictions(fetchedPredictions);
-        setLoading(false);
-      } catch (error) {
-        console.error('Erreur lors de la récupération des prédictions:', error);
-        setLoading(false);
-      }
-    };
-  
-    fetchPredictions();
-  }, [latestSession]); // Déclenche uniquement lorsque la session change
+  const fetchPredictions = async () => {
+    if (!latestSession?.id) return
+
+    try {
+      const predictionsCollection = collection(db, 'predictions')
+      const q = query(
+        predictionsCollection,
+        where("sessionId", "==", latestSession.id),
+        orderBy('createdAt', 'desc')
+      )
+      const querySnapshot = await getDocs(q)
+      const fetchedPredictions = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Prediction))
+      setPredictions(fetchedPredictions)
+      setLoading(false)
+      calculateTrends(fetchedPredictions)
+    } catch (error) {
+      console.error("Erreur lors de la récupération des prédictions:", error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de récupérer les prédictions.",
+        variant: "destructive",
+      })
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -236,25 +225,7 @@ export default function PredictionPage() {
     }
 
     try {
-      // Check for existing prediction
       const predictionsCollection = collection(db, 'predictions')
-      const q = query(
-        predictionsCollection,
-        where("userId", "==", user.uid),
-        where("sessionId", "==", latestSession.id)
-      )
-      const querySnapshot = await getDocs(q)
-
-      if (!querySnapshot.empty) {
-        toast({
-          title: "Prédiction existante",
-          description: "Vous avez déjà soumis une prédiction pour cette session.",
-          variant: "destructive",
-        })
-        return
-      }
-
-      // Add new prediction
       const docRef = await addDoc(predictionsCollection, {
         userId: user.uid,
         username: userName,
@@ -268,12 +239,11 @@ export default function PredictionPage() {
         id: docRef.id,
         userId: user.uid,
         username: userName,
-        meeting_key: latestMeeting.id,
-        session_key: latestSession.id,
+        meetingId: latestMeeting.id,
+        sessionId: latestSession.id,
         ...newPrediction,
       }, ...predictions])
 
-      // Update user points
       await updateUserPoints(user.uid, userPoints - newPrediction.points)
 
       setNewPrediction({ pole: "", winner: "", fastestLap: "", points: 1 })
@@ -299,7 +269,6 @@ export default function PredictionPage() {
         points: newPoints
       })
       setUserPoints(newPoints)
-      console.log("Points de l'utilisateur mis à jour:", newPoints)
     } catch (error) {
       console.error("Erreur lors de la mise à jour des points de l'utilisateur:", error)
     }
@@ -330,7 +299,7 @@ export default function PredictionPage() {
             <Trophy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{trends.pole || "N/A"}</div>
+            <div className="text-2xl font-bold">{trends.pole}</div>
           </CardContent>
         </Card>
         <Card>
@@ -339,21 +308,21 @@ export default function PredictionPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{trends.winner || "N/A"}</div>
+            <div className="text-2xl font-bold">{trends.winner}</div>
           </CardContent>
         </Card>
       </div>
 
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Prédictions actuelles</CardTitle>
-          <CardDescription>Voici les dernières prédictions des utilisateurs pour la prochaine course.</CardDescription>
+          <CardTitle>Prédictions pour la session actuelle</CardTitle>
+          <CardDescription>Voici les prédictions des utilisateurs pour {latestSession?.session_name || "la session en cours"}.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-              <TableHead>User</TableHead>
+                <TableHead>User</TableHead>
                 <TableHead>Pole Position</TableHead>
                 <TableHead>Vainqueur</TableHead>
                 <TableHead>Tour le plus rapide</TableHead>
@@ -361,7 +330,7 @@ export default function PredictionPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {predictions.slice(0, 5).map((prediction) => (
+              {predictions.map((prediction) => (
                 <TableRow key={prediction.id}>
                   <TableCell>{prediction.username}</TableCell>
                   <TableCell>{prediction.pole}</TableCell>
