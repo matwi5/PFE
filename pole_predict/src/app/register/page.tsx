@@ -81,6 +81,7 @@ const RegisterForm = () => {
         await setDoc(userDocRef, {
           username: user.displayName,
           email: user.email,
+          favoriteDriver: favoriteDriver,
           phone: "", // Optional: ask for phone after Google sign-up
           points: 100,
           createdAt: new Date(),

@@ -14,6 +14,7 @@ import {
 import { ArrowRight, Info, BarChart, Medal } from "lucide-react";
 import { Car3d } from "./components/Car3d";
 import HexagonChart from "./components/HexagonChart";
+
 import { Environment, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 
