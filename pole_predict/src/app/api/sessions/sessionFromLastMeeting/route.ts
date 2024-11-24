@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const url = 'https://api.openf1.org/v1/sessions?meeting_key=latest';
+    const url = 'https://api.openf1.org/v1/sessions?meeting_key=latest&session_key=latest';
     console.log("Tentative de récupération depuis l'URL :", url);
 
     const sessionResponse = await axios.get(url);
