@@ -1,8 +1,8 @@
-/* eslint-disable */
+// src/lib/openF1api.ts
 
 import axios from 'axios';
 import { db } from "../firebaseConfig"; // Ton fichier de configuration Firebase
-import { collection, addDoc } from "firebase/firestore"; 
+import { collection, addDoc } from "firebase/firestore";
 
 export const fetchDrivers = async () => {
   try {
@@ -49,38 +49,41 @@ export const fetchDrivers = async () => {
   }
 };
 
-
-
-
-/*import axios from 'axios';
-
-export const fetchDrivers = async () => {
+// Accéder aux dates et heures des GP
+export const fetchRaceControlEvents = async (date: string) => {
   try {
-    const response = await axios.get('https://api.openf1.org/v1/drivers');
-    const drivers = response.data;
+    const startDate = new Date(date);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 1);
 
-    // Créer un Map pour stocker les pilotes uniques
-    const uniqueDriversMap = new Map();
+    const response = await axios.get(
+      `https://api.openf1.org/v1/race_control?date>=${startDate.toISOString().split('T')[0]}&date<${endDate.toISOString().split('T')[0]}`
+    );
 
-    drivers.forEach((driver: any) => {
-      // Vérifier si le pilote est déjà dans le Map
-      if (!uniqueDriversMap.has(driver.full_name)) {
-        // Ajouter le pilote s'il n'existe pas encore
-        uniqueDriversMap.set(driver.full_name, driver);
-      } else {
-        // Si le pilote existe déjà, comparer et garder l'information la plus récente
-        const existingDriver = uniqueDriversMap.get(driver.full_name);
-        if (driver.session_key > existingDriver.session_key) {
-          uniqueDriversMap.set(driver.full_name, driver);
-        }
-      }
-    });
-
-    // Convertir le Map en tableau pour retourner
-    const uniqueDrivers = Array.from(uniqueDriversMap.values());
-    return uniqueDrivers;
+    return response.data;
   } catch (error) {
-    throw new Error(`Failed to fetch drivers: ${error}`);
+    throw new Error(`Failed to fetch race control events: ${error}`);
   }
 };
-*/
+
+export const fetchMeetings = async () => {
+  try {
+    const response = await axios.get('https://api.openf1.org/v1/meetings');
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des meetings:', error);
+    throw error;
+  }
+};
+
+
+// Accéder aux dates et heures des sessions
+export const fetchSessions = async (meetingKey: string) => {
+  try {
+    const response = await axios.get(`https://api.openf1.org/v1/sessions?meeting_key=${meetingKey}`);
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des sessions:', error);
+    throw error;
+  }
+};

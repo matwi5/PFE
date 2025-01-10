@@ -3,11 +3,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { fetchDrivers } from "@/lib/openF1api";
-import { db } from "@/firebaseConfig"; // Ton fichier de configuration Firebase
+import { fetchDrivers } from "../../lib/openF1api";
+import { db } from "../../firebaseConfig"; // Ton fichier de configuration Firebase
 import { collection, getDocs } from "firebase/firestore"; 
 import Link from "next/link";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTrigger } from "../../components/ui/dialog"
 
 
 interface Driver {
