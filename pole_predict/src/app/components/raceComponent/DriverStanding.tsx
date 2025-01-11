@@ -249,15 +249,12 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
   }
 
  return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle>
-          Driver Standings {viewMode === 'lap' ? `- Lap ${currentLap}` : ''}
-          ({enhancedStandings.filter(s => s.status === 'active').length} active / {enhancedStandings.length} total)
-        </CardTitle>
-      </CardHeader>
+    <Card className="h-full overflow-hidden">
+      <CardHeader className="py-2">
+    <CardTitle className="text-lg">Driver Standings</CardTitle>
+  </CardHeader>
       <CardContent>
-        <div className="relative h-[calc(100vh-12rem)] overflow-y-auto">
+        <div className="relative h-[calc(100vh-38rem)] overflow-y-auto">
           <AnimatePresence>
             {enhancedStandings.map((standing, index) => (
               <motion.div
