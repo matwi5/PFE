@@ -1,4 +1,4 @@
-  /* eslint-disable */
+/* eslint-disable */
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -35,6 +35,7 @@ export default function PredictionPage() {
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [newPrediction, setNewPrediction] = useState({ pole: "", winner: "", fastestLap: "", points: 1 })
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [drivers, setDrivers] = useState<string[]>([])
   const [userPoints, setUserPoints] = useState<number | null>(null)
   const [userName, setUserName] = useState<string>("")
@@ -48,14 +49,23 @@ export default function PredictionPage() {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        setUser(user)
-        await fetchDrivers()
-        await fetchLatestMeeting()
-        await fetchLatestSession()
-        await fetchUserPoints(user.uid)
-      } else {
-        router.push('/login')
+      try {
+        if (user) {
+          setUser(user)
+          await Promise.all([
+            fetchDrivers(),
+            fetchLatestMeeting(),
+            fetchLatestSession(),
+            fetchUserPoints(user.uid)
+          ])
+          setLoading(false)
+        } else {
+          router.push('/login')
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement initial:", error)
+        setError("Une erreur est survenue lors du chargement des données")
+        setLoading(false)
       }
     })
 
@@ -63,10 +73,19 @@ export default function PredictionPage() {
   }, [router])
 
   useEffect(() => {
-    if (latestSession?.id && user) {
-      fetchPredictions()
-      checkUserPrediction(user.uid)
+    const loadPredictions = async () => {
+      try {
+        if (latestSession?.id && user) {
+          await fetchPredictions()
+          await checkUserPrediction(user.uid)
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des prédictions:", error)
+        setError("Erreur lors du chargement des prédictions")
+      }
     }
+
+    loadPredictions()
   }, [latestSession, user])
 
   const fetchUserPoints = async (userId: string) => {
@@ -86,17 +105,21 @@ export default function PredictionPage() {
       }
     } catch (error) {
       console.error("Erreur lors de la récupération des points de l'utilisateur:", error)
-      setUserPoints(0)
+      throw new Error("Impossible de récupérer les points de l'utilisateur")
     }
   }
 
   const fetchDrivers = async () => {
-    const driversCollection = collection(db, "drivers")
-    const driverDocs = await getDocs(driversCollection)
-    const driverNames = driverDocs.docs
-      .map(doc => doc.data().full_name)
-      .sort((a, b) => a.localeCompare(b))
-    setDrivers(driverNames)
+    try {
+      const driversCollection = collection(db, "drivers")
+      const driverDocs = await getDocs(driversCollection)
+      const driverNames = driverDocs.docs
+        .map(doc => doc.data().full_name)
+        .sort((a, b) => a.localeCompare(b))
+      setDrivers(driverNames)
+    } catch (error) {
+      throw new Error("Erreur lors de la récupération des pilotes")
+    }
   }
 
   const fetchLatestSession = async () => {
@@ -111,10 +134,10 @@ export default function PredictionPage() {
           ...sessionDoc.data(),
         })
       } else {
-        console.error("Aucune session récente trouvée.")
+        throw new Error("Aucune session récente trouvée")
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération de la session :", error)
+      throw new Error("Erreur lors de la récupération de la session")
     }
   }
 
@@ -130,10 +153,10 @@ export default function PredictionPage() {
           ...meetingDoc.data(),
         })
       } else {
-        console.error("Aucun meeting récent trouvé.")
+        throw new Error("Aucun meeting récent trouvé")
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération du meeting :", error)
+      throw new Error("Erreur lors de la récupération du meeting")
     }
   }
 
@@ -162,17 +185,22 @@ export default function PredictionPage() {
   }
 
   const checkUserPrediction = async (userId: string) => {
-    if (!latestSession?.id) return
-  
-    const predictionsCollection = collection(db, 'predictions')
-    const q = query(
-      predictionsCollection,
-      where("userId", "==", userId),
-      where("sessionId", "==", latestSession.id)
-    )
-    const querySnapshot = await getDocs(q)
-  
-    setHasPredicted(!querySnapshot.empty)
+    try {
+      if (!latestSession?.id) return
+    
+      const predictionsCollection = collection(db, 'predictions')
+      const q = query(
+        predictionsCollection,
+        where("userId", "==", userId),
+        where("sessionId", "==", latestSession.id)
+      )
+      const querySnapshot = await getDocs(q)
+    
+      setHasPredicted(!querySnapshot.empty)
+    } catch (error) {
+      console.error("Erreur lors de la vérification des prédictions:", error)
+      throw new Error("Impossible de vérifier les prédictions de l'utilisateur")
+    }
   }
 
   const fetchPredictions = async () => {
@@ -200,6 +228,7 @@ export default function PredictionPage() {
         description: "Impossible de récupérer les prédictions.",
         variant: "destructive",
       })
+      throw new Error("Impossible de récupérer les prédictions")
     }
   }
 
@@ -272,10 +301,25 @@ export default function PredictionPage() {
       setUserPoints(newPoints)
     } catch (error) {
       console.error("Erreur lors de la mise à jour des points de l'utilisateur:", error)
+      throw new Error("Impossible de mettre à jour les points de l'utilisateur")
     }
   }
 
-  if (loading || userPoints === null) {
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen">
+        <p className="text-red-500 mb-4">{error}</p>
+        <Button 
+          onClick={() => window.location.reload()}
+          variant="outline"
+        >
+          Réessayer
+        </Button>
+      </div>
+    )
+  }
+
+  if (loading) {
     return <div className="flex justify-center items-center h-screen">Chargement...</div>
   }
 
@@ -418,7 +462,7 @@ export default function PredictionPage() {
                   id="points"
                   type="number"
                   min={1}
-                  max={userPoints}
+                  max={userPoints || 0}
                   value={newPrediction.points}
                   onChange={(e) => setNewPrediction({ ...newPrediction, points: parseInt(e.target.value) })}
                   required

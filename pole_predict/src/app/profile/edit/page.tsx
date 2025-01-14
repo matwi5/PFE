@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { auth, db } from '../../../firebaseConfig'
-import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { User } from 'firebase/auth'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -22,10 +22,16 @@ interface UserProfile {
   favoriteDriver: string
 }
 
+interface Driver {
+  driver_number: number
+  full_name: string
+  headshot_url: string
+}
+
 export default function EditProfilePage() {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [drivers, setDrivers] = useState<string[]>([]) // Nouveau state pour les pilotes
+  const [drivers, setDrivers] = useState<Driver[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const router = useRouter()
@@ -39,7 +45,7 @@ export default function EditProfilePage() {
         if (docSnap.exists()) {
           setProfile(docSnap.data() as UserProfile)
         }
-        await fetchDrivers() // Récupération des pilotes lors de la connexion de l'utilisateur
+        await fetchDrivers()
       } else {
         router.push('/login')
       }
@@ -49,14 +55,35 @@ export default function EditProfilePage() {
     return () => unsubscribe()
   }, [router])
 
-  // Fonction pour récupérer les pilotes depuis Firebase
   const fetchDrivers = async () => {
-    const driversCollection = collection(db, "drivers")
-    const driverDocs = await getDocs(driversCollection)
-    const driverNames = driverDocs.docs
-    .map(doc => doc.data().full_name)
-    .sort((a, b) => a.localeCompare(b))
-    setDrivers(driverNames)
+    try {
+      const response = await fetch('https://api.openf1.org/v1/drivers?session_key=latest')
+      const data = await response.json()
+      
+      // Typer les données avant le filtrage et le tri
+      const typedData = data as Driver[]
+      
+      // Filtrer les pilotes qui ont une headshot_url et enlever les doublons
+      const uniqueDrivers = Array.from(new Map(
+        typedData
+          .filter((driver) => driver.headshot_url)
+          .map((driver) => [driver.driver_number, driver])
+      ).values()) as Driver[]
+      
+      // Trier par numéro de pilote
+      const sortedDrivers = uniqueDrivers.sort((a, b) => 
+        a.driver_number - b.driver_number
+      )
+      
+      setDrivers(sortedDrivers)
+    } catch (error) {
+      console.error("Erreur lors de la récupération des pilotes:", error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger la liste des pilotes.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -146,8 +173,11 @@ export default function EditProfilePage() {
                 </SelectTrigger>
                 <SelectContent>
                   {drivers.map((driver) => (
-                    <SelectItem key={driver} value={driver}>
-                      {driver}
+                    <SelectItem 
+                      key={driver.driver_number} 
+                      value={`${driver.full_name}`}
+                    >
+                      {driver.full_name} ({driver.driver_number})
                     </SelectItem>
                   ))}
                 </SelectContent>
