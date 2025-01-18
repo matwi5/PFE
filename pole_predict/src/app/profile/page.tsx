@@ -1,24 +1,53 @@
 "use client"
-
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { auth, db } from '../../firebaseConfig'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
 import { User } from 'firebase/auth'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Badge } from "lucide-react"
 
-// velaur chercher dans la collection des users
+// Interface pour la structure d'un badge
+interface UserBadge {
+  name: string
+  description: string
+  obtainedAt: Date
+  type: string
+}
+
+// Mise à jour de l'interface UserProfile
 interface UserProfile {
   username: string
   email: string
   avatarUrl: string
-  phone : string
-  points : number
+  phone: string
+  points: number
   favoriteDriver: string
+  badges: UserBadge[]
+}
+
+// Composant pour afficher un badge individuel
+const BadgeCard = ({ badge }: { badge: UserBadge }) => {
+  return (
+    <Card className="w-full">
+      <CardHeader className="p-4">
+        <div className="flex items-center space-x-2">
+          <Badge className="h-6 w-6 text-blue-500" />
+          <CardTitle className="text-lg">{badge.name}</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 pt-0">
+        <p className="text-sm text-gray-600 dark:text-gray-400">{badge.description}</p>
+        <p className="text-xs text-gray-500 mt-2">
+          Obtenu le : {new Date(badge.obtainedAt).toLocaleDateString()}
+        </p>
+      </CardContent>
+    </Card>
+  )
 }
 
 export default function ProfilePage() {
@@ -33,15 +62,28 @@ export default function ProfilePage() {
         setUser(user)
         const docRef = doc(db, "users", user.uid)
         const docSnap = await getDoc(docRef)
+        
         if (docSnap.exists()) {
-          setProfile(docSnap.data() as UserProfile)
+          // Récupérer les données du profil
+          const profileData = docSnap.data()
+          
+          // Convertir les timestamps en Date pour les badges
+          const badgesWithDates = profileData.badges?.map((badge: any) => ({
+            ...badge,
+            obtainedAt: badge.obtainedAt?.toDate() || new Date()
+          })) || []
+          
+          setProfile({
+            ...profileData,
+            badges: badgesWithDates
+          } as UserProfile)
         }
       } else {
         router.push('/login')
       }
       setLoading(false)
     })
-
+    
     return () => unsubscribe()
   }, [router])
 
@@ -54,8 +96,8 @@ export default function ProfilePage() {
   }
 
   const handleEditClick = () => {
-    router.push(`profile/edit`); // Ajoute "/edit" à l'URL actuelle
-  };
+    router.push(`profile/edit`)
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -72,6 +114,7 @@ export default function ProfilePage() {
             </div>
           </div>
         </CardHeader>
+        
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="phone">Téléphone</Label>
@@ -85,11 +128,25 @@ export default function ProfilePage() {
             <Label htmlFor="favoriteDriver">Pilote favori</Label>
             <Input id="favoriteDriver" value={profile.favoriteDriver} readOnly />
           </div>
+          
+          {/* Section des badges */}
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-4">Mes badges</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {profile.badges?.map((badge, index) => (
+                <BadgeCard key={index} badge={badge} />
+              ))}
+            </div>
+            {(!profile.badges || profile.badges.length === 0) && (
+              <p className="text-center text-gray-500">Aucun badge pour le moment</p>
+            )}
+          </div>
         </CardContent>
+
         <CardFooter>
-          <Button className="w-full" onClick={handleEditClick
-            
-          }>Modifier le profil</Button>
+          <Button className="w-full" onClick={handleEditClick}>
+            Modifier le profil
+          </Button>
         </CardFooter>
       </Card>
     </div>
