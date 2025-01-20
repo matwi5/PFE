@@ -1,8 +1,8 @@
 import React from 'react';
-import Header from './components/Header'; // Importation du composant Header
-import Footer from './components/Footer'; // Importation du composant Footer
-import { UserProvider } from '../context/UserContext'; // Importation du UserProvider
-import './globals.css'; // Importation des styles globaux
+import Header from './components/Header';
+import Footer from './components/Footer';
+import { UserProvider } from '../context/UserContext';
+import './globals.css';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,11 +15,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <link rel="icon" href="/favicon.ico" />
         <title>Mon Site F1</title>
       </head>
-      <body className="min-h-screen flex flex-col">
-        <UserProvider> {/* Contexte utilisateur global */}
-          <Header title="PolePredict"/> {/* En-tête partagé */}
-          <main className="flex-grow">{children}</main> {/* Contenu dynamique des pages */}
-          <Footer /> {/* Pied de page partagé */}
+      <body className="min-h-screen flex flex-col bg-[#1B1C1D] text-white">
+        <UserProvider>
+          <Header title="PolePredict"/>
+          <main className="flex-grow">{children}</main>
+          <Footer />
         </UserProvider>
       </body>
     </html>
