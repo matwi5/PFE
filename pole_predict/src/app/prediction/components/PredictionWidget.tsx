@@ -72,7 +72,7 @@ export const PredictionWidget = ({ type, data, className, isExpertMode }: Predic
   const renderSimpleMode = () => (
     <div className="flex items-center justify-center h-36">
       <h3 className={`font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center
-        ${type === 'position' ? 'text-9xl  mt-1' : 'text-4xl'}`}>
+        ${type === 'position' ? 'text-9xl  mt-6' : 'text-5xl'}`}>
         {getPredictionDisplay()}
       </h3>
     </div>
@@ -161,36 +161,59 @@ export const PredictionWidget = ({ type, data, className, isExpertMode }: Predic
     if (!data?.lap_predictions) return null;
   
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full table-auto">
-          <thead>
-            <tr>
-              <th className="px-2 py-1 text-left text-gray-400">Lap</th>
-              <th className="px-2 py-1 text-right text-gray-400">Predicted</th>
-              {DEBUG_LAP_TIME && (
-                <th className="px-2 py-1 text-right text-gray-400">Actual</th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {data.lap_predictions.slice(0, 10).map((pred) => (
-              <tr key={pred.lap_number} className="border-t border-gray-700">
-                <td className="px-2 py-1 text-left">{pred.lap_number}</td>
-                <td className="px-2 py-1 text-right font-mono">
-                  {TIME_FORMAT.format(pred.predicted_time)}
-                </td>
-                {DEBUG_LAP_TIME && (
-                  <td className="px-2 py-1 text-right font-mono">
-                    {pred.actual_time ? TIME_FORMAT.format(pred.actual_time) : '-'}
-                  </td>
-                )}
+      <div className="mt-4 h-[calc(95%-1rem)] relative">
+        {/* Conteneur avec dégradé en haut et en bas pour un "fade" élégant */}
+        <div className="absolute inset-x-0 h-8 top-0 bg-gradient-to-b from-[#282a2c] to-transparent z-10" />
+        <div className="absolute inset-x-0 h-8 bottom-0 bg-gradient-to-t from-[#282a2c] to-transparent z-10" />
+        
+        {/* Conteneur du tableau avec scrollbar personnalisé */}
+        <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
+          <table className="w-full">
+            <thead className="sticky top-0 bg-[#282a2c] z-20">
+              <tr>
+                <th className="px-4 py-2 text-left">
+                  <span className="text-lg bg-gradient-to-r from-[#5382ec] to-[#5382ec] bg-clip-text text-transparent font-medium">
+                    Lap
+                  </span>
+                </th>
+                <th className="px-4 py-2 text-right">
+                  <span className="text-lg bg-gradient-to-r from-[#2dd4bf] to-[#2dd4bf] bg-clip-text text-transparent font-medium">
+                    Predicted
+                  </span>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.lap_predictions.map((pred, index) => (
+                <tr 
+                  key={pred.lap_number} 
+                  className={`
+                    border-b border-gray-700/30 hover:bg-gray-700/10 transition-colors duration-150
+                    ${index === 0 ? 'bg-gradient-to-r from-[#5382ec]/10 to-[#2dd4bf]/10' : ''}
+                  `}
+                >
+                  <td className="px-4 py-3 text-left">
+                    <span className={`text-xl font-medium
+                      ${index === 0 ? 'bg-gradient-to-r from-[#5382ec] to-[#5382ec] bg-clip-text text-transparent' : 'text-gray-300'}
+                    `}>
+                      {pred.lap_number}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className={`text-xl font-mono font-medium
+                      ${index === 0 ? 'bg-gradient-to-r from-[#2dd4bf] to-[#2dd4bf] bg-clip-text text-transparent' : 'text-gray-300'}
+                    `}>
+                      {TIME_FORMAT.format(pred.predicted_time)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
-  };
+};
   
   const renderLaptimeGraph = () => {
     if (!data?.lap_predictions) return null;
@@ -206,7 +229,7 @@ export const PredictionWidget = ({ type, data, className, isExpertMode }: Predic
     const centerTime = predictedTimes.reduce((sum, time) => sum + time, 0) / predictedTimes.length;
     
     // Domaine fixe basé uniquement sur les prédictions
-    const yDomain = [centerTime - 1, centerTime + 1];
+    const yDomain = [centerTime - 0.3, centerTime + 0.3];
   
     return (
       <div className="h-56">
@@ -215,6 +238,12 @@ export const PredictionWidget = ({ type, data, className, isExpertMode }: Predic
             data={chartData}
             margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
           >
+            <defs>
+              <linearGradient id="predictionGradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#5382ec" />
+                <stop offset="100%" stopColor="#d56676" />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.5} stroke="#7e8385" />
             <XAxis 
               dataKey="lap"
@@ -225,7 +254,7 @@ export const PredictionWidget = ({ type, data, className, isExpertMode }: Predic
               domain={yDomain}
               tickFormatter={(value) => TIME_FORMAT.format(value)}
               scale="linear"
-              allowDataOverflow={true} // Permet aux données de dépasser le domaine
+              allowDataOverflow={true}
             />
             <Tooltip
               contentStyle={{
@@ -237,7 +266,6 @@ export const PredictionWidget = ({ type, data, className, isExpertMode }: Predic
               formatter={(value: number) => [TIME_FORMAT.format(value), 'Time']}
             />
             
-            {/* Ligne des temps réels (peut dépasser l'échelle) */}
             {DEBUG_LAP_TIME && (
               <Line
                 type="monotone"
@@ -250,17 +278,20 @@ export const PredictionWidget = ({ type, data, className, isExpertMode }: Predic
               />
             )}
   
-            {/* Ligne de prédiction (détermine l'échelle) */}
             <Line
               type="monotone"
               dataKey="predicted"
-              stroke={LAPTIME_COLORS.PREDICTED}
-              strokeWidth={2}
-              dot
+              stroke="url(#predictionGradient)"
+              strokeWidth={2.5}
+              dot={{
+                stroke: "#5382ec",
+                strokeWidth: 2,
+                r: 4,
+                fill: "#282a2c"
+              }}
               name="Predicted Time"
               isAnimationActive={false}
             />
-  
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -277,7 +308,7 @@ export const PredictionWidget = ({ type, data, className, isExpertMode }: Predic
           </CardTitle>
           <Sparkles className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text" />
         </CardHeader>
-        <CardContent className="h-56 relative">
+        <CardContent className="h-64 relative -mt-7">
           {data ? (
             <div className={`flip-container ${isExpertMode ? 'animate-flip-card' : ''}`}>
               <div className="flip-front">

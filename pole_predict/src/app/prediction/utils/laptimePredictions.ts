@@ -40,97 +40,105 @@ export function isAbnormalLap(
 }
 
 export function predictFutureLaptimes(
-    historicalLaps: { lap_number: number; lap_duration: number; is_abnormal: boolean }[],
-    currentLap: number,
-    config: LaptimeConfig = LAPTIME_CONFIG
+  historicalLaps: { lap_number: number; lap_duration: number; is_abnormal: boolean }[],
+  currentLap: number,
+  config: LaptimeConfig = LAPTIME_CONFIG
 ): PredictionData {
-    const sortedLaps = [...historicalLaps].sort((a, b) => a.lap_number - b.lap_number);
-    
-    // Ajout du log pour voir tous les tours anormaux
-    const abnormalLaps = sortedLaps.filter(lap => lap.is_abnormal);
-    console.log('Tours anormaux détectés:', abnormalLaps.map(lap => ({
-        lap_number: lap.lap_number,
-        lap_duration: lap.lap_duration
-    })));
-    
-    if (sortedLaps.length === 0) {
-      return {
-        predictions: { prediction: 0 },
-        lap_predictions: []
-      };
-    }
-
-    const validLaps = sortedLaps.filter(lap => 
-        lap.lap_number <= currentLap && 
-        !lap.is_abnormal && 
-        !isNaN(lap.lap_duration)
-      );
-
-      console.log('[PREDICT] Tours valides utilisés:', 
-        validLaps.map(l => `${l.lap_number} (${l.lap_duration}s)`).join(', ')
-      );
-
-    if (validLaps.length === 0) {
-      return {
-        predictions: { prediction: 0 },
-        lap_predictions: []
-      };
-    }
-
-    // Ajouter une vérification finale
-    if (validLaps.length === 0) {
-        console.error('[PREDICT] Aucun tour valide pour calculer les prédictions!');
-        return { predictions: { prediction: 0 }, lap_predictions: [] };
-    }
-
-    let lastLaptime = validLaps[validLaps.length - 1].lap_duration;
-    const validTimes = validLaps.map(l => l.lap_duration);
-
-    const shortTermDelta = calculateWeightedDelta(validTimes, Math.min(config.SHORT_WINDOW, validTimes.length));
-    const mediumTermDelta = calculateWeightedDelta(validTimes, Math.min(config.MEDIUM_WINDOW, validTimes.length));
-    const combinedDelta = (shortTermDelta * config.SHORT_TERM_WEIGHT) + 
-                         (mediumTermDelta * (1 - config.SHORT_TERM_WEIGHT));
-
-                         const shortWindow = Math.min(config.SHORT_WINDOW, validTimes.length);
-    const mediumWindow = Math.min(config.MEDIUM_WINDOW, validTimes.length);
-
-                         // Log détaillé des deltas
-    console.log('\n[DELTA RESULTS]');
-    console.log(`Short-term delta: ${shortTermDelta.toFixed(3)}s`, 
-        `(sur ${shortWindow} tours: [${validTimes.slice(-shortWindow).join(', ')}])`);
-    console.log(`Medium-term delta: ${mediumTermDelta.toFixed(3)}s`,
-        `(sur ${mediumWindow} tours: [${validTimes.slice(-mediumWindow).join(', ')}])`);
-    console.log(`Combined delta: ${combinedDelta.toFixed(3)}s`,
-        `(pondération: ${config.SHORT_TERM_WEIGHT*100}% short / ${(1-config.SHORT_TERM_WEIGHT)*100}% medium)`);
-    
-    const futureLapsCount = Math.min(config.FUTURE_LAPS, 10);
+  const sortedLaps = [...historicalLaps].sort((a, b) => a.lap_number - b.lap_number);
   
-    const predictions = [];
-    for (let lapOffset = 1; lapOffset <= futureLapsCount; lapOffset++) {
+  // Ajout du log pour voir tous les tours anormaux
+  const abnormalLaps = sortedLaps.filter(lap => lap.is_abnormal);
+  console.log('Tours anormaux détectés:', abnormalLaps.map(lap => ({
+      lap_number: lap.lap_number,
+      lap_duration: lap.lap_duration
+  })));
+  
+  if (sortedLaps.length === 0) {
+    return {
+      predictions: { prediction: 0 },
+      lap_predictions: []
+    };
+  }
+
+  // Filtrer d'abord les tours valides
+  let validLaps = sortedLaps.filter(lap => 
+      lap.lap_number <= currentLap && 
+      !lap.is_abnormal && 
+      !isNaN(lap.lap_duration)
+  );
+
+  // Trouver le dernier "reset" de la course
+  let resetIndex = 0;
+  for (let i = 1; i < validLaps.length; i++) {
+      const delta = Math.abs(validLaps[i].lap_duration - validLaps[i-1].lap_duration);
+      if (delta > config.ABNORMAL_THRESHOLD) {
+          resetIndex = i;
+          console.log(`Reset détecté au tour ${validLaps[i].lap_number} (delta: ${delta.toFixed(2)}s)`);
+      }
+  }
+
+  // Ne garder que les tours après le dernier reset
+  validLaps = validLaps.slice(resetIndex);
+
+  console.log('[PREDICT] Tours valides utilisés:', 
+      validLaps.map(l => `${l.lap_number} (${l.lap_duration}s)`).join(', ')
+  );
+
+  if (validLaps.length === 0) {
+      return {
+          predictions: { prediction: 0 },
+          lap_predictions: []
+      };
+  }
+
+  let lastLaptime = validLaps[validLaps.length - 1].lap_duration;
+  const validTimes = validLaps.map(l => l.lap_duration);
+
+  const shortTermDelta = calculateWeightedDelta(validTimes, Math.min(config.SHORT_WINDOW, validTimes.length));
+  const mediumTermDelta = calculateWeightedDelta(validTimes, Math.min(config.MEDIUM_WINDOW, validTimes.length));
+  const combinedDelta = (shortTermDelta * config.SHORT_TERM_WEIGHT) + 
+                       (mediumTermDelta * (1 - config.SHORT_TERM_WEIGHT));
+
+  const shortWindow = Math.min(config.SHORT_WINDOW, validTimes.length);
+  const mediumWindow = Math.min(config.MEDIUM_WINDOW, validTimes.length);
+
+  // Log détaillé des deltas
+  console.log('\n[DELTA RESULTS]');
+  console.log(`Short-term delta: ${shortTermDelta.toFixed(3)}s`, 
+      `(sur ${shortWindow} tours: [${validTimes.slice(-shortWindow).join(', ')}])`);
+  console.log(`Medium-term delta: ${mediumTermDelta.toFixed(3)}s`,
+      `(sur ${mediumWindow} tours: [${validTimes.slice(-mediumWindow).join(', ')}])`);
+  console.log(`Combined delta: ${combinedDelta.toFixed(3)}s`,
+      `(pondération: ${config.SHORT_TERM_WEIGHT*100}% short / ${(1-config.SHORT_TERM_WEIGHT)*100}% medium)`);
+  
+  const futureLapsCount = Math.min(config.FUTURE_LAPS, 10);
+
+  const predictions = [];
+  for (let lapOffset = 1; lapOffset <= futureLapsCount; lapOffset++) {
       const attenuatedDelta = combinedDelta * Math.pow(config.DAMPING_FACTOR, lapOffset);
       const progression = Math.log1p(lapOffset * config.PROGRESSION_FACTOR);
       const deltaChange = attenuatedDelta * progression;
       
       const predictedTime = lastLaptime + deltaChange;
       const futureLapNumber = currentLap + lapOffset;
-  
+
       const actualLap = sortedLaps.find(l => l.lap_number === futureLapNumber);
-  
+
       predictions.push({
-        lap_number: futureLapNumber,
-        predicted_time: predictedTime,
-        actual_time: actualLap?.lap_duration,
-        is_abnormal: actualLap?.is_abnormal
+          lap_number: futureLapNumber,
+          predicted_time: predictedTime,
+          actual_time: actualLap?.lap_duration,
+          is_abnormal: actualLap?.is_abnormal
       });
-  
+
       lastLaptime = predictedTime;
-    }
-  
-    return {
+  }
+
+  return {
       predictions: { prediction: predictions[0]?.predicted_time || 0 },
       lap_predictions: predictions
-    };
-  }
+  };
+}
 
   export function cleanLaptimeData(
     laps: { lap_number: number; lap_duration: number }[],

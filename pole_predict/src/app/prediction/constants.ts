@@ -41,7 +41,18 @@ export const LAPTIME_COLORS = {
 } as const;
 
 // Format pour l'affichage des temps
-export const TIME_FORMAT = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 3,
-  maximumFractionDigits: 3
-});
+export const TIME_FORMAT = {
+  format: (time: number) => {
+    if (!time || isNaN(time)) return '-';
+    
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    const milliseconds = Math.floor((time % 1) * 1000);
+
+    if (minutes === 0) {
+      return `${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+    }
+    
+    return `${minutes}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+  }
+};
