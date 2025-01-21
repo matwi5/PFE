@@ -1,3 +1,4 @@
+// page.tsx
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -12,7 +13,8 @@ import { PlayButton } from './components/PlayButton';
 import { ExpertModeToggle } from './components/ExpertModeToggle';
 import { PredictionWidget } from './components/PredictionWidget';
 import { PredictionCache } from './types';
-import { predictionTypes } from './constants';
+import { predictionTypes, LAPTIME_CONFIG  } from './constants';
+import { cleanLaptimeData, predictFutureLaptimes } from './utils/laptimePredictions';
 
 export default function PredictionDisplayPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -28,6 +30,10 @@ export default function PredictionDisplayPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed] = useState(300);
   const [isExpertMode, setIsExpertMode] = useState(false);
+
+  const [laptimeData, setLaptimeData] = useState<{
+    [lap: string]: { lap_duration: number; lap_number: number }[]
+  }>({});
 
   const router = useRouter();
 
@@ -86,49 +92,116 @@ export default function PredictionDisplayPage() {
     setDrivers(driverKeys);
   }
 
-  async function loadLapsAndPredictions(sessionKey: string, driverKey: string) {
+  async function loadLapsAndPredictions(sessionKey: string, driverId: string) {
     setIsLoadingPredictions(true);
     try {
-      const lapsCollectionRef = collection(db, "predictions_ia", "version 1", "sessions", sessionKey, "drivers", driverKey, "laps");
-      const lapsQuery = query(lapsCollectionRef);
-      const lapsSnapshot = await getDocs(lapsQuery);
-
-      const lapKeys: string[] = [];
-      lapsSnapshot.forEach((doc) => {
-        if (doc.id !== "lap_keys") {
-          lapKeys.push(doc.id);
-        }
-      });
-
-      const sortedLaps = lapKeys.sort((a, b) => parseInt(a) - parseInt(b));
-      setLaps(sortedLaps);
-
-      if (sortedLaps.length > 0) {
+      // Chargement des clés de tours depuis Firebase
+      const lapsCollectionRef = collection(db, "predictions_ia", "version 1", "sessions", sessionKey, "drivers", driverId, "laps");
+      const lapsSnapshot = await getDocs(query(lapsCollectionRef));
+  
+      const lapKeys = lapsSnapshot.docs
+        .filter(doc => doc.id !== "lap_keys")
+        .map(doc => doc.id)
+        .sort((a, b) => parseInt(a) - parseInt(b));
+      
+      setLaps(lapKeys);
+  
+      if (lapKeys.length > 0) {
         const allPredictions: PredictionCache = {};
+  
+        // Récupération des données OpenF1 avec validation
+        const openF1Response = await fetch(
+          `https://api.openf1.org/v1/laps?session_key=${sessionKey}&driver_number=${driverId}`
+        );
+        if (!openF1Response.ok) throw new Error(`Erreur OpenF1: ${openF1Response.status}`);
         
-        await Promise.all(sortedLaps.map(async (lap) => {
-          allPredictions[lap] = {};
-          await Promise.all(predictionTypes.map(async (type) => {
+        const openF1Data = await openF1Response.json();
+        
+        // Transformation sécurisée des données
+        const lapsData = openF1Data
+          .filter((lap: any) => lap.lap_duration !== null)
+          .map((lap: any) => ({
+            lap_number: lap.lap_number,
+            lap_duration: parseFloat(lap.lap_duration),
+            is_abnormal: false
+          }));
+  
+        const maxLap = Math.max(...lapsData.map((l: any) => l.lap_number), 0);
+  
+        // Traitement parallélisé des tours
+        await Promise.all(lapKeys.map(async (lapKey) => {
+          const currentLapNumber = parseInt(lapKey);
+          allPredictions[lapKey] = {};
+  
+          // Chargement des prédictions existantes
+          await Promise.all(predictionTypes.filter(type => type !== 'laptime').map(async (type) => {
             try {
-              const predictionDocRef = doc(db, "predictions_ia", "version 1", "sessions", sessionKey, "drivers", driverKey, "laps", lap, "predictions", type);
-              const predictionDocSnap = await getDoc(predictionDocRef);
-              
-              if (predictionDocSnap.exists()) {
-                allPredictions[lap][type] = predictionDocSnap.data();
-              }
+              const docRef = doc(db, "predictions_ia", "version 1", "sessions", sessionKey, 
+                "drivers", driverId, "laps", lapKey, "predictions", type);
+              const docSnap = await getDoc(docRef);
+              if (docSnap.exists()) allPredictions[lapKey][type] = docSnap.data();
             } catch (error) {
-              console.error(`Error fetching ${type} prediction for lap ${lap}:`, error);
+              console.error(`Erreur chargement ${type} pour ${lapKey}:`, error);
             }
           }));
+  
+          // Configuration de base pour les prédictions
+          const emptyPrediction = { 
+            predictions: { prediction: 0 }, 
+            lap_predictions: [] 
+          };
+  
+          // Vérification des données minimales
+          if (currentLapNumber >= maxLap || lapsData.length === 0) {
+            allPredictions[lapKey]['laptime'] = emptyPrediction;
+            return;
+          }
+  
+          try {
+            const historicalLaps = lapsData
+              .filter((l: any) => l.lap_number <= currentLapNumber)
+              .sort((a: any, b: any) => a.lap_number - b.lap_number);
+  
+            const cleanedLaps = cleanLaptimeData(historicalLaps);
+            const validLaps = cleanedLaps.filter(lap => !lap.is_abnormal);
+  
+            if (validLaps.length > 0) {
+              const futureLaps = Math.min(
+                LAPTIME_CONFIG.FUTURE_LAPS,
+                10,
+                maxLap - currentLapNumber
+              );
+  
+              const predictions = predictFutureLaptimes(
+                validLaps,
+                currentLapNumber,
+                { ...LAPTIME_CONFIG, FUTURE_LAPS: futureLaps }
+              );
+  
+              // Mappage des temps réels
+              predictions.lap_predictions = predictions.lap_predictions.map(pred => ({
+                ...pred,
+                actual_time: lapsData.find(l => l.lap_number === pred.lap_number)?.lap_duration
+              }));
+  
+              allPredictions[lapKey]['laptime'] = predictions;
+            } else {
+              allPredictions[lapKey]['laptime'] = emptyPrediction;
+            }
+          } catch (error) {
+            console.error(`Erreur prédiction ${lapKey}:`, error);
+            allPredictions[lapKey]['laptime'] = emptyPrediction;
+          }
         }));
-
+  
         setPredictionsCache(allPredictions);
-        setSelectedLap(sortedLaps[0]);
+        setSelectedLap(lapKeys[0]);
       }
     } catch (error) {
-      console.error("Error loading laps and predictions:", error);
+      console.error("Erreur chargement principal:", error);
+    } finally {
+      setIsLoadingPredictions(false);
     }
-    setIsLoadingPredictions(false);
   }
 
   const handleSessionChange = (value: string) => {
@@ -251,7 +324,9 @@ export default function PredictionDisplayPage() {
                 type={type}
                 data={predictionData}
                 isExpertMode={isExpertMode}
-                className={`transition-opacity duration-300 ${index === 3 ? 'col-span-1' : ''}`}
+                className={`transition-opacity duration-300 ${
+                  index >= 3 ? 'col-span-3 md:col-span-1' : ''
+                }`}
               />
             );
           })}

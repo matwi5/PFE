@@ -1,11 +1,12 @@
+// components/PredictionWidget.tsx
 "use client"
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line, Legend } from 'recharts';
 import { Sparkles } from 'lucide-react';
 import { FormattedPredictionData, PredictionData, PredictionWidgetProps } from '../types';
-import { PREDICTION_CLASS_ORDER, PREDICTION_TITLES } from '../constants';
+import { PREDICTION_CLASS_ORDER, PREDICTION_TITLES, TIME_FORMAT, LAPTIME_COLORS, DEBUG_LAP_TIME } from '../constants';
 
 const lightenColor = (color: string, factor: number) => {
   if (color.startsWith('rgb')) {
@@ -155,6 +156,146 @@ export const PredictionWidget = ({ type, data, className, isExpertMode }: Predic
       </div>
     );
   };
+
+  const renderLaptimeTable = () => {
+    if (!data?.lap_predictions) return null;
+  
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full table-auto">
+          <thead>
+            <tr>
+              <th className="px-2 py-1 text-left text-gray-400">Lap</th>
+              <th className="px-2 py-1 text-right text-gray-400">Predicted</th>
+              {DEBUG_LAP_TIME && (
+                <th className="px-2 py-1 text-right text-gray-400">Actual</th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {data.lap_predictions.slice(0, 10).map((pred) => (
+              <tr key={pred.lap_number} className="border-t border-gray-700">
+                <td className="px-2 py-1 text-left">{pred.lap_number}</td>
+                <td className="px-2 py-1 text-right font-mono">
+                  {TIME_FORMAT.format(pred.predicted_time)}
+                </td>
+                {DEBUG_LAP_TIME && (
+                  <td className="px-2 py-1 text-right font-mono">
+                    {pred.actual_time ? TIME_FORMAT.format(pred.actual_time) : '-'}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+  
+  const renderLaptimeGraph = () => {
+    if (!data?.lap_predictions) return null;
+  
+    const chartData = data.lap_predictions.map(pred => ({
+      lap: pred.lap_number,
+      predicted: pred.predicted_time,
+      actual: pred.actual_time
+    }));
+  
+    // Correction: utiliser la clé correcte 'predicted' au lieu de 'predicted_time'
+    const predictedTimes = chartData.map(d => d.predicted);
+    const centerTime = predictedTimes.reduce((sum, time) => sum + time, 0) / predictedTimes.length;
+    
+    // Domaine fixe basé uniquement sur les prédictions
+    const yDomain = [centerTime - 1, centerTime + 1];
+  
+    return (
+      <div className="h-56">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={chartData}
+            margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.5} stroke="#7e8385" />
+            <XAxis 
+              dataKey="lap"
+              stroke="#7e8385"
+            />
+            <YAxis 
+              stroke="#7e8385"
+              domain={yDomain}
+              tickFormatter={(value) => TIME_FORMAT.format(value)}
+              scale="linear"
+              allowDataOverflow={true} // Permet aux données de dépasser le domaine
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#282a2c',
+                border: '1px solid #7e8385',
+                borderRadius: '4px'
+              }}
+              labelStyle={{ color: '#fff' }}
+              formatter={(value: number) => [TIME_FORMAT.format(value), 'Time']}
+            />
+            
+            {/* Ligne des temps réels (peut dépasser l'échelle) */}
+            {DEBUG_LAP_TIME && (
+              <Line
+                type="monotone"
+                dataKey="actual"
+                stroke={LAPTIME_COLORS.NORMAL}
+                strokeWidth={2}
+                dot
+                name="Actual Time"
+                isAnimationActive={false}
+              />
+            )}
+  
+            {/* Ligne de prédiction (détermine l'échelle) */}
+            <Line
+              type="monotone"
+              dataKey="predicted"
+              stroke={LAPTIME_COLORS.PREDICTED}
+              strokeWidth={2}
+              dot
+              name="Predicted Time"
+              isAnimationActive={false}
+            />
+  
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  };
+
+  // Rendu spécifique pour le widget de temps au tour
+  if (type === 'laptime') {
+    return (
+      <Card className={`${className} perspective-1000 overflow-hidden bg-[#282a2c] border-0`}>
+        <CardHeader className="pb-2 flex justify-between items-start">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
+            {PREDICTION_TITLES[type]}
+          </CardTitle>
+          <Sparkles className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text" />
+        </CardHeader>
+        <CardContent className="h-56 relative">
+          {data ? (
+            <div className={`flip-container ${isExpertMode ? 'animate-flip-card' : ''}`}>
+              <div className="flip-front">
+                {renderLaptimeTable()}
+              </div>
+              <div className="flip-back">
+                {renderLaptimeGraph()}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              Data not available
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={`${className} perspective-1000 overflow-hidden bg-[#282a2c] border-0`}>
