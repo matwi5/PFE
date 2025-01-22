@@ -9,14 +9,11 @@ import { User } from 'firebase/auth';
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LapSlider } from './components/LapSlider';
-import { PlayButton } from './components/PlayButton';
-import { ExpertModeToggle } from './components/ExpertModeToggle';
-import { PredictionWidget } from './components/PredictionWidget';
+import { PredictionWidget } from './components/PredictionWidget/PredictionWidget';
 import { PredictionCache } from './types';
 import { predictionTypes, LAPTIME_CONFIG  } from './constants';
 import { cleanLaptimeData, predictFutureLaptimes } from './utils/laptimePredictions';
 import { motion } from 'framer-motion';
-import { Play, Pause } from 'lucide-react';
 
 export default function PredictionDisplayPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -33,17 +30,7 @@ export default function PredictionDisplayPage() {
   const [playbackSpeed] = useState(300);
   const [isExpertMode, setIsExpertMode] = useState(false);
 
-  const [laptimeData, setLaptimeData] = useState<{
-    [lap: string]: { lap_duration: number; lap_number: number }[]
-  }>({});
-
   const router = useRouter();
-
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6 }
-  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;

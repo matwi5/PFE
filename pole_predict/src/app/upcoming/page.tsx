@@ -5,21 +5,17 @@ import { doc, getDoc, collection, getDocs, query } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from 'framer-motion';
-import { 
-  Trophy, 
-  Clock, 
-  Flag, 
-  Info, 
-  Calendar,
-  Cog,
-  TrendingUp, 
-  History,
-  Award,
-  Timer,
-  Sparkles
-} from 'lucide-react';
+
+// Imports des nouveaux composants widgets
+import RaceDatesWidget from './components/RaceDatesWidget';
+import VitalStatisticsWidget from './components/VitalStatisticsWidget';
+import LastPoleSittersWidget from './components/LastPoleSittersWidget';
+import LastWinnersWidget from './components/LastWinnersWidget';
+import TyreStrategyWidget from './components/TyreStrategyWidget';
+import CurrentFormWidget from './components/CurrentFormWidget';
+import IconicMomentWidget from './components/IconicMomentWidget';
+import LoadingRaceCard from './components/LoadingRaceCard';
 
 interface Race {
   name: string;
@@ -64,219 +60,7 @@ interface Race {
   iconic_moment: string;
 }
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6 }
-};
-
-const RaceDatesWidget = ({ dates }: { dates: Race['dates'] }) => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <Card className="bg-[#282a2c] border-0">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-              Race Weekend Schedule
-            </CardTitle>
-            <Calendar className="h-5 w-5 text-[#5382ec]" />
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          {Object.entries(dates).map(([key, value]) => value && (
-            <div key={key} className="flex items-center justify-between p-2 bg-[#1d1f20] rounded-lg">
-              <span className="text-gray-400 uppercase text-sm">{key.replace('_', ' ')}</span>
-              <span className="text-white font-medium">{value}</span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-  
-  const VitalStatisticsWidget = ({ stats }: { stats: Race['vital_statistics'] }) => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-      <Card className="bg-[#282a2c] border-0">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
-              Circuit Statistics
-            </CardTitle>
-            <Info className="h-5 w-5 text-[#5382ec]" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="p-3 bg-[#1d1f20] rounded-lg">
-              <span className="text-gray-400 text-sm">Lap Record</span>
-              <div className="mt-1">
-                <span className="text-2xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                  {stats.lap_record.time}
-                </span>
-                <div className="text-white mt-1">
-                  {stats.lap_record.driver}
-                  <span className="text-gray-400 text-sm ml-2">
-                    {stats.lap_record.team}, {stats.lap_record.year}
-                  </span>
-                </div>
-              </div>
-            </div>
-  
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-[#1d1f20] rounded-lg">
-                <span className="text-gray-400 text-sm">Track Length</span>
-                <div className="text-xl font-bold text-white mt-1">{stats.track_length}</div>
-              </div>
-              <div className="p-3 bg-[#1d1f20] rounded-lg">
-                <span className="text-gray-400 text-sm">First GP</span>
-                <div className="text-xl font-bold text-white mt-1">{stats.first_grand_prix}</div>
-              </div>
-            </div>
-  
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-[#1d1f20] rounded-lg">
-                <span className="text-gray-400 text-sm">Safety Car Probability</span>
-                <div className="text-xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                  {stats.safety_car_probability}%
-                </div>
-              </div>
-              <div className="p-3 bg-[#1d1f20] rounded-lg">
-                <span className="text-gray-400 text-sm">Pit Stop Time Loss</span>
-                <div className="text-xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                  {stats.pit_stop_time_loss}s
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-  
-  const LastPoleSittersWidget = ({ poleSitters }: { poleSitters: Race['last_five_pole_sitters'] }) => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-      <Card className="bg-[#282a2c] border-0">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#fbbf24] bg-clip-text text-transparent">
-              Recent Pole Positions
-            </CardTitle>
-            <Timer className="h-5 w-5 text-[#fbbf24]" />
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {poleSitters.map((sitter, index) => (
-            <div key={index} className="flex items-center justify-between p-2 bg-[#1d1f20] rounded-lg">
-              <div className="flex items-center gap-2">
-                <span className="text-[#fbbf24] font-medium">{sitter.year}</span>
-                <span className="text-white">{sitter.driver}</span>
-              </div>
-              <span className="text-gray-400 text-sm">{sitter.team}</span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-
-  const LastWinnersWidget = ({ winners }: { winners: Race['last_five_winners'] }) => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-      <Card className="bg-[#282a2c] border-0">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#d56676] to-[#5382ec] bg-clip-text text-transparent">
-              Recent Winners
-            </CardTitle>
-            <Trophy className="h-5 w-5 text-[#d56676]" />
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {winners.map((winner, index) => (
-            <div key={index} className="flex items-center justify-between p-2 bg-[#1d1f20] rounded-lg">
-              <div className="flex items-center gap-2">
-                <span className="text-[#d56676] font-medium">{winner.year}</span>
-                <span className="text-white">{winner.driver}</span>
-              </div>
-              <span className="text-gray-400 text-sm">{winner.team}</span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-  
-  const TyreStrategyWidget = ({ insights }: { insights: Race['tyre_strategy_insight'] }) => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-      <Card className="bg-[#282a2c] border-0">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#2dd4bf] to-[#5382ec] bg-clip-text text-transparent">
-              Tyre Strategy
-            </CardTitle>
-            <Cog className="h-5 w-5 text-[#2dd4bf]" />
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {insights.map((insight, index) => (
-            <div key={index} className="p-3 bg-[#1d1f20] rounded-lg">
-              <p className="text-gray-200">{insight}</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-  
-  const CurrentFormWidget = ({ form }: { form: Race['current_form'] }) => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-      <Card className="bg-[#282a2c] border-0">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-              Current Form
-            </CardTitle>
-            <TrendingUp className="h-5 w-5 text-[#5382ec]" />
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {form.map((point, index) => (
-            <div key={index} className="p-3 bg-[#1d1f20] rounded-lg">
-              <p className="text-gray-200">{point}</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-  
-  const IconicMomentWidget = ({ moment }: { moment: Race['iconic_moment'] }) => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-      <Card className="bg-[#282a2c] border-0">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#fbbf24] to-[#d56676] bg-clip-text text-transparent">
-              Iconic Moment
-            </CardTitle>
-            <History className="h-5 w-5 text-[#fbbf24]" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="p-4 bg-[#1d1f20] rounded-lg">
-            <p className="text-gray-200 italic">{moment}</p>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-
-  const LoadingRaceCard = () => (
-    <Card className="bg-[#282a2c] border-0">
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-8 w-48 bg-[#1d1f20]" />
-        <Skeleton className="h-6 w-full bg-[#1d1f20]" />
-        <Skeleton className="h-6 w-3/4 bg-[#1d1f20]" />
-      </div>
-    </Card>
-  );
+interface RaceDisplayPageProps {}
 
 export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
   const [races, setRaces] = useState<Race[]>([]);
@@ -346,10 +130,10 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
     <div className="min-h-screen bg-[#1B1C1D]">
       <div className="container mx-auto px-4 py-16">
         <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-center mb-16 space-y-4"
-                >
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16 space-y-4"
+        >
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
             Upcoming
           </h1>
