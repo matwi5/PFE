@@ -46,6 +46,9 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
               <Link href="/prediction" className="hover:text-blue-200 transition-colors">Prediction</Link>
             </li>
             <li>
+              <Link href="/upcoming" className="hover:text-blue-200 transition-colors">Upcoming</Link>
+            </li>
+            <li>
               <Link href="/drivers" className="hover:text-blue-200 transition-colors">Pilotes</Link>
             </li>
           </ul>

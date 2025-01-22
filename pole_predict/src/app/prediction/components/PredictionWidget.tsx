@@ -229,7 +229,7 @@ export const PredictionWidget = ({ type, data, className, isExpertMode }: Predic
     const centerTime = predictedTimes.reduce((sum, time) => sum + time, 0) / predictedTimes.length;
     
     // Domaine fixe basé uniquement sur les prédictions
-    const yDomain = [centerTime - 0.3, centerTime + 0.3];
+    const yDomain = [centerTime - 0.7, centerTime + 0.7];
   
     return (
       <div className="h-56">

@@ -15,6 +15,8 @@ import { PredictionWidget } from './components/PredictionWidget';
 import { PredictionCache } from './types';
 import { predictionTypes, LAPTIME_CONFIG  } from './constants';
 import { cleanLaptimeData, predictFutureLaptimes } from './utils/laptimePredictions';
+import { motion } from 'framer-motion';
+import { Play, Pause } from 'lucide-react';
 
 export default function PredictionDisplayPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -36,6 +38,12 @@ export default function PredictionDisplayPage() {
   }>({});
 
   const router = useRouter();
+
+  const fadeInUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6 }
+  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -240,104 +248,178 @@ export default function PredictionDisplayPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Real-time Predictions</h1>
+    <div className="min-h-screen bg-[#1B1C1D]">
+      <div className="container mx-auto px-4 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16 space-y-4"
+        >
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+            Real-time Predictions
+          </h1>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Explore AI-powered insights and predictions for Formula 1 races
+          </p>
+        </motion.div>
 
-      <Card className="mb-8 bg-[#282a2c] border-none">
-        <CardHeader>
-          <CardDescription className="text-gray-400 text-center">Select a session and driver to view predictions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-center gap-4">
-              <Select value={selectedSession} onValueChange={handleSessionChange}>
-                <SelectTrigger className="bg-[#1B1C1D] border-gray-700 text-white w-48">
-                  <SelectValue placeholder="Select a session" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1B1C1D] border-gray-700">
-                  {sessions.map((session) => (
-                    <SelectItem 
-                      key={session} 
-                      value={session}
-                      className="text-white hover:bg-[#282a2c] focus:bg-[#282a2c]"
-                    >
-                      Session {session}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {selectedSession && (
-                <Select value={selectedDriver} onValueChange={handleDriverChange}>
-                  <SelectTrigger className="bg-[#1B1C1D] border-gray-700 text-white w-48">
-                    <SelectValue placeholder="Select a driver" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1B1C1D] border-gray-700">
-                    {drivers.map((driver) => (
-                      <SelectItem 
-                        key={driver} 
-                        value={driver}
-                        className="text-white hover:bg-[#282a2c] focus:bg-[#282a2c]"
-                      >
-                        Driver {driver}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            {selectedDriver && laps.length > 0 && (
-              <div className="space-y-4">
-                <LapSlider 
-                  laps={laps}
-                  selectedLap={selectedLap || laps[0]}
-                  onLapChange={handleLapChange}
-                  disabled={isLoadingPredictions || isPlaying}
-                />
-                <div className="flex justify-center items-center gap-4">
-                  <PlayButton 
-                    isPlaying={isPlaying}
-                    onToggle={togglePlayback}
-                    disabled={isLoadingPredictions}
-                  />
-                  <ExpertModeToggle 
-                    isExpertMode={isExpertMode}
-                    onToggle={setIsExpertMode}
-                  />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="flex justify-center mb-16"
+        >
+          <Card className="bg-[#282a2c] border-none">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-44">
+                  <Select value={selectedSession} onValueChange={handleSessionChange}>
+                    <SelectTrigger className="bg-[#1d1f20] border-0 text-white h-12 hover:bg-gray-800/50 transition-colors">
+                      <SelectValue placeholder="Select a race..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1d1f20] border-0">
+                      {sessions.map((session) => (
+                        <SelectItem 
+                          key={session} 
+                          value={session}
+                          className="text-white hover:bg-[#282a2c] focus:bg-[#282a2c] cursor-pointer"
+                        >
+                          Race {session}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
-      {selectedLap && !isLoadingPredictions && (
-        <div className="grid grid-cols-3 gap-4">
-          {predictionTypes.map((type, index) => {
-            const predictionData = predictionsCache[selectedLap]?.[type];
-            if (!predictionData) return null;
-        
-            return (
-              <PredictionWidget
-                key={type}
-                type={type}
-                data={predictionData}
-                isExpertMode={isExpertMode}
-                className={`transition-opacity duration-300 ${
-                  index >= 3 ? 'col-span-3 md:col-span-1' : ''
-                }`}
-              />
-            );
-          })}
-        </div>
-      )}
+                {selectedSession && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-44"
+                  >
+                    <Select value={selectedDriver} onValueChange={handleDriverChange}>
+                      <SelectTrigger className="bg-[#1d1f20] border-0 text-white h-12 hover:bg-gray-800/50 transition-colors">
+                        <SelectValue placeholder="Select a driver..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1d1f20] border-0">
+                        {drivers.map((driver) => (
+                          <SelectItem 
+                            key={driver} 
+                            value={driver}
+                            className="text-white hover:bg-[#282a2c] focus:bg-[#282a2c] cursor-pointer"
+                          >
+                            Driver {driver}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </motion.div>
+                )}
 
-      {isLoadingPredictions && (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      )}
+                {selectedDriver && laps.length > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-4"
+                  >
+                    <div className="w-96">
+                      <LapSlider 
+                        laps={laps}
+                        selectedLap={selectedLap || laps[0]}
+                        onLapChange={handleLapChange}
+                        isPlaying={isPlaying}
+                        onPlayToggle={togglePlayback}
+                        disabled={isLoadingPredictions}
+                      />
+                    </div>
+                    
+                    {/* Switch Expert Mode */}
+                    <motion.div 
+                      className={`
+                        relative h-12 w-32 rounded-lg cursor-pointer overflow-hidden
+                        bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]
+                        p-0.5
+                      `}
+                      onClick={() => setIsExpertMode(!isExpertMode)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <motion.div 
+                        className={`
+                          absolute inset-0 bg-[#1d1f20] m-0.5 rounded-[6px]
+                          flex items-center justify-center
+                          overflow-hidden
+                        `}
+                        initial={false}
+                      >
+                        <motion.div
+                          className="absolute inset-0 flex"
+                          animate={{ x: isExpertMode ? "-100%" : "0%" }}
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        >
+                          <div className="w-full h-full flex items-center justify-center flex-shrink-0">
+                            <span className={`text-sm font-medium transition-colors ${!isExpertMode ? 'text-[#5382ec]' : 'text-gray-400'}`}>
+                              Simple
+                            </span>
+                          </div>
+                          <div className="w-full h-full flex items-center justify-center flex-shrink-0">
+                            <span className={`text-sm font-medium transition-colors ${isExpertMode ? 'text-[#2dd4bf]' : 'text-gray-400'}`}>
+                              Expert
+                            </span>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    </motion.div>
+                  </motion.div>
+                )}
+                    </div>
+                  </CardContent>
+                </Card>
+        </motion.div>
+
+        {selectedLap && !isLoadingPredictions && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="grid grid-cols-3 gap-4">
+              {predictionTypes.map((type, index) => {
+                const predictionData = predictionsCache[selectedLap]?.[type];
+                if (!predictionData) return null;
+            
+                return (
+                  <motion.div
+                    key={type}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <PredictionWidget
+                      type={type}
+                      data={predictionData}
+                      isExpertMode={isExpertMode}
+                      className={`transition-opacity duration-300 ${
+                        index >= 3 ? 'col-span-3 md:col-span-1' : ''
+                      }`}
+                    />
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
+        {isLoadingPredictions && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center items-center h-64"
+          >
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#5382ec]"></div>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
