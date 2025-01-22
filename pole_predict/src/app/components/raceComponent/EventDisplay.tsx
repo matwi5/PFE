@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../../../components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface RaceControlEvent {
@@ -18,12 +18,44 @@ interface EventDisplayProps {
   events: RaceControlEvent[];
   sessionName?: string;
   loading?: boolean;
-  viewMode: 'lap' | 'chronological';
+  viewMode: 'chrono' | 'lap' | 'final';
   currentLap: number;
+  currentTime: string;
 }
 
-const EventDisplay = ({ events, sessionName, loading, viewMode, currentLap }: EventDisplayProps) => {
-  const currentEvents = viewMode === 'lap' ? events.filter(e => e.lap_number === currentLap) : events;
+const EventDisplay = ({ 
+  events, 
+  sessionName, 
+  loading, 
+  viewMode, 
+  currentLap,
+  currentTime 
+}: EventDisplayProps) => {
+  const getFilteredEvents = () => {
+    const now = new Date(currentTime);
+    
+    return events.filter(event => {
+      const eventDate = new Date(event.date);
+      
+      switch(viewMode) {
+        case 'chrono':
+          return eventDate <= now;
+          
+        case 'lap':
+          return event.lap_number === currentLap;
+          
+        case 'final':
+          return true;
+          
+        default:
+          return false;
+      }
+    });
+  };
+
+  const sortedEvents = [...getFilteredEvents()].sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime() // Plus récent en premier
+  );
 
   const getFlagColor = (flag: string | undefined) => {
     switch (flag?.toUpperCase()) {
@@ -37,7 +69,7 @@ const EventDisplay = ({ events, sessionName, loading, viewMode, currentLap }: Ev
   };
 
   const formatEventTime = (date: string) => 
-    new Date(date).toLocaleTimeString('fr-FR', { 
+    new Date(date).toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit', 
       second: '2-digit' 
@@ -47,27 +79,27 @@ const EventDisplay = ({ events, sessionName, loading, viewMode, currentLap }: Ev
     return (
       <Card className="h-full">
         <CardContent className="flex items-center justify-center h-full">
-          <div className="text-center py-8">Loading events...</div>
+          <div className="text-center py-8">Chargement des événements...</div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-        <Card className="h-full overflow-hidden">
-          <CardHeader className="py-2">
-           <CardTitle className="text-lg">Race Control Events</CardTitle>
-        {sessionName && <CardDescription>{sessionName}</CardDescription>}
+    <Card className="h-full overflow-hidden">
+      <CardHeader className="py-2">
+        <CardTitle className="text-lg">Messages Race Control</CardTitle>
+        {sessionName && <span className="text-sm text-muted-foreground">{sessionName}</span>}
       </CardHeader>
-      <CardContent>
-        <div className="relative h-[calc(100vh-12rem)] overflow-y-auto">
+      <CardContent className="h-[calc(100%-3.5rem)]">
+        <div className="h-full overflow-y-auto pr-2">
           <AnimatePresence>
-            {currentEvents.length === 0 ? (
-              <div className="text-center py-8">No events to display.</div>
+            {sortedEvents.length === 0 ? (
+              <div className="text-center py-8">Aucun événement à afficher</div>
             ) : (
-              currentEvents.map((event, index) => (
+              sortedEvents.map((event, index) => (
                 <motion.div
-                  key={`${event.date}-${index}`}
+                  key={`${event.date}-${event.message}-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{
                     opacity: 1,
@@ -76,20 +108,22 @@ const EventDisplay = ({ events, sessionName, loading, viewMode, currentLap }: Ev
                       type: "spring",
                       stiffness: 300,
                       damping: 30,
-                      delay: index * 0.05
+                      delay: index * 0.03
                     }
                   }}
                   exit={{ opacity: 0 }}
-                  className="mb-4"
+                  className="mb-2"
                 >
-                  <div className="p-4 border rounded-lg bg-secondary/50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className={`w-4 h-4 rounded-full ${getFlagColor(event.flag)}`} />
-                      <span className="font-medium">
-                        {event.driver_number ? `Driver ${event.driver_number}` : 'General Event'} 
-                        {event.lap_number ? ` - Lap ${event.lap_number}` : ''}
+                  <div className="p-3 border rounded-lg bg-secondary/50">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className={`w-3 h-3 rounded-full ${getFlagColor(event.flag)}`} />
+                      <span className="text-sm font-medium">
+                        {event.driver_number ? `Pilote ${event.driver_number}` : 'Race Control'}
                       </span>
-                      <span className="ml-auto text-sm text-muted-foreground">
+                      <span className="text-xs text-muted-foreground">
+                        {event.lap_number ? `Tour ${event.lap_number}` : ''}
+                      </span>
+                      <span className="ml-auto text-xs text-muted-foreground">
                         {formatEventTime(event.date)}
                       </span>
                     </div>
