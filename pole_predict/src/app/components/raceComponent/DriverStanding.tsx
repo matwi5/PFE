@@ -1,6 +1,7 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
-import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "../../../components/ui/button";
 
@@ -85,7 +86,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
         // Fetch drivers
         const driversResponse = await fetch('https://api.openf1.org/v1/drivers');
-        const driversData = await driversResponse.json();
+        const driversData = await driversResponse.json() as Driver[];
         const uniqueDrivers = Array.from(new Map(
           driversData.map((driver: Driver) => [driver.driver_number, driver])
         ).values());
@@ -116,15 +117,15 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
         // Pour chaque tour, trouver le moment où le leader a commencé le tour
         sortedLapTimes.forEach(lap => {
-          const positions = positionsData.filter(pos => 
+          const positions = positionsData.filter((pos: { date: string | number | Date; }) => 
             new Date(pos.date).getTime() <= new Date(lap.date_start).getTime()
           );
           
           if (positions.length > 0) {
             // Trouver le leader à ce moment
             const leaderPosition = positions
-              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-              .find(pos => pos.position === 1);
+              .sort((a: { date: string | number | Date; }, b: { date: string | number | Date; }) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .find((pos: { position: number; }) => pos.position === 1);
 
             if (leaderPosition && leaderPosition.driver_number === lap.driver_number) {
               lapStartMap.set(lap.lap_number, lap.date_start);
@@ -241,7 +242,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           position: position?.position || 999,
           driver_number: driver.driver_number,
           driver_details: driver,
-          status: position ? 'active' : 'inactive',
+          status: position ? 'active' as const : 'inactive' as const,
           gap_to_leader: interval?.gap_to_leader || null,
           interval: interval?.interval || null
         };

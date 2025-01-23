@@ -332,7 +332,7 @@ const RaceSelection = ({
                 <Button
                   onClick={() => setIsRunning((prev) => !prev)}
                   className="flex items-center gap-2"
-                  disabled={viewMode === 'final'}
+                  disabled={viewMode !== 'chrono' && viewMode !== 'lap'}
                 >
                   {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                   {isRunning ? "Pause" : "Play"}

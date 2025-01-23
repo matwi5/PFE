@@ -59,6 +59,7 @@ const RaceControlEvents = () => {
   const [currentLap, setCurrentLap] = useState<number>(0);
   const [totalLaps, setTotalLaps] = useState<number>(0);
   const [viewMode, setViewMode] = useState<'chrono' | 'lap' | 'final'>('final');
+  const [lapsData, setLapsData] = useState<LapData[]>([]);
 
   // Fetch meetings
   useEffect(() => {
