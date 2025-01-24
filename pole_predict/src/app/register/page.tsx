@@ -65,8 +65,8 @@ const RegisterForm = () => {
       });
 
       // Create a subcollection for badges
-      const badgesCollectionRef = collection(db, "users", user.uid, "badges");
-      await setDoc(doc(badgesCollectionRef, "welcome"), welcomeBadge);
+      /*const badgesCollectionRef = collection(db, "users", user.uid, "badges");
+      await setDoc(doc(badgesCollectionRef, "welcome"), welcomeBadge);*/
 
       await sendEmailVerification(user);
       setMessage("Un e-mail de vérification a été envoyé. Veuillez vérifier votre boîte de réception.");
@@ -103,8 +103,8 @@ const RegisterForm = () => {
         });
 
         // Create badge in subcollection
-        const badgesCollectionRef = collection(db, "users", user.uid, "badges");
-        await setDoc(doc(badgesCollectionRef, "welcome"), welcomeBadge);
+        /*const badgesCollectionRef = collection(db, "users", user.uid, "badges");
+        await setDoc(doc(badgesCollectionRef, "welcome"), welcomeBadge);*/
       }
 
       router.push("/");
