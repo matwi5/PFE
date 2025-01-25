@@ -13,6 +13,7 @@ import { PredictionCache } from './types';
 import { predictionTypes, LAPTIME_CONFIG } from './constants';
 import { cleanLaptimeData, predictFutureLaptimes } from './utils/laptimePredictions';
 import { motion } from 'framer-motion';
+import VitalStatisticsWidget from '../upcoming/components/VitalStatisticsWidget';
 
 interface Session {
   id: string;
@@ -32,6 +33,31 @@ interface Driver {
   team_name: string;
 }
 
+interface VitalStatistics {
+  first_grand_prix: string;
+  track_length: string;
+  lap_record: {
+    time: string;
+    driver: string;
+    team: string;
+    year: string;
+  };
+  most_pole_positions: {
+    driver: string;
+    poles: number;
+  };
+  most_wins: {
+    drivers: string[];
+    wins: number;
+  };
+  trivia: string;
+  pole_run_to_turn1_braking_point: number;
+  overtakes_2023: number;
+  safety_car_probability: number;
+  virtual_safety_car_probability: number;
+  pit_stop_time_loss: number;
+  notes: string;
+}
 export default function PredictionDisplayPage() {
   const [user, setUser] = useState<User | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -47,6 +73,7 @@ export default function PredictionDisplayPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed] = useState(300);
   const [isExpertMode, setIsExpertMode] = useState(false);
+  const [vitalStats, setVitalStats] = useState<VitalStatistics | null>(null);
 
   const router = useRouter();
 
@@ -115,6 +142,29 @@ export default function PredictionDisplayPage() {
   
       setMeetings(meetingsData);
       setSessions(sessionsData);
+    }
+  }
+
+  async function loadVitalStatistics(sessionKey: string) {
+    try {
+      const session = sessions.find(s => s.id === sessionKey);
+      if (!session) return;
+  
+      // Récupérer le meeting_key de la session
+      const meeting = meetings.find(m => m.meeting_key === session.meeting_key);
+      if (!meeting) return;
+  
+      // Récupérer les stats depuis upcoming_races en utilisant le meeting_name
+      const upcomingRaceRef = doc(db, "upcoming_races", meeting.meeting_key.toString());
+      const upcomingRaceSnap = await getDoc(upcomingRaceRef);
+      
+      if (upcomingRaceSnap.exists()) {
+        const raceData = upcomingRaceSnap.data();
+        // Extraire uniquement les statistiques vitales nécessaires
+        setVitalStats(raceData.vital_statistics);
+      }
+    } catch (error) {
+      console.error("Erreur chargement statistiques vitales:", error);
     }
   }
 
@@ -266,6 +316,7 @@ export default function PredictionDisplayPage() {
     setLaps([]);
     setPredictionsCache({});
     loadDrivers(value);
+    loadVitalStatistics(value);
   };
 
   const handleDriverChange = async (value: string) => {
@@ -428,6 +479,17 @@ export default function PredictionDisplayPage() {
             transition={{ duration: 0.5 }}
           >
             <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+              {vitalStats && (
+                <div className="break-inside-avoid">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0 }}
+                  >
+                    <VitalStatisticsWidget stats={vitalStats} />
+                  </motion.div>
+                </div>
+              )}
               {predictionTypes.map((type, index) => {
                 const predictionData = predictionsCache[selectedLap]?.[type];
                 if (!predictionData) return null;
