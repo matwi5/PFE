@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from 'framer-motion';
 
-// Imports des nouveaux composants widgets
+// Imports des composants widgets
 import RaceDatesWidget from './components/RaceDatesWidget';
 import VitalStatisticsWidget from './components/VitalStatisticsWidget';
 import LastPoleSittersWidget from './components/LastPoleSittersWidget';
@@ -17,8 +17,17 @@ import CurrentFormWidget from './components/CurrentFormWidget';
 import IconicMomentWidget from './components/IconicMomentWidget';
 import LoadingRaceCard from './components/LoadingRaceCard';
 
+interface Meeting {
+  meeting_key: number;
+  meeting_name: string;
+  meeting_official_name: string;
+  circuit_short_name: string;
+  country_name: string;
+  date_start: string;
+}
+
 interface Race {
-  name: string;
+  id: number;
   dates: {
     fp1: string;
     fp2: string;
@@ -64,6 +73,7 @@ interface RaceDisplayPageProps {}
 
 export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
   const [races, setRaces] = useState<Race[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [selectedRaceName, setSelectedRaceName] = useState<string>("");
   const [selectedRaceData, setSelectedRaceData] = useState<Race | null>(null);
   const [loadingRaces, setLoadingRaces] = useState(true);
@@ -71,6 +81,17 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchMeetings = async () => {
+      try {
+        const response = await fetch('https://api.openf1.org/v1/meetings?year=2024');
+        const data = await response.json();
+        setMeetings(data);
+      } catch (e) {
+        console.error("Error fetching meetings:", e);
+        setError("Failed to load meetings data.");
+      }
+    };
+
     const fetchRaces = async () => {
       setLoadingRaces(true);
       setError(null);
@@ -90,6 +111,7 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
       }
     };
 
+    fetchMeetings();
     fetchRaces();
   }, []);
 
@@ -126,6 +148,11 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
     setSelectedRaceName(value);
   };
 
+  const getMeetingName = (id: number) => {
+    const meeting = meetings.find(m => m.meeting_key === Number(id));
+    return meeting ? meeting.meeting_name : `Race ${id}`;
+  };
+
   return (
     <div className="min-h-screen bg-[#1B1C1D]">
       <div className="container mx-auto px-4 py-16">
@@ -154,15 +181,18 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
                   <SelectValue placeholder="Select a Race" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1d1f20] border-0">
-                  {races.map((race) => (
-                    <SelectItem
-                      key={race.name}
-                      value={race.name}
-                      className="text-white hover:bg-[#282a2c] focus:bg-[#282a2c]"
-                    >
-                      {race.name}
-                    </SelectItem>
-                  ))}
+                  {races.map((race) => {
+                    const meetingName = getMeetingName(race.id);
+                    return (
+                      <SelectItem
+                        key={race.id}
+                        value={race.id.toString()}
+                        className="text-white hover:bg-[#282a2c] focus:bg-[#282a2c]"
+                      >
+                        {meetingName}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </CardContent>
@@ -172,25 +202,25 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
         {selectedRaceData && !loadingRaceData && (
         <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
             <div className="break-inside-avoid">
-            <VitalStatisticsWidget stats={selectedRaceData.vital_statistics} />
+              <VitalStatisticsWidget stats={selectedRaceData.vital_statistics} />
             </div>
             <div className="break-inside-avoid">
-            <RaceDatesWidget dates={selectedRaceData.dates} />
+              <RaceDatesWidget dates={selectedRaceData.dates} />
             </div>
             <div className="break-inside-avoid">
-            <LastPoleSittersWidget poleSitters={selectedRaceData.last_five_pole_sitters} />
+              <LastPoleSittersWidget poleSitters={selectedRaceData.last_five_pole_sitters} />
             </div>
             <div className="break-inside-avoid">
-            <LastWinnersWidget winners={selectedRaceData.last_five_winners} />
+              <LastWinnersWidget winners={selectedRaceData.last_five_winners} />
             </div>
             <div className="break-inside-avoid">
-            <TyreStrategyWidget insights={selectedRaceData.tyre_strategy_insight} />
+              <TyreStrategyWidget insights={selectedRaceData.tyre_strategy_insight} />
             </div>
             <div className="break-inside-avoid">
-            <CurrentFormWidget form={selectedRaceData.current_form} />
+              <CurrentFormWidget form={selectedRaceData.current_form} />
             </div>
             <div className="break-inside-avoid">
-            <IconicMomentWidget moment={selectedRaceData.iconic_moment} />
+              <IconicMomentWidget moment={selectedRaceData.iconic_moment} />
             </div>
         </div>
         )}

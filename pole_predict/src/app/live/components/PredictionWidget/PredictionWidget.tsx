@@ -56,7 +56,7 @@ export const PredictionWidget = ({ type, data, className, isExpertMode }: Predic
                 </CardTitle>
                 <Sparkles className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text" />
             </CardHeader>
-            <CardContent className="h-56 relative -mt-7">
+            <CardContent className="h-64 relative -mt-7 p-8">
                 {renderContent()}
             </CardContent>
         </Card>

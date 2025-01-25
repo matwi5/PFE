@@ -43,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
               <Link href="/about" className="hover:text-blue-200 transition-colors">À propos</Link>
             </li>
             <li>
-              <Link href="/prediction" className="hover:text-blue-200 transition-colors">Prediction</Link>
+              <Link href="/live" className="hover:text-blue-200 transition-colors">Live</Link>
             </li>
             <li>
               <Link href="/upcoming" className="hover:text-blue-200 transition-colors">Upcoming</Link>

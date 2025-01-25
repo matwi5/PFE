@@ -11,7 +11,7 @@ export const LaptimeTable: React.FC<LaptimeTableProps> = ({ data }) => {
     if (!data?.lap_predictions) return null;
 
     return (
-        <div className="mt-4 h-[calc(95%-1rem)] relative">
+        <div className="h-[calc(130%-1rem)] relative -mt-8">
             {/* Conteneur avec dégradé en haut et en bas pour un "fade" élégant */}
             <div className="absolute inset-x-0 h-8 top-0 bg-gradient-to-b from-[#282a2c] to-transparent z-10" />
             <div className="absolute inset-x-0 h-8 bottom-0 bg-gradient-to-t from-[#282a2c] to-transparent z-10" />

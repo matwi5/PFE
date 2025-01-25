@@ -1,4 +1,3 @@
-// page.tsx
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -6,19 +5,38 @@ import { doc, getDoc, collection, getDocs, query } from 'firebase/firestore';
 import { auth, db } from '../../firebaseConfig';
 import { useRouter } from 'next/navigation';
 import { User } from 'firebase/auth';
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LapSlider } from './components/LapSlider';
 import { PredictionWidget } from './components/PredictionWidget/PredictionWidget';
 import { PredictionCache } from './types';
-import { predictionTypes, LAPTIME_CONFIG  } from './constants';
+import { predictionTypes, LAPTIME_CONFIG } from './constants';
 import { cleanLaptimeData, predictFutureLaptimes } from './utils/laptimePredictions';
 import { motion } from 'framer-motion';
 
+interface Session {
+  id: string;
+  session_key: number;
+  session_name: string;
+  meeting_key: number;
+}
+
+interface Meeting {
+  meeting_key: number;
+  meeting_name: string;
+}
+
+interface Driver {
+  driver_number: string;
+  full_name: string;
+  team_name: string;
+}
+
 export default function PredictionDisplayPage() {
   const [user, setUser] = useState<User | null>(null);
-  const [sessions, setSessions] = useState<string[]>([]);
-  const [drivers, setDrivers] = useState<string[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [laps, setLaps] = useState<string[]>([]);
   const [selectedSession, setSelectedSession] = useState<string>("");
   const [selectedDriver, setSelectedDriver] = useState<string>("");
@@ -66,31 +84,68 @@ export default function PredictionDisplayPage() {
   async function loadSessions() {
     const versionDocRef = doc(db, "predictions_ia", "version 1");
     const versionDocSnap = await getDoc(versionDocRef);
-
+  
     if (versionDocSnap.exists()) {
       const sessionKeys = versionDocSnap.data().session_keys;
-      setSessions(sessionKeys);
+      
+      const sessionsPromises = sessionKeys.map(async (key: string) => {
+        const response = await fetch(`https://api.openf1.org/v1/sessions?session_key=${key}`);
+        const data = await response.json();
+        if (data && data[0]) {
+          return {
+            id: key,
+            session_key: data[0].session_key,
+            session_name: data[0].session_name,
+            meeting_key: data[0].meeting_key
+          };
+        }
+        return null;
+      });
+  
+      const sessionsData = (await Promise.all(sessionsPromises)).filter(Boolean);
+  
+      const uniqueMeetingKeys = [...new Set(sessionsData.map(s => s?.meeting_key))];
+      const meetingsData = await Promise.all(
+        uniqueMeetingKeys.map(async (key) => {
+          const response = await fetch(`https://api.openf1.org/v1/meetings?meeting_key=${key}`);
+          const data = await response.json();
+          return data[0];
+        })
+      );
+  
+      setMeetings(meetingsData);
+      setSessions(sessionsData);
     }
   }
 
   async function loadDrivers(sessionKey: string) {
-    const driversCollectionRef = collection(db, "predictions_ia", "version 1", "sessions", sessionKey, "drivers");
-    const driversQuery = query(driversCollectionRef);
-    const driversSnapshot = await getDocs(driversQuery);
-
-    const driverKeys: string[] = [];
-    driversSnapshot.forEach((doc) => {
-      if (doc.id !== "driver_keys") {
-        driverKeys.push(doc.id);
-      }
-    });
-    setDrivers(driverKeys);
+    try {
+      const session = sessions.find(s => s.id === sessionKey);
+      if (!session) return;
+  
+      const response = await fetch(`https://api.openf1.org/v1/drivers?session_key=${session.session_key}`);
+      const driversData = await response.json();
+      
+      const uniqueDrivers = driversData.reduce((acc: Driver[], current: any) => {
+        if (!acc.some(d => d.driver_number === current.driver_number)) {
+          acc.push({
+            driver_number: current.driver_number.toString(),
+            full_name: current.full_name,
+            team_name: current.team_name
+          });
+        }
+        return acc;
+      }, []);
+  
+      setDrivers(uniqueDrivers);
+    } catch (error) {
+      console.error("Erreur chargement pilotes:", error);
+    }
   }
 
   async function loadLapsAndPredictions(sessionKey: string, driverId: string) {
     setIsLoadingPredictions(true);
     try {
-      // Chargement des clés de tours depuis Firebase
       const lapsCollectionRef = collection(db, "predictions_ia", "version 1", "sessions", sessionKey, "drivers", driverId, "laps");
       const lapsSnapshot = await getDocs(query(lapsCollectionRef));
   
@@ -104,7 +159,6 @@ export default function PredictionDisplayPage() {
       if (lapKeys.length > 0) {
         const allPredictions: PredictionCache = {};
   
-        // Récupération des données OpenF1 avec validation
         const openF1Response = await fetch(
           `https://api.openf1.org/v1/laps?session_key=${sessionKey}&driver_number=${driverId}`
         );
@@ -112,7 +166,6 @@ export default function PredictionDisplayPage() {
         
         const openF1Data = await openF1Response.json();
         
-        // Transformation sécurisée des données
         const lapsData = openF1Data
           .filter((lap: any) => lap.lap_duration !== null)
           .map((lap: any) => ({
@@ -123,12 +176,10 @@ export default function PredictionDisplayPage() {
   
         const maxLap = Math.max(...lapsData.map((l: any) => l.lap_number), 0);
   
-        // Traitement parallélisé des tours
         await Promise.all(lapKeys.map(async (lapKey) => {
           const currentLapNumber = parseInt(lapKey);
           allPredictions[lapKey] = {};
   
-          // Chargement des prédictions existantes
           await Promise.all(predictionTypes.filter(type => type !== 'laptime').map(async (type) => {
             try {
               const docRef = doc(db, "predictions_ia", "version 1", "sessions", sessionKey, 
@@ -140,13 +191,11 @@ export default function PredictionDisplayPage() {
             }
           }));
   
-          // Configuration de base pour les prédictions
           const emptyPrediction = { 
             predictions: { prediction: 0 }, 
             lap_predictions: [] 
           };
   
-          // Vérification des données minimales
           if (currentLapNumber >= maxLap || lapsData.length === 0) {
             allPredictions[lapKey]['laptime'] = emptyPrediction;
             return;
@@ -173,7 +222,6 @@ export default function PredictionDisplayPage() {
                 { ...LAPTIME_CONFIG, FUTURE_LAPS: futureLaps }
               );
   
-              // Mappage des temps réels
               predictions.lap_predictions = predictions.lap_predictions.map(pred => ({
                 ...pred,
                 actual_time: lapsData.find(l => l.lap_number === pred.lap_number)?.lap_duration
@@ -198,6 +246,16 @@ export default function PredictionDisplayPage() {
       setIsLoadingPredictions(false);
     }
   }
+
+  const getSessionDisplay = (sessionKey: string) => {
+    const session = sessions.find(s => s.session_key.toString() === sessionKey);
+    if (!session) return sessionKey;
+
+    const meeting = meetings.find(m => m.meeting_key === session.meeting_key);
+    if (!meeting) return `${session.session_name}`;
+
+    return `${meeting.meeting_name} - ${session.session_name}`;
+  };
 
   const handleSessionChange = (value: string) => {
     setIsPlaying(false);
@@ -259,19 +317,19 @@ export default function PredictionDisplayPage() {
           <Card className="bg-[#282a2c] border-none">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="w-44">
+                <div className="w-72">
                   <Select value={selectedSession} onValueChange={handleSessionChange}>
                     <SelectTrigger className="bg-[#1d1f20] border-0 text-white h-12 hover:bg-gray-800/50 transition-colors">
-                      <SelectValue placeholder="Select a race..." />
+                      <SelectValue placeholder="Select a session..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1d1f20] border-0">
                       {sessions.map((session) => (
                         <SelectItem 
-                          key={session} 
-                          value={session}
+                          key={session.id}
+                          value={session.id}
                           className="text-white hover:bg-[#282a2c] focus:bg-[#282a2c] cursor-pointer"
                         >
-                          Race {session}
+                          {getSessionDisplay(session.session_key.toString())}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -282,7 +340,7 @@ export default function PredictionDisplayPage() {
                   <motion.div
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="w-44"
+                    className="w-72"
                   >
                     <Select value={selectedDriver} onValueChange={handleDriverChange}>
                       <SelectTrigger className="bg-[#1d1f20] border-0 text-white h-12 hover:bg-gray-800/50 transition-colors">
@@ -291,11 +349,11 @@ export default function PredictionDisplayPage() {
                       <SelectContent className="bg-[#1d1f20] border-0">
                         {drivers.map((driver) => (
                           <SelectItem 
-                            key={driver} 
-                            value={driver}
+                            key={driver.driver_number} 
+                            value={driver.driver_number}
                             className="text-white hover:bg-[#282a2c] focus:bg-[#282a2c] cursor-pointer"
                           >
-                            Driver {driver}
+                            {`${driver.full_name} - ${driver.team_name}`}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -320,7 +378,6 @@ export default function PredictionDisplayPage() {
                       />
                     </div>
                     
-                    {/* Switch Expert Mode */}
                     <motion.div 
                       className={`
                         relative h-12 w-32 rounded-lg cursor-pointer overflow-hidden
@@ -359,9 +416,9 @@ export default function PredictionDisplayPage() {
                     </motion.div>
                   </motion.div>
                 )}
-                    </div>
-                  </CardContent>
-                </Card>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
         {selectedLap && !isLoadingPredictions && (
@@ -370,27 +427,25 @@ export default function PredictionDisplayPage() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="grid grid-cols-3 gap-4">
+            <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
               {predictionTypes.map((type, index) => {
                 const predictionData = predictionsCache[selectedLap]?.[type];
                 if (!predictionData) return null;
             
                 return (
-                  <motion.div
-                    key={type}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <PredictionWidget
-                      type={type}
-                      data={predictionData}
-                      isExpertMode={isExpertMode}
-                      className={`transition-opacity duration-300 ${
-                        index >= 3 ? 'col-span-3 md:col-span-1' : ''
-                      }`}
-                    />
-                  </motion.div>
+                  <div key={type} className="break-inside-avoid">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <PredictionWidget
+                        type={type}
+                        data={predictionData}
+                        isExpertMode={isExpertMode}
+                      />
+                    </motion.div>
+                  </div>
                 );
               })}
             </div>
