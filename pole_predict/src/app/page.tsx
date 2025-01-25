@@ -3,14 +3,14 @@
 import React, { useContext, useState, useEffect } from "react"; // Ajout de useRef et useEffect
 import Typewriter from "typewriter-effect";
 import UserContext from "../context/UserContext";
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/card";
+} from "../components/ui/card";
 import { ArrowRight, Info, BarChart, Medal } from "lucide-react";
 import { Car3d } from "./components/Car3d";
 import HexagonChart from "./components/HexagonChart";

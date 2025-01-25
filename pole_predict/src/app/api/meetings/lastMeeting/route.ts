@@ -1,4 +1,4 @@
-import logger from '@/utils/logger';
+import logger from '../../../../utils/logger';
 import { db } from '../../../../firebaseConfig';
 import axios from 'axios';
 import { collection, doc, setDoc } from 'firebase/firestore';

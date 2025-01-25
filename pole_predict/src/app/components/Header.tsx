@@ -5,14 +5,16 @@ import { useContext } from 'react';
 import { signOut } from 'firebase/auth';
 import UserContext from '../../context/UserContext';
 import { auth } from '../../firebaseConfig';
-import { Button } from "@/components/ui/button"
+import { Button } from "../../components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "../../components/ui/dropdown-menu"
 import { Menu, User, LogOut, TrendingUpDown } from 'lucide-react';
+import React from 'react';
 
 interface HeaderProps {
   title: string;
@@ -47,6 +49,12 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
             </li>
             <li>
               <Link href="/upcoming" className="hover:text-blue-200 transition-colors">Upcoming</Link>
+            </li>
+            <li>
+              <Link href="/past-race" className="hover:text-blue-200 transition-colors">Past Race</Link>
+            </li>
+            <li>
+              <Link href="/prediction" className="hover:text-blue-200 transition-colors">Prediction</Link>
             </li>
             <li>
               <Link href="/drivers" className="hover:text-blue-200 transition-colors">Pilotes</Link>

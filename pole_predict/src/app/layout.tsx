@@ -13,7 +13,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <html lang="fr">
       <head>
         <link rel="icon" href="/favicon.ico" />
-        <title>Mon Site F1</title>
+        <title>PolePredict</title>
       </head>
       <body className="min-h-screen flex flex-col bg-[#1B1C1D] text-white">
         <UserProvider>
