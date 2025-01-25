@@ -50,6 +50,7 @@ interface RaceSelectionProps {
   totalLaps: number;
   onLapChange: (lap: number) => void;
   onTotalLapsChange: (total: number) => void;
+  isDriverMode?: boolean;
 }
 
 const RaceSelection = ({
@@ -69,6 +70,7 @@ const RaceSelection = ({
   totalLaps,
   onLapChange,
   onTotalLapsChange,
+  isDriverMode
 }: RaceSelectionProps) => {
   const [isRunning, setIsRunning] = useState(false);
   const [laps, setLaps] = useState<Lap[]>([]);
@@ -216,7 +218,7 @@ const RaceSelection = ({
           <div className="col-span-1">
             <Flag className="w-5 h-5" />
           </div>
-
+  
           <div className="col-span-4">
             <Select value={selectedMeeting} onValueChange={onMeetingChange}>
               <SelectTrigger className="h-8">
@@ -231,7 +233,7 @@ const RaceSelection = ({
               </SelectContent>
             </Select>
           </div>
-
+  
           <div className="col-span-3">
             {selectedMeeting && (
               <Select value={selectedSession} onValueChange={onSessionChange}>
@@ -248,7 +250,7 @@ const RaceSelection = ({
               </Select>
             )}
           </div>
-
+  
           <div className="col-span-4 flex gap-2">
             <Button
               size="sm"
@@ -257,22 +259,26 @@ const RaceSelection = ({
             >
               Chrono
             </Button>
-            <Button
-              size="sm"
-              variant={viewMode === 'lap' ? 'secondary' : 'outline'}
-              onClick={() => handleViewModeChange('lap')}
-            >
-              Lap
-            </Button>
-            <Button
-              size="sm"
-              variant={viewMode === 'final' ? 'secondary' : 'outline'}
-              onClick={() => handleViewModeChange('final')}
-            >
-              Final
-            </Button>
+            {!isDriverMode && (
+              <>
+                <Button
+                  size="sm"
+                  variant={viewMode === 'lap' ? 'secondary' : 'outline'}
+                  onClick={() => handleViewModeChange('lap')}
+                >
+                  Lap
+                </Button>
+                <Button
+                  size="sm"
+                  variant={viewMode === 'final' ? 'secondary' : 'outline'}
+                  onClick={() => handleViewModeChange('final')}
+                >
+                  Final
+                </Button>
+              </>
+            )}
           </div>
-
+  
           {viewMode !== 'final' && (
             <>
               <div className="col-span-12 flex items-center gap-2 mt-4">
@@ -327,7 +333,7 @@ const RaceSelection = ({
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
-
+  
               <div className="col-span-12 flex items-center justify-center mt-4">
                 <Button
                   onClick={() => setIsRunning((prev) => !prev)}
@@ -338,7 +344,7 @@ const RaceSelection = ({
                   {isRunning ? "Pause" : "Play"}
                 </Button>
               </div>
-
+  
               <div className="col-span-12 text-center mt-4">
                 {viewMode === 'chrono' ? (
                   <>

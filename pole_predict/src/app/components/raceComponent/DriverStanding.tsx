@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "../../../components/ui/button";
+import {useRouter} from "next/navigation";
 
 interface Driver {
   driver_number: number;
@@ -11,7 +12,7 @@ interface Driver {
   name_acronym: string;
   headshot_url?: string;
   team_name?: string;
-  team_color?: string;
+  team_colour?: string;
 }
 
 interface DriverPosition {
@@ -66,6 +67,8 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
   viewMode,
   currentLap = 0
 }) => {
+  const [selectedDriver, setSelectedDriver] = useState<number | null>(null);
+  const router = useRouter();
   const [positions, setPositions] = useState<DriverPosition[]>([]);
   const [intervals, setIntervals] = useState<Interval[]>([]);
   const [lapTimes, setLapTimes] = useState<LapTime[]>([]);
@@ -292,41 +295,107 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                 const displayValue = gapMode === 'interval' 
                   ? standing.interval 
                   : standing.gap_to_leader;
-  
+                const teamColor = standing.driver_details?.team_colour || '2b2b2b';
+                const headshotUrl = standing.driver_details?.headshot_url;
+                const isSelected = selectedDriver === standing.driver_number;
+
                 return (
-                  <motion.div
+                  <motion.button
                     key={standing.driver_number}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="relative mb-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-full text-left p-0 bg-transparent border-none mb-2 group"
+                    onClick={() => {
+                      setSelectedDriver(standing.driver_number);
+                      router.push(`/live-race?driver=${standing.driver_number}`);
+                    }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <div className={`flex items-center p-3 rounded-lg ${
-                      standing.status === 'active' 
-                        ? 'bg-secondary/50' 
-                        : 'bg-secondary/20'
-                    }`}>
-                      <div className="w-8 text-center font-bold">{index + 1}</div>
-                      <div className="flex-1 ml-4">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-medium">
-                            {standing.driver_details?.full_name}
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {standing.driver_details?.name_acronym}
-                          </span>
+                    <div 
+                      className={`p-3 rounded-lg relative overflow-hidden transition-all duration-300 ${
+                        isSelected ? 'ring-2 ring-offset-2' : ''
+                      }`}
+                      style={{
+                        backgroundColor: `#${teamColor}33`,
+                        borderLeft: `6px solid #${teamColor}`,
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        marginLeft: isSelected ? '8px' : '0',
+                      }}
+                    >
+                      <div className="flex items-center">
+                        {/* Photo du pilote avec effet de sélection */}
+                        <span className="font-bold text-sm mr-2 text-muted-foreground">
+                              {standing.position}
+                            </span>
+                        <div className="relative w-12 h-12 flex-shrink-0 mr-4 rounded-full overflow-hidden border-2">
+                          {headshotUrl ? (
+                            <motion.img
+                              src={headshotUrl}
+                              alt={standing.driver_details?.full_name}
+                              className="w-full h-full object-cover"
+                              initial={{ scale: 1 }}
+                              animate={{ scale: isSelected ? 1.1 : 1 }}
+                              transition={{ duration: 0.2 }}
+                            />
+                          ) : (
+                            <div 
+                              className="w-full h-full bg-muted/50 flex items-center justify-center"
+                              style={{ backgroundColor: `#${teamColor}66` }}
+                            >
+                              <span className="font-bold text-sm">
+                                {standing.driver_details?.driver_number}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {standing.driver_details?.team_name}
+
+                       {/* Infos pilote */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2">
+                            <span 
+                              className="font-medium truncate"
+                              style={{ color: '#000000'}}
+                            >
+                              {standing.driver_details?.full_name}
+                            </span>
+                            <span 
+                              className="text-sm"
+                              style={{ color: '#000000'}}
+                            >
+                              {standing.driver_details?.name_acronym}
+                            </span>
+                          </div>
+                          
+                          {/* Nom de l'équipe */}
+                          <div className="mt-1">
+                            <span 
+                              className="text-xs px-3 py-1 rounded-full inline-block font-semibold"
+                              style={{
+                                backgroundColor: `#${teamColor}`,
+                                color: '#000000',
+                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                              }}
+                            >
+                              {standing.driver_details?.team_name}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="w-24 text-right">
-                        <div className="text-sm">
-                          {formatGap(displayValue, isLeader)}
+
+
+                        {/* Intervalle */}
+                        <div className="w-24 text-right">
+                          <div 
+                            className="text-sm font-mono font-semibold"
+                            style={{ color: '#000000' }}
+                          >
+                            {formatGap(displayValue, isLeader)}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </motion.div>
+                  </motion.button>
                 );
               })}
           </AnimatePresence>
@@ -335,5 +404,4 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
     </Card>
   );
 };
-
 export default DriverStandings;

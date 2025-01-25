@@ -1,10 +1,29 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import RaceSelection from '../components/raceComponent/RaceSelection';
 import EventDisplay from '../components/raceComponent/EventDisplay';
 import DriverStandings from '../components/raceComponent/DriverStanding';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Button } from '../../components/ui/button';
+import RaceCarTelemetry from '../components/raceComponent/RaceCarTelemetry';
+import SectorAnalysis from '../components/raceComponent/sectorAnalysis';
+
+
+export interface Driver {
+  driver_number: number;
+  full_name: string;
+  name_acronym: string;
+  headshot_url?: string;
+  team_name?: string;
+  team_colour?: string;
+  first_name?: string;
+  last_name?: string;
+  country_code?: string;
+  session_key?: number;
+  meeting_key?: number;
+}
 
 interface Meeting {
   meeting_key: number;
@@ -45,11 +64,23 @@ interface LapData {
   session_key: number;
 }
 
+interface CarData {
+  brake: number;
+  date: string;
+  driver_number: number;
+  drs: number;
+  meeting_key: number;
+  n_gear: number;
+  rpm: number;
+  session_key: number;
+  speed: number;
+  throttle: number;
+}
+
 const RaceControlEvents = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [events, setEvents] = useState<RaceControlEvent[]>([]);
-  const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<string>('');
   const [selectedSession, setSelectedSession] = useState<string>('');
@@ -60,8 +91,13 @@ const RaceControlEvents = () => {
   const [totalLaps, setTotalLaps] = useState<number>(0);
   const [viewMode, setViewMode] = useState<'chrono' | 'lap' | 'final'>('final');
   const [lapsData, setLapsData] = useState<LapData[]>([]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const driverNumber = searchParams.get('driver');
+  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [carData, setCarData] = useState<CarData[]>([]);
+  const [carDataLoading, setCarDataLoading] = useState(false);
 
-  // Fetch meetings
   useEffect(() => {
     const fetchMeetings = async () => {
       try {
@@ -73,12 +109,12 @@ const RaceControlEvents = () => {
         );
         setMeetings(sortedMeetings);
 
-        // Select the latest meeting and session by default
         if (sortedMeetings.length > 0) {
           const latestMeeting = sortedMeetings[0];
           setSelectedMeeting(latestMeeting.meeting_key.toString());
-
-          const responseSessions = await fetch(`https://api.openf1.org/v1/sessions?meeting_key=${latestMeeting.meeting_key}`);
+          const responseSessions = await fetch(
+            `https://api.openf1.org/v1/sessions?meeting_key=${latestMeeting.meeting_key}`
+          );
           if (!responseSessions.ok) throw new Error('Failed to fetch sessions');
           const sessionsData = await responseSessions.json();
           setSessions(sessionsData);
@@ -94,14 +130,12 @@ const RaceControlEvents = () => {
           }
         }
       } catch (err) {
-        setError('Error fetching meetings');
         console.error(err);
       }
     };
     fetchMeetings();
   }, []);
 
-  // Fetch sessions for selected meeting
   useEffect(() => {
     if (!selectedMeeting) return;
     const fetchSessions = async () => {
@@ -111,14 +145,12 @@ const RaceControlEvents = () => {
         const data = await response.json();
         setSessions(data);
       } catch (err) {
-        setError('Error fetching sessions');
         console.error(err);
       }
     };
     fetchSessions();
   }, [selectedMeeting]);
 
-  // Fetch events for selected session
   useEffect(() => {
     if (!selectedSession) return;
     const fetchEvents = async () => {
@@ -131,7 +163,6 @@ const RaceControlEvents = () => {
           new Date(a.date).getTime() - new Date(b.date).getTime()
         ));
 
-        // Get session details to set time bounds
         const sessionDetails = sessions.find(s => s.session_key.toString() === selectedSession);
         if (sessionDetails) {
           setSessionStartTime(sessionDetails.date_start);
@@ -141,7 +172,6 @@ const RaceControlEvents = () => {
           setCurrentLap(sessionDetails.total_laps || 0);
         }
       } catch (err) {
-        setError('Error fetching events');
         console.error(err);
       } finally {
         setLoading(false);
@@ -149,67 +179,91 @@ const RaceControlEvents = () => {
     };
     fetchEvents();
   }, [selectedSession, sessions]);
-  
 
-  // Fetch laps data for selected session (by lap number)
   useEffect(() => {
     if (!selectedSession) return;
-
     const fetchLapsData = async () => {
       try {
         const response = await fetch(`https://api.openf1.org/v1/laps?session_key=${selectedSession}`);
         const data = await response.json();
         setLapsData(data);
-
-        // Calculate total laps
         const maxLap = Math.max(...data.map((lap: LapData) => lap.lap_number));
         setTotalLaps(maxLap);
       } catch (err) {
         console.error('Error fetching laps data:', err);
       }
     };
-
     fetchLapsData();
   }, [selectedSession]);
 
-  const handleMeetingChange = (meetingKey: string) => {
-    setSelectedMeeting(meetingKey);
-    setSelectedSession('');
-  };
+  useEffect(() => {
+    const fetchCarData = async () => {
+      if (driverNumber && selectedSession && currentTime) {
+        try {
+          setCarDataLoading(true);
+          const response = await fetch(
+            `https://api.openf1.org/v1/car_data?` +
+            `driver_number=${driverNumber}&` +
+            `session_key=${selectedSession}&` +
+            `date<=${currentTime}`
+          );
+          const data = await response.json();
+          setCarData(data.filter((d: CarData) => 
+            d.brake !== null && 
+            d.throttle !== null && 
+            d.rpm !== null
+          ));
+        } catch (error) {
+          console.error('Error fetching car data:', error);
+        } finally {
+          setCarDataLoading(false);
+        }
+      }
+    };
+    fetchCarData();
+  }, [driverNumber, selectedSession, currentTime]);
 
-  const handleSessionChange = (sessionKey: string) => {
-    setSelectedSession(sessionKey);
-    setViewMode('chrono');
-  };
+  useEffect(() => {
+    const fetchDriver = async () => {
+      if (driverNumber) {
+        try {
+          const response = await fetch(`https://api.openf1.org/v1/drivers?driver_number=${driverNumber}`);
+          const data = await response.json();
+          setSelectedDriver(data[0] || null);
+        } catch (error) {
+          console.error('Error fetching driver:', error);
+        }
+      } else {
+        setSelectedDriver(null);
+      }
+    };
+    fetchDriver();
+  }, [driverNumber]);
 
-  const handleTimeChange = (time: string) => {
-    setCurrentTime(time);
-  };
+  const { throttle, rpm, speed, gear, drsStatus } = useMemo(() => {
+    const latest = carData[carData.length - 1] || {};
+    return {
+      throttle: latest?.throttle || 0,
+      rpm: latest?.rpm || 0,
+      speed: latest?.speed || 0,
+      gear: latest?.n_gear?.toString() || 'B',
+      drsStatus: latest?.drs ? 'ACTIF' : 'INACTIF'
+    };
+  }, [carData]);
 
-  const handleLapChange = (lap: number) => {
-    setCurrentLap(lap);
-  };
-
-  const handleViewModeChange = (mode: 'chrono' | 'lap' | 'final') => {
-    setViewMode(mode);
-    if (mode === 'final') {
-      setCurrentTime(sessionEndTime);
-    } else if (mode === 'lap') {
-      setCurrentLap(0);
-    }
-  };
-
-  const currentSessionDetails = sessions.find(s =>
-    s.session_key.toString() === selectedSession
+  
+  const realTimeDataContent = selectedDriver ? (
+    <RaceCarTelemetry
+      throttle={throttle}
+      rpm={rpm}
+      speed={speed}
+      gear={gear}
+      drsStatus={drsStatus} brake={0}    />
+  ) : (
+    <div className="h-full bg-secondary/20 rounded-lg flex items-center justify-center">
+      Select a pilot to see its race datas
+    </div>
   );
-
-  const selectedGrandPrix = meetings.find(m =>
-    m.meeting_key.toString() === selectedMeeting
-  );
-
-  const handleTotalLapsChange = (total: number) => {
-    setTotalLaps(total);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -222,91 +276,125 @@ const RaceControlEvents = () => {
                 sessions={sessions}
                 selectedMeeting={selectedMeeting}
                 selectedSession={selectedSession}
-                onMeetingChange={handleMeetingChange}
-                onSessionChange={handleSessionChange}
+                onMeetingChange={setSelectedMeeting}
+                onSessionChange={setSelectedSession}
                 currentTime={currentTime}
                 sessionStartTime={sessionStartTime}
                 sessionEndTime={sessionEndTime}
-                onTimeChange={handleTimeChange}
+                onTimeChange={setCurrentTime}
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
                 currentLap={currentLap}
                 totalLaps={totalLaps}
                 onLapChange={setCurrentLap}
-                onTotalLapsChange={handleTotalLapsChange}
+                onTotalLapsChange={setTotalLaps}
+                isDriverMode={!!selectedDriver}
               />
             </CardContent>
           </Card>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-          {/* Left column */}
           <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Race Information</CardTitle>
+                <CardTitle>{selectedDriver ? 'Pilot Information' : 'Race Information'}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div>
+                {selectedDriver ? (
+                  <div className="space-y-4">
+                    <Button onClick={() => router.push('/live-race')} variant="outline" className="mb-4">
+                      Return to race
+                    </Button>
+                    <div className="flex items-center gap-4">
+                      {selectedDriver.headshot_url && (
+                        <img
+                          src={selectedDriver.headshot_url}
+                          alt={selectedDriver.full_name}
+                          className="h-24 w-24 rounded-full object-cover"
+                        />
+                      )}
+                      <div>
+                        <h2 className="text-2xl font-bold">{selectedDriver.full_name}</h2>
+                        <p className="text-lg text-muted-foreground">{selectedDriver.team_name}</p>
+                        <div 
+                          className="w-8 h-8 rounded-full border-2 border-white"
+                          style={{ backgroundColor: `#${selectedDriver.team_colour}` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <p className="font-semibold">Numéro</p>
+                        <p className="text-xl">{selectedDriver.driver_number}</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Code</p>
+                        <p className="text-xl">{selectedDriver.name_acronym}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
                     <h2 className="text-2xl font-bold">
-                      {selectedGrandPrix?.meeting_name || 'Select a Grand Prix'}
+                      {meetings.find(m => m.meeting_key.toString() === selectedMeeting)?.meeting_name || 'Select a Grand Prix'}
                     </h2>
+                    <div>
+                      <p className="font-semibold">Session: {sessions.find(s => s.session_key.toString() === selectedSession)?.session_name}</p>
+                      <p className="font-semibold">Circuit: {sessions.find(s => s.session_key.toString() === selectedSession)?.circuit_short_name}</p>
+                      {viewMode === 'lap' ? (
+                        <p className="font-semibold">Tour: {currentLap} / {totalLaps}</p>
+                      ) : (
+                        <p className="font-semibold">
+                          Heure actuelle: {currentTime ? new Date(currentTime).toLocaleTimeString() : '-'}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold">Session: {currentSessionDetails?.session_name}</p>
-                    <p className="font-semibold">Circuit: {currentSessionDetails?.circuit_short_name}</p>
-                    {viewMode === 'lap' ? (
-                      <p className="font-semibold">Lap: {currentLap} / {totalLaps}</p>
-                    ) : (
-                      <p className="font-semibold">
-                        Current Time: {currentTime ? new Date(currentTime).toLocaleTimeString() : '-'}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Race statistics */}
             <Card className="h-96">
               <CardHeader>
-                <CardTitle>Race Statistics</CardTitle>
+                <CardTitle>Real Time Data</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="h-full bg-secondary/20 rounded-lg flex items-center justify-center">
-                  Race statistics placeholder
-                </div>
+              <CardContent className="h-80">
+                {realTimeDataContent}
               </CardContent>
             </Card>
           </div>
 
-          {/* Middle column */}
           <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Circuit</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 bg-secondary/20 rounded-lg flex items-center justify-center">
-                  Circuit map placeholder
-                </div>
-              </CardContent>
-            </Card>
+  <Card>
+    <CardHeader>
+      <CardTitle>Circuit</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="h-64 bg-secondary/20 rounded-lg flex items-center justify-center">
+        Circuit map placeholder
+      </div>
+    </CardContent>
+  </Card>
 
-            <Card className="h-64">
-              <CardHeader>
-                <CardTitle>Race Data</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-full bg-secondary/20 rounded-lg flex items-center justify-center">
-                  Race data graphs placeholder
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+  {selectedDriver && (
+    <Card className="h-[500px]">
+      <CardHeader>
+        <CardTitle>Real Time Sector Analysis</CardTitle>
+      </CardHeader>
+      <CardContent className="h-[calc(100%-3rem)] overflow-y-auto">
+        <SectorAnalysis 
+          driverNumber={Number(driverNumber)}
+          sessionKey={selectedSession}
+          currentTime={currentTime}
+          currentLap={currentLap}
+          viewMode={viewMode}
+        />
+      </CardContent>
+    </Card>
+  )}
+</div>
 
-          {/* Right column */}
           <div className="space-y-4">
             <Card className="h-[calc(43vh-2rem)]">
               <CardContent className="h-[calc(100%-4rem)] overflow-hidden">
@@ -322,17 +410,17 @@ const RaceControlEvents = () => {
 
             <Card className="h-[calc(35vh-2rem)]">
               <CardHeader>
-                <CardTitle>Race Control Messages</CardTitle>
+                <CardTitle>Messages Race Control</CardTitle>
               </CardHeader>
               <CardContent className="h-[calc(100%-4rem)] overflow-auto">
-              <EventDisplay
-                events={events}
-                sessionName={currentSessionDetails?.session_name}
-                loading={loading}
-                viewMode={viewMode}
-                currentLap={currentLap}
-                currentTime={currentTime}
-              />
+                <EventDisplay
+                  events={events}
+                  sessionName={sessions.find(s => s.session_key.toString() === selectedSession)?.session_name}
+                  loading={loading}
+                  viewMode={viewMode}
+                  currentLap={currentLap}
+                  currentTime={currentTime}
+                />
               </CardContent>
             </Card>
           </div>

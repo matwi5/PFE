@@ -79,7 +79,7 @@ const EventDisplay = ({
     return (
       <Card className="h-full">
         <CardContent className="flex items-center justify-center h-full">
-          <div className="text-center py-8">Chargement des événements...</div>
+          <div className="text-center py-8">Event Loading...</div>
         </CardContent>
       </Card>
     );
@@ -88,14 +88,13 @@ const EventDisplay = ({
   return (
     <Card className="h-full overflow-hidden">
       <CardHeader className="py-2">
-        <CardTitle className="text-lg">Messages Race Control</CardTitle>
         {sessionName && <span className="text-sm text-muted-foreground">{sessionName}</span>}
       </CardHeader>
       <CardContent className="h-[calc(100%-3.5rem)]">
         <div className="h-full overflow-y-auto pr-2">
           <AnimatePresence>
             {sortedEvents.length === 0 ? (
-              <div className="text-center py-8">Aucun événement à afficher</div>
+              <div className="text-center py-8">No event to display</div>
             ) : (
               sortedEvents.map((event, index) => (
                 <motion.div
