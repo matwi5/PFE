@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/ca
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '../../components/ui/button';
 import RaceCarTelemetry from '../components/raceComponent/RaceCarTelemetry';
-import SectorAnalysis from '../components/raceComponent/sectorAnalysis';
+import SectorAnalysis from '../components/raceComponent/SectorAnalysis';
 
 
 export interface Driver {
