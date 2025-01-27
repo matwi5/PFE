@@ -32,6 +32,33 @@ export const PREDICTION_TITLES = {
   laptime: 'Future lap times prediction'
 };
 
+export const PREDICTION_METRICS = {
+  position: { 
+    score: 0.25, 
+    format: "Right 25% of the time (improves as race progresses)"
+  },
+  
+  pneu: { 
+    score: 0.89, 
+    format: "Right 89% of the time (98% for soft tires)"
+  },
+  
+  pitstop: { 
+    score: 0.71, 
+    format: "Right 71% of the time (84% for no more stops)"
+  },
+  
+  laptime: { 
+    score: 0.5, 
+    format: "±0.5s"
+  },
+
+  depassement: { 
+    score: 0.97, 
+    format: "Right 97% of the time (62% when predicting overtake)"
+  }
+ } as const;
+
 // Nouvelles constantes pour le graphique de temps
 export const LAPTIME_COLORS = {
   NORMAL: 'rgb(128, 128, 128)',    // Gris pour les tours normaux

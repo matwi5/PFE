@@ -57,7 +57,9 @@ interface VitalStatistics {
   virtual_safety_car_probability: number;
   pit_stop_time_loss: number;
   notes: string;
+  circuit_layout: string;
 }
+
 export default function PredictionDisplayPage() {
   const [user, setUser] = useState<User | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -71,7 +73,7 @@ export default function PredictionDisplayPage() {
   const [loading, setLoading] = useState(true);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed] = useState(300);
+  const [playbackSpeed] = useState(1000);
   const [isExpertMode, setIsExpertMode] = useState(false);
   const [vitalStats, setVitalStats] = useState<VitalStatistics | null>(null);
 
@@ -150,18 +152,18 @@ export default function PredictionDisplayPage() {
       const session = sessions.find(s => s.id === sessionKey);
       if (!session) return;
   
-      // Récupérer le meeting_key de la session
       const meeting = meetings.find(m => m.meeting_key === session.meeting_key);
       if (!meeting) return;
   
-      // Récupérer les stats depuis upcoming_races en utilisant le meeting_name
       const upcomingRaceRef = doc(db, "upcoming_races", meeting.meeting_key.toString());
       const upcomingRaceSnap = await getDoc(upcomingRaceRef);
       
       if (upcomingRaceSnap.exists()) {
         const raceData = upcomingRaceSnap.data();
-        // Extraire uniquement les statistiques vitales nécessaires
-        setVitalStats(raceData.vital_statistics);
+        setVitalStats({
+          ...raceData.vital_statistics,
+          circuit_layout: raceData.circuit_layout
+        });
       }
     } catch (error) {
       console.error("Erreur chargement statistiques vitales:", error);
@@ -486,7 +488,10 @@ export default function PredictionDisplayPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0 }}
                   >
-                    <VitalStatisticsWidget stats={vitalStats} />
+                    <VitalStatisticsWidget 
+                      stats={vitalStats}
+                      circuit_layout={vitalStats.circuit_layout || ''} // Ajout de la prop
+                    />
                   </motion.div>
                 </div>
               )}
@@ -499,7 +504,7 @@ export default function PredictionDisplayPage() {
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
+                      transition={{ delay: index * 0.05 + 0.1 }}
                     >
                       <PredictionWidget
                         type={type}

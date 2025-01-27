@@ -16,6 +16,8 @@ import TyreStrategyWidget from './components/TyreStrategyWidget';
 import CurrentFormWidget from './components/CurrentFormWidget';
 import IconicMomentWidget from './components/IconicMomentWidget';
 import LoadingRaceCard from './components/LoadingRaceCard';
+import QualifyingPredictionsWidget from './components/QualifyingPredictionsWidget';
+import RacePredictionsWidget from './components/RacePredictionsWidget';
 
 interface Meeting {
   meeting_key: number;
@@ -67,6 +69,17 @@ interface Race {
   tyre_strategy_insight: string[];
   current_form: string[];
   iconic_moment: string;
+  qualifying_prediction: {
+    position: number;
+    constructor: string;
+    driver: string;
+  }[];
+  race_prediction: {
+    position: number;
+    constructor: string;
+    driver: string;
+  }[];
+  circuit_layout: string;
 }
 
 interface RaceDisplayPageProps {}
@@ -202,10 +215,22 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
         {selectedRaceData && !loadingRaceData && (
         <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
             <div className="break-inside-avoid">
-              <VitalStatisticsWidget stats={selectedRaceData.vital_statistics} />
+              <VitalStatisticsWidget 
+                stats={selectedRaceData.vital_statistics}
+                circuit_layout={selectedRaceData.circuit_layout}
+              />
             </div>
             <div className="break-inside-avoid">
               <RaceDatesWidget dates={selectedRaceData.dates} />
+            </div>
+            <div className="break-inside-avoid">
+              <CurrentFormWidget form={selectedRaceData.current_form} />
+            </div>
+            <div className="break-inside-avoid">
+              <QualifyingPredictionsWidget predictions={selectedRaceData.qualifying_prediction} />
+            </div>
+            <div className="break-inside-avoid">
+              <RacePredictionsWidget predictions={selectedRaceData.race_prediction} />
             </div>
             <div className="break-inside-avoid">
               <LastPoleSittersWidget poleSitters={selectedRaceData.last_five_pole_sitters} />
@@ -215,9 +240,6 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
             </div>
             <div className="break-inside-avoid">
               <TyreStrategyWidget insights={selectedRaceData.tyre_strategy_insight} />
-            </div>
-            <div className="break-inside-avoid">
-              <CurrentFormWidget form={selectedRaceData.current_form} />
             </div>
             <div className="break-inside-avoid">
               <IconicMomentWidget moment={selectedRaceData.iconic_moment} />
