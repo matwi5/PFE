@@ -15,26 +15,53 @@ const fadeInUp = {
   transition: { duration: 0.6 }
 };
 
-const TyreStrategyWidget: React.FC<TyreStrategyWidgetProps> = ({ insights }) => (
-    <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.4 }}>
-      <Card className="bg-[#282a2c] border-0">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#2dd4bf] to-[#5382ec] bg-clip-text text-transparent">
-              Tyre Strategy
-            </CardTitle>
-            <Cog className="h-5 w-5 text-[#2dd4bf]" />
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {insights.map((insight, index) => (
-            <div key={index} className="p-3 bg-[#1d1f20] rounded-lg">
-              <p className="text-gray-200">{insight}</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.3,
+    }
+  }
+};
 
-  export default TyreStrategyWidget;
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0 }
+};
+
+const TyreStrategyWidget: React.FC<TyreStrategyWidgetProps> = ({ insights }) => (
+  <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.45 }}>
+    <Card className="bg-[#282a2c] border-0">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#D4582D] to-[#D42D62] bg-clip-text text-transparent">
+            Tyre Strategy
+          </CardTitle>
+          <Cog className="h-5 w-5 text-[#D4582D]" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <motion.div
+          className="space-y-3"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {insights.map((insight, index) => (
+            <motion.div 
+              key={index} 
+              variants={itemVariants}
+              className="p-3 bg-[#1d1f20] rounded-lg"
+            >
+              <p className="text-gray-200">{insight}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </CardContent>
+    </Card>
+  </motion.div>
+);
+
+export default TyreStrategyWidget;
