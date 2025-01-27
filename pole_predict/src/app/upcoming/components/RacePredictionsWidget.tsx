@@ -1,3 +1,5 @@
+// upcoming/components/RacePredictionsWidget.tsx
+
 "use client";
 
 import React from 'react';
@@ -37,7 +39,7 @@ const itemVariants = {
 };
 
 const RacePredictionsWidget: React.FC<RacePredictionsWidgetProps> = ({ predictions }) => (
-  <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.3 }}>
+  <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.45 }}>
     <AnimatedBorderCard>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">

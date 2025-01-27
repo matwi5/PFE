@@ -1,3 +1,5 @@
+// upcoming/page.tsx
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -18,6 +20,7 @@ import IconicMomentWidget from './components/IconicMomentWidget';
 import LoadingRaceCard from './components/LoadingRaceCard';
 import QualifyingPredictionsWidget from './components/QualifyingPredictionsWidget';
 import RacePredictionsWidget from './components/RacePredictionsWidget';
+import HistoricalPerformanceWidget from './components/HistoricalPerformanceWidget';
 
 interface Meeting {
   meeting_key: number;
@@ -224,19 +227,22 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
               <RaceDatesWidget dates={selectedRaceData.dates} />
             </div>
             <div className="break-inside-avoid">
-              <CurrentFormWidget form={selectedRaceData.current_form} />
+              <LastPoleSittersWidget poleSitters={selectedRaceData.last_five_pole_sitters} />
             </div>
             <div className="break-inside-avoid">
               <QualifyingPredictionsWidget predictions={selectedRaceData.qualifying_prediction} />
             </div>
             <div className="break-inside-avoid">
-              <RacePredictionsWidget predictions={selectedRaceData.race_prediction} />
+              <CurrentFormWidget form={selectedRaceData.current_form} />
             </div>
             <div className="break-inside-avoid">
-              <LastPoleSittersWidget poleSitters={selectedRaceData.last_five_pole_sitters} />
+              <HistoricalPerformanceWidget meeting_key={selectedRaceData.id} />
             </div>
             <div className="break-inside-avoid">
               <LastWinnersWidget winners={selectedRaceData.last_five_winners} />
+            </div>
+            <div className="break-inside-avoid">
+              <RacePredictionsWidget predictions={selectedRaceData.race_prediction} />
             </div>
             <div className="break-inside-avoid">
               <TyreStrategyWidget insights={selectedRaceData.tyre_strategy_insight} />

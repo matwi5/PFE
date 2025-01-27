@@ -32,14 +32,14 @@ const itemVariants = {
 };
 
 const CurrentFormWidget: React.FC<CurrentFormWidgetProps> = ({ form }) => (
-  <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.2 }}>
+  <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.3 }}>
     <Card className="bg-[#282a2c] border-0">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#e58927] to-[#9954dd] bg-clip-text text-transparent">
             Current Form
           </CardTitle>
-          <TrendingUp className="h-5 w-5 text-[#5382ec]" />
+          <TrendingUp className="h-5 w-5 text-[#e58927]" />
         </div>
       </CardHeader>
       <CardContent>

@@ -1,3 +1,5 @@
+// upcoming/components/TyreStrategyWidget.tsx
+
 "use client";
 
 import React from 'react';
@@ -32,7 +34,7 @@ const itemVariants = {
 };
 
 const TyreStrategyWidget: React.FC<TyreStrategyWidgetProps> = ({ insights }) => (
-  <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.45 }}>
+  <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.5 }}>
     <Card className="bg-[#282a2c] border-0">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">

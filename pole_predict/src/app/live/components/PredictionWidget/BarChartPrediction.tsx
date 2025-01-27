@@ -40,7 +40,7 @@ export const BarChartPrediction: React.FC<BarChartPredictionProps> = ({ type, da
                 if (className === 'HARD') displayName = 'Hard';
                 if (className === 'WET') displayName = 'Wet';
             } else if (type === 'depassement') {
-                if (className === 'True') displayName = 'Overtake';
+                if (className === 'True') displayName = 'Pass';
                 if (className === 'False') displayName = 'Stay';
             }
 

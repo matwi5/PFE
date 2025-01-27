@@ -32,7 +32,7 @@ const itemVariants = {
 };
 
 const LastPoleSittersWidget: React.FC<LastPoleSittersWidgetProps> = ({ poleSitters }) => (
-  <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.35 }}>
+  <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.20 }}>
     <Card className="bg-[#282a2c] border-0">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">

@@ -1,3 +1,5 @@
+// upcoming/components/VitalStatisticsWidget.tsx
+
 "use client";
 
 import React from 'react';

@@ -32,7 +32,7 @@ const itemVariants = {
 };
 
 const IconicMomentWidget: React.FC<IconicMomentWidgetProps> = ({ moment }) => (
-  <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.5 }}>
+  <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.55 }}>
     <Card className="bg-[#282a2c] border-0">
       <motion.div
         variants={containerVariants}
