@@ -14,6 +14,7 @@ import { predictionTypes, LAPTIME_CONFIG } from './constants';
 import { cleanLaptimeData, predictFutureLaptimes } from './utils/laptimePredictions';
 import { motion } from 'framer-motion';
 import VitalStatisticsWidget from '../upcoming/components/VitalStatisticsWidget';
+import { Button } from '../../components/ui/button';
 
 interface Session {
   id: string;
@@ -348,18 +349,26 @@ export default function PredictionDisplayPage() {
   return (
     <div className="min-h-screen bg-[#1B1C1D]">
       <div className="container mx-auto px-4 py-16">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-16 space-y-4"
-        >
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-16 space-y-4"
+      >
+        <div className="relative flex justify-center items-center gap-4">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center">
             Real-time Predictions
           </h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          <Button
+            onClick={() => router.push('/live-race')}
+            className="bg-[#5382ec] hover:bg-[#436cbf] transition-colors whitespace-nowrap absolute right-0"
+          >
+            Go to Race Control Dashboard
+          </Button>
+        </div>
+        <p className="text-gray-400 text-lg max-w-2xl mx-auto text-center">
             Explore AI-powered insights and predictions for Formula 1 races
-          </p>
-        </motion.div>
+        </p>
+      </motion.div>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}

@@ -9,6 +9,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '../../components/ui/button';
 import RaceCarTelemetry from '../components/raceComponent/RaceCarTelemetry';
 import SectorAnalysis from '../components/raceComponent/SectorAnalysis';
+import { motion } from 'framer-motion';
 
 
 export interface Driver {
@@ -265,12 +266,38 @@ const RaceControlEvents = () => {
     </div>
   );
 
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-4">
-        <div className="mb-4">
-          <Card>
-            <CardContent className="py-4">
+    <div className="min-h-screen bg-[#1B1C1D]">
+      <div className="container mx-auto px-4 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-16 space-y-4"
+        >
+          <div className="relative flex justify-center items-center gap-4">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center">
+              Race Control Dashboard
+            </h1>
+            <Button
+              onClick={() => router.push('/live')}
+              className="bg-[#5382ec] hover:bg-[#436cbf] transition-colors whitespace-nowrap absolute right-0"
+            >
+              Go to Race Predictions
+            </Button>
+          </div>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto text-center">
+            Live race monitoring with real-time telemetry and race control events
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mb-16"
+        >
+          <Card className="bg-[#282a2c] border-none">
+            <CardContent className="p-6">
               <RaceSelection
                 meetings={meetings}
                 sessions={sessions}
@@ -292,137 +319,154 @@ const RaceControlEvents = () => {
               />
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>{selectedDriver ? 'Pilot Information' : 'Race Information'}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {selectedDriver ? (
-                  <div className="space-y-4">
-                    <Button onClick={() => router.push('/live-race')} variant="outline" className="mb-4">
-                      Return to race
-                    </Button>
-                    <div className="flex items-center gap-4">
-                      {selectedDriver.headshot_url && (
-                        <img
-                          src={selectedDriver.headshot_url}
-                          alt={selectedDriver.full_name}
-                          className="h-24 w-24 rounded-full object-cover"
-                        />
-                      )}
-                      <div>
-                        <h2 className="text-2xl font-bold">{selectedDriver.full_name}</h2>
-                        <p className="text-lg text-muted-foreground">{selectedDriver.team_name}</p>
-                        <div 
-                          className="w-8 h-8 rounded-full border-2 border-white"
-                          style={{ backgroundColor: `#${selectedDriver.team_colour}` }}
-                        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Colonne Gauche */}
+          <div className="space-y-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Card className="bg-[#282a2c] border-none">
+                <CardHeader>
+                  <CardTitle className="text-xl bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                    {selectedDriver ? 'Driver Profile' : 'Event Overview'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedDriver ? (
+                    <motion.div className="space-y-4">
+                      <Button 
+                        onClick={() => router.push('/live-race')} 
+                        className="bg-[#5382ec] hover:bg-[#436cbf] transition-colors"
+                      >
+                        Return to Race Overview
+                      </Button>
+                      <div className="flex items-center gap-4">
+                        {selectedDriver.headshot_url && (
+                          <motion.img
+                            src={selectedDriver.headshot_url}
+                            alt={selectedDriver.full_name}
+                            className="h-24 w-24 rounded-full object-cover border-2 border-[#5382ec]"
+                            whileHover={{ scale: 1.05 }}
+                          />
+                        )}
+                        <div>
+                          <h2 className="text-2xl font-bold text-white">{selectedDriver.full_name}</h2>
+                          <p className="text-[#2dd4bf]">{selectedDriver.team_name}</p>
+                          <div 
+                            className="w-8 h-8 rounded-full border-2 border-white mt-2"
+                            style={{ backgroundColor: `#${selectedDriver.team_colour}` }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                      <div>
-                        <p className="font-semibold">Numéro</p>
-                        <p className="text-xl">{selectedDriver.driver_number}</p>
-                      </div>
-                      <div>
-                        <p className="font-semibold">Code</p>
-                        <p className="text-xl">{selectedDriver.name_acronym}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-bold">
-                      {meetings.find(m => m.meeting_key.toString() === selectedMeeting)?.meeting_name || 'Select a Grand Prix'}
-                    </h2>
-                    <div>
-                      <p className="font-semibold">Session: {sessions.find(s => s.session_key.toString() === selectedSession)?.session_name}</p>
-                      <p className="font-semibold">Circuit: {sessions.find(s => s.session_key.toString() === selectedSession)?.circuit_short_name}</p>
-                      {viewMode === 'lap' ? (
-                        <p className="font-semibold">Tour: {currentLap} / {totalLaps}</p>
-                      ) : (
-                        <p className="font-semibold">
-                          Heure actuelle: {currentTime ? new Date(currentTime).toLocaleTimeString() : '-'}
+                    </motion.div>
+                  ) : (
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-bold text-white">
+                        {meetings.find(m => m.meeting_key.toString() === selectedMeeting)?.meeting_name || 'Select Event'}
+                      </h2>
+                      <div className="text-gray-300">
+                        <p>Session: {sessions.find(s => s.session_key.toString() === selectedSession)?.session_name}</p>
+                        <p>Circuit: {sessions.find(s => s.session_key.toString() === selectedSession)?.circuit_short_name}</p>
+                        <p>
+                          {viewMode === 'lap' 
+                            ? `Lap ${currentLap}/${totalLaps}`
+                            : `Time: ${currentTime ? new Date(currentTime).toLocaleTimeString() : '-'}`}
                         </p>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card className="h-96">
-              <CardHeader>
-                <CardTitle>Real Time Data</CardTitle>
-              </CardHeader>
-              <CardContent className="h-80">
-                {realTimeDataContent}
-              </CardContent>
-            </Card>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Card className="bg-[#282a2c] border-none h-[500px]">
+                <CardHeader>
+                  <CardTitle className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                    Live Telemetry
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="h-80">
+                  {realTimeDataContent}
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
-          <div className="space-y-4">
-  <Card>
-    <CardHeader>
-      <CardTitle>Circuit</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="h-64 bg-secondary/20 rounded-lg flex items-center justify-center">
-        Circuit map placeholder
-      </div>
-    </CardContent>
-  </Card>
+          {/* Colonne Centrale */}
+          <div className="space-y-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Card className="bg-[#282a2c] border-none">
+                <CardHeader>
+                  <CardTitle className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                    Circuit Map
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64 bg-[#1d1f20] rounded-lg flex items-center justify-center">
+                    <span className="text-gray-400">Live Circuit Visualization</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-  {selectedDriver && (
-    <Card className="h-[500px]">
-      <CardHeader>
-        <CardTitle>Real Time Sector Analysis</CardTitle>
-      </CardHeader>
-      <CardContent className="h-[calc(100%-3rem)] overflow-y-auto">
-        <SectorAnalysis 
-          driverNumber={Number(driverNumber)}
-          sessionKey={selectedSession}
-          currentTime={currentTime}
-          currentLap={currentLap}
-          viewMode={viewMode}
-        />
-      </CardContent>
-    </Card>
-  )}
-</div>
+            {selectedDriver && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <Card className="bg-[#282a2c] border-none h-[500px]">
+                  <CardHeader>
+                    <CardTitle className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                      Sector Analysis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[calc(100%-3rem)] overflow-y-auto">
+                    <SectorAnalysis 
+                      driverNumber={Number(driverNumber)}
+                      sessionKey={selectedSession}
+                      currentTime={currentTime}
+                      currentLap={currentLap}
+                      viewMode={viewMode}
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </div>
 
-          <div className="space-y-4">
-            <Card className="h-[calc(43vh-2rem)]">
-              <CardContent className="h-[calc(100%-4rem)] overflow-hidden">
-                <DriverStandings
-                  sessionKey={selectedSession}
-                  meetingKey={selectedMeeting}
-                  currentTime={currentTime}
-                  viewMode={viewMode}
-                  currentLap={currentLap}
-                />
-              </CardContent>
-            </Card>
+          {/* Colonne Droite */}
+          <div className="space-y-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Card className="bg-[#282a2c] border-none h-[43vh]">
+                <CardContent className="h-[calc(100%-4rem)] overflow-hidden">
+                  <DriverStandings
+                    sessionKey={selectedSession}
+                    meetingKey={selectedMeeting}
+                    currentTime={currentTime}
+                    viewMode={viewMode}
+                    currentLap={currentLap}
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card className="h-[calc(35vh-2rem)]">
-              <CardHeader>
-                <CardTitle>Messages Race Control</CardTitle>
-              </CardHeader>
-              <CardContent className="h-[calc(100%-4rem)] overflow-auto">
-                <EventDisplay
-                  events={events}
-                  sessionName={sessions.find(s => s.session_key.toString() === selectedSession)?.session_name}
-                  loading={loading}
-                  viewMode={viewMode}
-                  currentLap={currentLap}
-                  currentTime={currentTime}
-                />
-              </CardContent>
-            </Card>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Card className="bg-[#282a2c] border-none h-[35vh]">
+                <CardHeader>
+                  <CardTitle className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                    Race Control
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="h-[calc(100%-4rem)] overflow-auto">
+                  <EventDisplay
+                    events={events}
+                    sessionName={sessions.find(s => s.session_key.toString() === selectedSession)?.session_name}
+                    loading={loading}
+                    viewMode={viewMode}
+                    currentLap={currentLap}
+                    currentTime={currentTime}
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         </div>
       </div>
