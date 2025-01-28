@@ -9,8 +9,11 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '../../components/ui/button';
 import RaceCarTelemetry from '../components/raceComponent/RaceCarTelemetry';
 import SectorAnalysis from '../components/raceComponent/SectorAnalysis';
+import DriverProfile from '../components/raceComponent/DriverProfile';
+import CircuitMap from '../components/raceComponent/CircuitMap';
 import { motion } from 'framer-motion';
-
+import { Gauge } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 
 export interface Driver {
   driver_number: number;
@@ -241,17 +244,17 @@ const RaceControlEvents = () => {
     fetchDriver();
   }, [driverNumber]);
 
-  const { throttle, rpm, speed, gear, drsStatus } = useMemo(() => {
+  const { throttle, rpm, speed, gear, drsStatus, brake } = useMemo(() => {
     const latest = carData[carData.length - 1] || {};
     return {
       throttle: latest?.throttle || 0,
       rpm: latest?.rpm || 0,
       speed: latest?.speed || 0,
       gear: latest?.n_gear?.toString() || 'B',
-      drsStatus: latest?.drs ? 'ACTIF' : 'INACTIF'
+      drsStatus: latest?.drs ? 'ACTIF' : 'INACTIF',
+      brake: latest?.brake || 0
     };
   }, [carData]);
-
   
   const realTimeDataContent = selectedDriver ? (
     <RaceCarTelemetry
@@ -259,17 +262,28 @@ const RaceControlEvents = () => {
       rpm={rpm}
       speed={speed}
       gear={gear}
-      drsStatus={drsStatus} brake={0}    />
+      drsStatus={drsStatus}
+      brake={brake}
+    />
   ) : (
-    <div className="h-full bg-secondary/20 rounded-lg flex items-center justify-center">
-      Select a pilot to see its race datas
-    </div>
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.7),0_0_30px_rgba(236,72,153,0.7)]">
+      <CardHeader className="pb-2 flex justify-between items-start">
+        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
+          Live Telemetry
+        </CardTitle>
+        <Gauge className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text" />
+      </CardHeader>
+      <CardContent className="h-[calc(100%-4rem)] flex items-center justify-center">
+        <span className="text-gray-400">Select a pilot to see telemetry data</span>
+      </CardContent>
+    </Card>
   );
 
 
   return (
     <div className="min-h-screen bg-[#1B1C1D]">
       <div className="container mx-auto px-4 py-16">
+        {/* En-tête - inchangé */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -291,6 +305,7 @@ const RaceControlEvents = () => {
           </p>
         </motion.div>
 
+        {/* Section de sélection - inchangée */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -321,154 +336,112 @@ const RaceControlEvents = () => {
           </Card>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Colonne Gauche */}
-          <div className="space-y-6">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <Card className="bg-[#282a2c] border-none">
-                <CardHeader>
-                  <CardTitle className="text-xl bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                    {selectedDriver ? 'Driver Profile' : 'Event Overview'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {selectedDriver ? (
-                    <motion.div className="space-y-4">
-                      <Button 
-                        onClick={() => router.push('/live-race')} 
-                        className="bg-[#5382ec] hover:bg-[#436cbf] transition-colors"
-                      >
-                        Return to Race Overview
-                      </Button>
-                      <div className="flex items-center gap-4">
-                        {selectedDriver.headshot_url && (
-                          <motion.img
-                            src={selectedDriver.headshot_url}
-                            alt={selectedDriver.full_name}
-                            className="h-24 w-24 rounded-full object-cover border-2 border-[#5382ec]"
-                            whileHover={{ scale: 1.05 }}
-                          />
-                        )}
-                        <div>
-                          <h2 className="text-2xl font-bold text-white">{selectedDriver.full_name}</h2>
-                          <p className="text-[#2dd4bf]">{selectedDriver.team_name}</p>
-                          <div 
-                            className="w-8 h-8 rounded-full border-2 border-white mt-2"
-                            style={{ backgroundColor: `#${selectedDriver.team_colour}` }}
-                          />
-                        </div>
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <div className="space-y-2">
-                      <h2 className="text-2xl font-bold text-white">
-                        {meetings.find(m => m.meeting_key.toString() === selectedMeeting)?.meeting_name || 'Select Event'}
-                      </h2>
-                      <div className="text-gray-300">
-                        <p>Session: {sessions.find(s => s.session_key.toString() === selectedSession)?.session_name}</p>
-                        <p>Circuit: {sessions.find(s => s.session_key.toString() === selectedSession)?.circuit_short_name}</p>
-                        <p>
-                          {viewMode === 'lap' 
-                            ? `Lap ${currentLap}/${totalLaps}`
-                            : `Time: ${currentTime ? new Date(currentTime).toLocaleTimeString() : '-'}`}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <Card className="bg-[#282a2c] border-none h-[500px]">
-                <CardHeader>
-                  <CardTitle className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                    Live Telemetry
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="h-80">
-                  {realTimeDataContent}
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-
-          {/* Colonne Centrale */}
-          <div className="space-y-6">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <Card className="bg-[#282a2c] border-none">
-                <CardHeader>
-                  <CardTitle className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                    Circuit Map
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-64 bg-[#1d1f20] rounded-lg flex items-center justify-center">
-                    <span className="text-gray-400">Live Circuit Visualization</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {selectedDriver && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <Card className="bg-[#282a2c] border-none h-[500px]">
-                  <CardHeader>
-                    <CardTitle className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                      Sector Analysis
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[calc(100%-3rem)] overflow-y-auto">
-                    <SectorAnalysis 
-                      driverNumber={Number(driverNumber)}
-                      sessionKey={selectedSession}
-                      currentTime={currentTime}
-                      currentLap={currentLap}
-                      viewMode={viewMode}
-                    />
-                  </CardContent>
-                </Card>
+        {/* Nouvelle section avec masonry columns */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+            {/* Profil du pilote / Aperçu événement */}
+            <div className="break-inside-avoid">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0 }}
+              >
+                <DriverProfile
+                  selectedDriver={selectedDriver}
+                  selectedMeeting={selectedMeeting}
+                  selectedSession={selectedSession}
+                  viewMode={viewMode}
+                  currentLap={currentLap}
+                  totalLaps={totalLaps}
+                  currentTime={currentTime}
+                  meetings={meetings}
+                  sessions={sessions}
+                  onReturnToOverview={() => router.push('/live-race')}
+                />
               </motion.div>
-            )}
-          </div>
+            </div>
 
-          {/* Colonne Droite */}
-          <div className="space-y-6">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <Card className="bg-[#282a2c] border-none h-[43vh]">
-                <CardContent className="h-[calc(100%-4rem)] overflow-hidden">
-                  <DriverStandings
+            {/* Classement des pilotes */}
+            <div className="break-inside-avoid">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <DriverStandings
+                  sessionKey={selectedSession}
+                  meetingKey={selectedMeeting}
+                  currentTime={currentTime}
+                  viewMode={viewMode}
+                  currentLap={currentLap}
+                />
+              </motion.div>
+            </div>
+
+            {/* Télémétrie en temps réel */}
+            <div className="break-inside-avoid">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                {realTimeDataContent}
+              </motion.div>
+            </div>
+
+            {/* Carte du circuit */}
+            <div className="break-inside-avoid">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <CircuitMap />
+              </motion.div>
+            </div>
+
+            {/* Analyse sectorielle (conditionnelle) */}
+            {selectedDriver && (
+              <div className="break-inside-avoid">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <SectorAnalysis 
+                    driverNumber={Number(driverNumber)}
                     sessionKey={selectedSession}
-                    meetingKey={selectedMeeting}
                     currentTime={currentTime}
-                    viewMode={viewMode}
                     currentLap={currentLap}
+                    viewMode={viewMode}
                   />
-                </CardContent>
-              </Card>
-            </motion.div>
+                </motion.div>
+              </div>
+            )}
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <Card className="bg-[#282a2c] border-none h-[35vh]">
-                <CardHeader>
-                  <CardTitle className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                    Race Control
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="h-[calc(100%-4rem)] overflow-auto">
-                  <EventDisplay
-                    events={events}
-                    sessionName={sessions.find(s => s.session_key.toString() === selectedSession)?.session_name}
-                    loading={loading}
-                    viewMode={viewMode}
-                    currentLap={currentLap}
-                    currentTime={currentTime}
-                  />
-                </CardContent>
-              </Card>
-            </motion.div>
+            {/* Affichage des événements */}
+            <div className="break-inside-avoid">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <EventDisplay
+                  events={events}
+                  sessionName={sessions.find(s => s.session_key.toString() === selectedSession)?.session_name}
+                  loading={loading}
+                  viewMode={viewMode}
+                  currentLap={currentLap}
+                  currentTime={currentTime}
+                />
+              </motion.div>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

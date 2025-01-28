@@ -57,17 +57,20 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)'
       },
       animation: {
-		'border-flow': 'border-flow 3s ease infinite',
-	  },
-	  keyframes: {
-		'rotate': {
-		  '0%': { transform: 'rotate(0deg) translateZ(0)' },
-		  '100%': { transform: 'rotate(360deg) translateZ(0)' }
-		}
-	  }
+        'border-flow': 'border-flow 3s ease infinite',
+      },
+      keyframes: {
+        'rotate': {
+          '0%': { transform: 'rotate(0deg) translateZ(0)' },
+          '100%': { transform: 'rotate(360deg) translateZ(0)' }
+        }
+      }
     }
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require('tailwind-scrollbar')({ nocompatible: true })
+  ],
 };
 
 export default config;

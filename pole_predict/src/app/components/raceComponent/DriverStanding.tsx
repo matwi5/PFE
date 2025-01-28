@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from "../../../components/ui/button";
-import {useRouter} from "next/navigation";
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
+import { Trophy } from 'lucide-react';
 
 interface Driver {
   driver_number: number;
@@ -269,139 +270,145 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
 
   return (
-    <Card className="h-full overflow-hidden">
-      <CardHeader className="py-2">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-lg">
-            {viewMode === 'final' ? 'Final Ranking' : 'Driver Standings'}
-            {viewMode === 'lap' && ` - Lap ${currentLap}`}
-          </CardTitle>
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.7),0_0_30px_rgba(236,72,153,0.7)] h-[70vh]">
+      <CardHeader className="pb-2 flex justify-between items-start">
+        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
+          {viewMode === 'final' ? 'Final Ranking' : 'Driver Standings'}
+          {viewMode === 'lap' && ` - Lap ${currentLap}`}
+        </CardTitle>
+        <div className="flex items-center gap-4">
           <Button 
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setGapMode(prev => prev === 'interval' ? 'leader' : 'interval')}
+            className="text-xs bg-black/20 hover:bg-black/30 text-gray-300"
           >
-            {gapMode === 'interval' ? 'Show gaps to leader' : 'Show intervals'}
+            {gapMode === 'interval' ? 'Gaps to leader' : 'Intervals'}
           </Button>
+          <Trophy className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text" />
         </div>
       </CardHeader>
-      <CardContent className="h-[calc(100%-3rem)]">
-        <div className="h-full overflow-y-auto pr-2">
-          <AnimatePresence>
-            {enhancedStandings
-              .filter(standing => standing.status === 'active')
-              .map((standing, index) => {
-                const isLeader = index === 0;
-                const displayValue = gapMode === 'interval' 
-                  ? standing.interval 
-                  : standing.gap_to_leader;
-                const teamColor = standing.driver_details?.team_colour || '2b2b2b';
-                const headshotUrl = standing.driver_details?.headshot_url;
-                const isSelected = selectedDriver === standing.driver_number;
+      <CardContent className="relative h-[calc(100%-4rem)]">
+        <div 
+          className="h-full overflow-y-auto pr-6
+            scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 
+            hover:scrollbar-thumb-[#d56676]/80 transition-colors duration-200"
+        >
+          <div className="pr-2 space-y-4">
+            <AnimatePresence>
+              {enhancedStandings
+                .filter(standing => standing.status === 'active')
+                .map((standing, index) => {
+                  const isLeader = index === 0;
+                  const displayValue = gapMode === 'interval' 
+                    ? standing.interval 
+                    : standing.gap_to_leader;
+                  const teamColor = standing.driver_details?.team_colour || '2b2b2b';
+                  const headshotUrl = standing.driver_details?.headshot_url;
+                  const isSelected = selectedDriver === standing.driver_number;
 
-                return (
-                  <motion.button
-                    key={standing.driver_number}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="w-full text-left p-0 bg-transparent border-none mb-2 group"
-                    onClick={() => {
-                      setSelectedDriver(standing.driver_number);
-                      router.push(`/live-race?driver=${standing.driver_number}`);
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div 
-                      className={`p-3 rounded-lg relative overflow-hidden transition-all duration-300 ${
-                        isSelected ? 'ring-2 ring-offset-2' : ''
-                      }`}
-                      style={{
-                        backgroundColor: `#${teamColor}33`,
-                        borderLeft: `6px solid #${teamColor}`,
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                        marginLeft: isSelected ? '8px' : '0',
+                  return (
+                    <motion.button
+                      key={standing.driver_number}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                        transition: {
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 30,
+                          delay: index * 0.03
+                        }
                       }}
+                      exit={{ opacity: 0 }}
+                      className="w-full text-left p-0 bg-transparent border-none"
+                      onClick={() => {
+                        setSelectedDriver(standing.driver_number);
+                        router.push(`/live-race?driver=${standing.driver_number}`);
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
-                      <div className="flex items-center">
-                        {/* Photo du pilote avec effet de sélection */}
-                        <span className="font-bold text-sm mr-2 text-muted-foreground">
-                              {standing.position}
-                            </span>
-                        <div className="relative w-12 h-12 flex-shrink-0 mr-4 rounded-full overflow-hidden border-2">
-                          {headshotUrl ? (
-                            <motion.img
-                              src={headshotUrl}
-                              alt={standing.driver_details?.full_name}
-                              className="w-full h-full object-cover"
-                              initial={{ scale: 1 }}
-                              animate={{ scale: isSelected ? 1.1 : 1 }}
-                              transition={{ duration: 0.2 }}
-                            />
-                          ) : (
-                            <div 
-                              className="w-full h-full bg-muted/50 flex items-center justify-center"
-                              style={{ backgroundColor: `#${teamColor}66` }}
-                            >
-                              <span className="font-bold text-sm">
-                                {standing.driver_details?.driver_number}
+                      <div 
+                        className={`p-3 rounded-lg relative overflow-hidden transition-all duration-300 
+                          bg-black/20 backdrop-blur-sm hover:bg-black/30 
+                          ${isSelected ? 'ring-2 ring-[#5382ec] ring-offset-1 ring-offset-[#282a2c]' : ''}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`text-lg font-bold ${
+                            isLeader 
+                              ? 'bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent' 
+                              : 'text-gray-400'
+                          }`}>
+                            {standing.position}
+                          </div>
+
+                          <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden">
+                            {headshotUrl ? (
+                              <motion.img
+                                src={headshotUrl}
+                                alt={standing.driver_details?.full_name}
+                                className="w-full h-full object-cover"
+                                initial={{ scale: 1 }}
+                                animate={{ scale: isSelected ? 1.1 : 1 }}
+                                transition={{ duration: 0.2 }}
+                              />
+                            ) : (
+                              <div 
+                                className="w-full h-full flex items-center justify-center"
+                                style={{ backgroundColor: `#${teamColor}33` }}
+                              >
+                                <span className="font-bold text-white">
+                                  {standing.driver_details?.driver_number}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-2">
+                              <span className="font-medium text-white truncate">
+                                {standing.driver_details?.full_name}
+                              </span>
+                              <span className="text-sm text-gray-400">
+                                {standing.driver_details?.name_acronym}
                               </span>
                             </div>
-                          )}
-                        </div>
-
-                       {/* Infos pilote */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-2">
-                            <span 
-                              className="font-medium truncate"
-                              style={{ color: '#000000'}}
-                            >
-                              {standing.driver_details?.full_name}
-                            </span>
-                            <span 
-                              className="text-sm"
-                              style={{ color: '#000000'}}
-                            >
-                              {standing.driver_details?.name_acronym}
-                            </span>
+                            
+                            <div className="mt-1">
+                              <span 
+                                className="text-xs px-2 py-0.5 rounded-full"
+                                style={{
+                                  backgroundColor: `#${teamColor}33`,
+                                  color: `#${teamColor}`,
+                                }}
+                              >
+                                {standing.driver_details?.team_name}
+                              </span>
+                            </div>
                           </div>
-                          
-                          {/* Nom de l'équipe */}
-                          <div className="mt-1">
-                            <span 
-                              className="text-xs px-3 py-1 rounded-full inline-block font-semibold"
-                              style={{
-                                backgroundColor: `#${teamColor}`,
-                                color: '#000000',
-                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-                              }}
-                            >
-                              {standing.driver_details?.team_name}
-                            </span>
-                          </div>
-                        </div>
 
-
-                        {/* Intervalle */}
-                        <div className="w-24 text-right">
-                          <div 
-                            className="text-sm font-mono font-semibold"
-                            style={{ color: '#000000' }}
-                          >
-                            {formatGap(displayValue, isLeader)}
+                          <div className="text-right font-mono">
+                            <div className={`text-sm font-medium ${
+                              isLeader 
+                                ? 'text-[#5382ec]' 
+                                : 'text-gray-300'
+                            }`}>
+                              {formatGap(displayValue, isLeader)}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </motion.button>
-                );
-              })}
-          </AnimatePresence>
+                    </motion.button>
+                  );
+                })}
+            </AnimatePresence>
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 };
+
 export default DriverStandings;
