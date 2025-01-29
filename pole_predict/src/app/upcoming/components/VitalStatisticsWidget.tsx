@@ -1,13 +1,14 @@
 "use client";
 
 import React from 'react';
-import { motion } from 'framer-motion'; // Assurez-vous que cette ligne est présente
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info } from 'lucide-react';
 
 interface VitalStatisticsWidgetProps {
   stats: Race['vital_statistics'];
   circuit_layout: string;
+  showCircuitLayout: boolean;
 }
 
 const fadeInUp = {
@@ -32,12 +33,12 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 }
 };
 
-const VitalStatisticsWidget: React.FC<VitalStatisticsWidgetProps> = ({ stats, circuit_layout }) => (
+const VitalStatisticsWidget: React.FC<VitalStatisticsWidgetProps> = ({ stats, circuit_layout, showCircuitLayout }) => (
   <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.1 }}>
     <Card className="bg-[#282a2c] border-0">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
+          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
             Circuit Statistics
           </CardTitle>
           <Info className="h-5 w-5 text-[#5382ec]" />
@@ -91,23 +92,26 @@ const VitalStatisticsWidget: React.FC<VitalStatisticsWidgetProps> = ({ stats, ci
             </div>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="p-3 bg-[#1d1f20] rounded-lg">
-            <span className="text-gray-400 text-sm">Circuit Layout</span>
-            <div className="relative w-full aspect-[16/9] rounded-md overflow-hidden mt-2">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <img 
-                  src={circuit_layout} 
-                  alt="Circuit layout"
-                  className="max-w-full max-h-full object-contain"
-                  loading="lazy"
-                  onError={(e) => {
-                    console.error('Error loading circuit image');
-                    e.currentTarget.src = '/fallback-circuit-image.png';
-                  }}
-                />
+          {/* Condition pour afficher le tracé du circuit */}
+          {showCircuitLayout && (
+            <motion.div variants={itemVariants} className="p-3 bg-[#1d1f20] rounded-lg">
+              <span className="text-gray-400 text-sm">Circuit Layout</span>
+              <div className="relative w-full aspect-[16/9] rounded-md overflow-hidden mt-2">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <img
+                    src={circuit_layout}
+                    alt="Circuit layout"
+                    className="max-w-full max-h-full object-contain"
+                    loading="lazy"
+                    onError={(e) => {
+                      console.error('Error loading circuit image');
+                      e.currentTarget.src = '/fallback-circuit-image.png';
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
         </motion.div>
       </CardContent>
     </Card>

@@ -41,12 +41,12 @@ const DriverProfile = ({
   onReturnToOverview
 }: DriverProfileProps) => {
   return (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.7),0_0_30px_rgba(236,72,153,0.7)]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300">
       <CardHeader className="pb-2 flex justify-between items-start">
-        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
+        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
           {selectedDriver ? 'Driver Profile' : 'Event Overview'}
         </CardTitle>
-        <User className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text" />
+        <User className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text" />
       </CardHeader>
       <CardContent>
         {selectedDriver ? (
@@ -67,7 +67,7 @@ const DriverProfile = ({
                 />
               )}
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                   {selectedDriver.full_name}
                 </h2>
                 <p className="text-[#2dd4bf]">{selectedDriver.team_name}</p>
@@ -80,7 +80,7 @@ const DriverProfile = ({
           </motion.div>
         ) : (
           <div className="space-y-3">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
               {meetings.find(m => m.meeting_key.toString() === selectedMeeting)?.meeting_name || 'Select Event'}
             </h2>
             <div className="space-y-2">
@@ -93,7 +93,7 @@ const DriverProfile = ({
                 Circuit: {sessions.find(s => s.session_key.toString() === selectedSession)?.circuit_short_name}
               </p>
               <p className="text-gray-300 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#d56676]" />
+                <span className="w-2 h-2 rounded-full bg-[#2dd4bf]" />
                 {viewMode === 'lap' 
                   ? `Lap ${currentLap}/${totalLaps}`
                   : `Time: ${currentTime ? new Date(currentTime).toLocaleTimeString() : '-'}`}

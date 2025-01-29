@@ -48,10 +48,6 @@ export function predictFutureLaptimes(
   
   // Ajout du log pour voir tous les tours anormaux
   const abnormalLaps = sortedLaps.filter(lap => lap.is_abnormal);
-  console.log('Tours anormaux détectés:', abnormalLaps.map(lap => ({
-      lap_number: lap.lap_number,
-      lap_duration: lap.lap_duration
-  })));
   
   if (sortedLaps.length === 0) {
     return {
@@ -73,16 +69,11 @@ export function predictFutureLaptimes(
       const delta = Math.abs(validLaps[i].lap_duration - validLaps[i-1].lap_duration);
       if (delta > config.ABNORMAL_THRESHOLD) {
           resetIndex = i;
-          console.log(`Reset détecté au tour ${validLaps[i].lap_number} (delta: ${delta.toFixed(2)}s)`);
       }
   }
 
   // Ne garder que les tours après le dernier reset
   validLaps = validLaps.slice(resetIndex);
-
-  console.log('[PREDICT] Tours valides utilisés:', 
-      validLaps.map(l => `${l.lap_number} (${l.lap_duration}s)`).join(', ')
-  );
 
   if (validLaps.length === 0) {
       return {
@@ -101,15 +92,6 @@ export function predictFutureLaptimes(
 
   const shortWindow = Math.min(config.SHORT_WINDOW, validTimes.length);
   const mediumWindow = Math.min(config.MEDIUM_WINDOW, validTimes.length);
-
-  // Log détaillé des deltas
-  console.log('\n[DELTA RESULTS]');
-  console.log(`Short-term delta: ${shortTermDelta.toFixed(3)}s`, 
-      `(sur ${shortWindow} tours: [${validTimes.slice(-shortWindow).join(', ')}])`);
-  console.log(`Medium-term delta: ${mediumTermDelta.toFixed(3)}s`,
-      `(sur ${mediumWindow} tours: [${validTimes.slice(-mediumWindow).join(', ')}])`);
-  console.log(`Combined delta: ${combinedDelta.toFixed(3)}s`,
-      `(pondération: ${config.SHORT_TERM_WEIGHT*100}% short / ${(1-config.SHORT_TERM_WEIGHT)*100}% medium)`);
   
   const futureLapsCount = Math.min(config.FUTURE_LAPS, 10);
 
@@ -145,10 +127,6 @@ export function predictFutureLaptimes(
     threshold: number = LAPTIME_CONFIG.ABNORMAL_THRESHOLD
 ): { lap_number: number; lap_duration: number; is_abnormal: boolean }[] {
     if (laps.length === 0) return [];
-
-    console.log('\n=== Début du nettoyage des temps au tour ===');
-    console.log(`Seuil utilisé: ${threshold}s`);
-    console.log(`Nombre de tours entrants: ${laps.length}`);
 
     const sortedLaps = [...laps].sort((a, b) => a.lap_number - b.lap_number);
     const lapsWithAbnormal = sortedLaps.map(lap => ({

@@ -218,6 +218,7 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
               <VitalStatisticsWidget 
                 stats={selectedRaceData.vital_statistics}
                 circuit_layout={selectedRaceData.circuit_layout}
+                showCircuitLayout={true}
               />
             </div>
             <div className="break-inside-avoid">

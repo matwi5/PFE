@@ -75,7 +75,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
 
   if (loading) {
     return (
-      <Card className="bg-[#282a2c] border-0 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.7),0_0_30px_rgba(236,72,153,0.7)]">
+      <Card className="bg-[#282a2c] border-0 transition-shadow duration-300">
         <CardContent className="flex items-center justify-center h-64">
           <div className="text-gray-500">Loading sectorial data...</div>
         </CardContent>
@@ -85,7 +85,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
 
   if (!laps.length) {
     return (
-      <Card className="bg-[#282a2c] border-0 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.7),0_0_30px_rgba(236,72,153,0.7)]">
+      <Card className="bg-[#282a2c] border-0 transition-shadow duration-300">
         <CardContent className="flex items-center justify-center h-64">
           <div className="text-gray-500">No available sectorial data</div>
         </CardContent>
@@ -94,12 +94,12 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
   }
 
   return (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.7),0_0_30px_rgba(236,72,153,0.7)]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300">
       <CardHeader className="pb-2 flex justify-between items-start">
-        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
+        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
           Sector Analysis
         </CardTitle>
-        <Activity className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text" />
+        <Activity className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text" />
       </CardHeader>
       <CardContent className="space-y-6 h-64 overflow-y-auto">
         {laps.map((lap) => (
@@ -108,7 +108,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
             className="bg-black/20 backdrop-blur-sm p-4 rounded-lg transition-transform duration-300 hover:scale-[1.02]"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="font-semibold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
+              <div className="font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                 Lap {lap.lap_number}
               </div>
               {viewMode === 'chrono' && (

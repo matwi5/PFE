@@ -1,20 +1,200 @@
 // components/PredictionWidget/PredictionWidget.tsx
 "use client"
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles } from 'lucide-react';
-import { PredictionWidgetProps } from '../../types';
-import { PREDICTION_TITLES, PREDICTION_METRICS } from '../../constants';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { db } from '../../../../firebaseConfig';
+import { PredictionData } from '../../types';
+import { PREDICTION_TITLES, PREDICTION_METRICS, LAPTIME_CONFIG } from '../../constants';
 import { SimplePredictionDisplay } from './SimplePredictionDisplay';
 import { BarChartPrediction } from './BarChartPrediction';
 import { LaptimeTable } from './LaptimeTable';
 import { LaptimeGraph } from './LaptimeGraph';
 import { AnimatedBorderCard } from './AnimatedBorderCard';
+import { cleanLaptimeData, predictFutureLaptimes } from '../../utils/laptimePredictions';
 
-export const PredictionWidget = ({ type, data, className, isExpertMode }: PredictionWidgetProps) => {
+interface PredictionWidgetProps {
+  type: string;
+  isExpertMode: boolean;
+  sessionId: string;
+  driverId: string;
+  lapNumber: string;
+  className?: string;
+}
+
+interface LapDataCache {
+  [key: string]: PredictionData;
+}
+
+export const PredictionWidget = ({ 
+  type, 
+  isExpertMode, 
+  sessionId, 
+  driverId, 
+  lapNumber,
+  className 
+}: PredictionWidgetProps) => {
+    const [dataCache, setDataCache] = useState<LapDataCache>({});
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        console.log('PredictionWidget props:', {
+            type,
+            isExpertMode,
+            sessionId,
+            driverId,
+            lapNumber
+        });
+    }, [type, isExpertMode, sessionId, driverId, lapNumber]);
+
+    useEffect(() => {
+        const loadAllPredictions = async () => {
+            if (!sessionId || !driverId) {
+                setDataCache({});
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const newCache: LapDataCache = {};
+
+                // Charger toutes les données en une seule fois
+                const lapsCollectionRef = collection(
+                    db, 
+                    "predictions_ia", 
+                    "version 1", 
+                    "sessions", 
+                    sessionId,
+                    "drivers",
+                    driverId,
+                    "laps"
+                );
+
+                const lapsSnapshot = await getDocs(lapsCollectionRef);
+                const lapDocs = lapsSnapshot.docs.filter(doc => doc.id !== "lap_keys");
+
+                if (type === 'laptime') {
+                    // Charger les données OpenF1 une seule fois
+                    const response = await fetch(
+                        `https://api.openf1.org/v1/laps?session_key=${sessionId}&driver_number=${driverId}`
+                    );
+                    
+                    if (!response.ok) throw new Error('OpenF1 fetch failed');
+                    const openF1Data = await response.json();
+                    
+                    const lapsData = openF1Data
+                        .filter((lap: any) => lap.lap_duration !== null)
+                        .map((lap: any) => ({
+                            lap_number: lap.lap_number,
+                            lap_duration: parseFloat(lap.lap_duration),
+                            is_abnormal: false
+                        }));
+
+                    // Calculer les prédictions pour chaque tour
+                    for (const lapDoc of lapDocs) {
+                        const lapNumber = lapDoc.id;
+                        const currentLapNumber = parseInt(lapNumber);
+                        const maxLap = Math.max(...lapsData.map(l => l.lap_number), 0);
+
+                        if (currentLapNumber >= maxLap || lapsData.length === 0) {
+                            newCache[lapNumber] = { 
+                                predictions: { prediction: 0 }, 
+                                lap_predictions: [] 
+                            };
+                            continue;
+                        }
+
+                        const historicalLaps = lapsData
+                            .filter(l => l.lap_number <= currentLapNumber)
+                            .sort((a, b) => a.lap_number - b.lap_number);
+
+                        const cleanedLaps = cleanLaptimeData(historicalLaps);
+                        const validLaps = cleanedLaps.filter(lap => !lap.is_abnormal);
+
+                        if (validLaps.length > 0) {
+                            const futureLaps = Math.min(
+                                LAPTIME_CONFIG.FUTURE_LAPS,
+                                10,
+                                maxLap - currentLapNumber
+                            );
+
+                            const predictions = predictFutureLaptimes(
+                                validLaps,
+                                currentLapNumber,
+                                { ...LAPTIME_CONFIG, FUTURE_LAPS: futureLaps }
+                            );
+
+                            predictions.lap_predictions = predictions.lap_predictions.map(pred => ({
+                                ...pred,
+                                actual_time: lapsData.find(l => l.lap_number === pred.lap_number)?.lap_duration
+                            }));
+
+                            newCache[lapNumber] = predictions;
+                        } else {
+                            newCache[lapNumber] = { 
+                                predictions: { prediction: 0 }, 
+                                lap_predictions: [] 
+                            };
+                        }
+                    }
+                } else {
+                    // Charger les autres types de prédictions
+                    await Promise.all(
+                        lapDocs.map(async (lapDoc) => {
+                            const lapNumber = lapDoc.id;
+                            const predictionRef = doc(
+                                db, 
+                                "predictions_ia", 
+                                "version 1", 
+                                "sessions", 
+                                sessionId,
+                                "drivers",
+                                driverId,
+                                "laps",
+                                lapNumber,
+                                "predictions",
+                                type
+                            );
+
+                            const predDoc = await getDoc(predictionRef);
+                            if (predDoc.exists()) {
+                                newCache[lapNumber] = predDoc.data() as PredictionData;
+                            }
+                        })
+                    );
+                }
+
+                setDataCache(newCache);
+            } catch (error) {
+                console.error(`Error loading predictions for ${type}:`, error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadAllPredictions();
+    }, [sessionId, driverId, type]);
+
+    // Ajouter une classe CSS pour l'animation
+    const getFlipContainerClass = () => {
+        if (!isExpertMode) return "flip-container";
+        return "flip-container flipped";
+    };
+
     const renderContent = () => {
-        if (!data) {
+        if (loading) {
+            return (
+                <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+            );
+        }
+
+        const currentData = dataCache[lapNumber];
+        if (!currentData) {
             return (
                 <div className="flex items-center justify-center h-full text-gray-500">
                     Data not available
@@ -24,23 +204,23 @@ export const PredictionWidget = ({ type, data, className, isExpertMode }: Predic
 
         if (type === 'laptime') {
             return (
-                <div className={`flip-container ${isExpertMode ? 'animate-flip-card' : ''}`}>
+                <div className={getFlipContainerClass()}>
                     <div className="flip-front">
-                        <LaptimeTable data={data} />
+                        <LaptimeTable data={currentData} />
                     </div>
                     <div className="flip-back">
-                        <LaptimeGraph data={data} />
+                        <LaptimeGraph data={currentData} />
                     </div>
                 </div>
             );
         } else {
             return (
-                <div className={`flip-container ${isExpertMode ? 'animate-flip-card' : ''}`}>
+                <div className={getFlipContainerClass()}>
                     <div className="flip-front">
-                        <SimplePredictionDisplay type={type} data={data} />
+                        <SimplePredictionDisplay type={type} data={currentData} />
                     </div>
                     <div className="flip-back">
-                        <BarChartPrediction type={type} data={data} />
+                        <BarChartPrediction type={type} data={currentData} />
                     </div>
                 </div>
             );

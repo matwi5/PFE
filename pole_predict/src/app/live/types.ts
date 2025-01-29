@@ -44,11 +44,13 @@ export interface PredictionCache {
 
 export interface PredictionWidgetProps {
     type: string;
-    data: PredictionData | null;
-    className?: string;
     isExpertMode: boolean;
-}
-
+    sessionId: string;
+    driverId: string;
+    lapNumber: string;
+    className?: string;
+  }
+  
 export interface ExpertModeToggleProps {
     isExpertMode: boolean;
     onToggle: (checked: boolean) => void;

@@ -270,9 +270,9 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
 
   return (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.7),0_0_30px_rgba(236,72,153,0.7)] h-[70vh]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300 h-[70vh]">
       <CardHeader className="pb-2 flex justify-between items-start">
-        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
+        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
           {viewMode === 'final' ? 'Final Ranking' : 'Driver Standings'}
           {viewMode === 'lap' && ` - Lap ${currentLap}`}
         </CardTitle>
@@ -285,14 +285,14 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           >
             {gapMode === 'interval' ? 'Gaps to leader' : 'Intervals'}
           </Button>
-          <Trophy className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text" />
+          <Trophy className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text" />
         </div>
       </CardHeader>
       <CardContent className="relative h-[calc(100%-4rem)]">
         <div 
           className="h-full overflow-y-auto pr-6
             scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 
-            hover:scrollbar-thumb-[#d56676]/80 transition-colors duration-200"
+            hover:scrollbar-thumb-[#2dd4bf]/80 transition-colors duration-200"
         >
           <div className="pr-2 space-y-4">
             <AnimatePresence>
@@ -338,7 +338,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                         <div className="flex items-center gap-3">
                           <div className={`text-lg font-bold ${
                             isLeader 
-                              ? 'bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent' 
+                              ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent' 
                               : 'text-gray-400'
                           }`}>
                             {standing.position}

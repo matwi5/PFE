@@ -75,12 +75,12 @@ const EventDisplay = ({
 
     if (loading) {
       return (
-        <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.7),0_0_30px_rgba(236,72,153,0.7)] h-[70vh]">
+        <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300">
           <CardHeader className="pb-2 flex justify-between items-start">
-            <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
+            <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
               Race Control
             </CardTitle>
-            <Bell className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text" />
+            <Bell className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text" />
           </CardHeader>
           <CardContent className="flex items-center justify-center h-[calc(100%-4rem)]">
             <div className="text-gray-400">Loading events...</div>
@@ -90,18 +90,18 @@ const EventDisplay = ({
     }
   
     return (
-      <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.7),0_0_30px_rgba(236,72,153,0.7)] h-[70vh]">
+      <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300 h-[70vh]">
         <CardHeader className="pb-2 flex justify-between items-start">
-          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
             Race Control
           </CardTitle>
-          <Bell className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text" />
+          <Bell className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text" />
         </CardHeader>
         <CardContent className="relative h-[calc(100%-4rem)]">
           <div 
             className="h-full overflow-y-auto pr-6
               scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 
-              hover:scrollbar-thumb-[#d56676]/80 transition-colors duration-200"
+              hover:scrollbar-thumb-[#2dd4bf]/80 transition-colors duration-200"
           >
             <div className="pr-2 space-y-4">
               <AnimatePresence>
