@@ -1,18 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { Settings2, GripVertical, ChevronRight, LayoutPanelTop } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { predictionTypes } from '../live/constants';
 
 export interface Widget {
   id: string;
   name: string;
   enabled: boolean;
+  isPrediction?: boolean;
+  predictionType?: string;
+  wasExplicitlyDisabled?: boolean;
 }
 
 interface WidgetCustomizerProps {
   onOrderChange: (widgets: Widget[]) => void;
   onVisibilityChange: (widgets: Widget[]) => void;
+  selectedSession?: string;
+  selectedDriver?: any;
+  isRaceSession?: boolean;
 }
 
 const defaultWidgets: Widget[] = [
@@ -23,19 +30,73 @@ const defaultWidgets: Widget[] = [
   { id: 'circuit-map', name: 'Circuit Map', enabled: true },
   { id: 'sector-analysis', name: 'Sector Analysis', enabled: true },
   { id: 'event-display', name: 'Event Display', enabled: true },
+  ...predictionTypes.map(type => ({
+    id: `prediction-${type}`,
+    name: `${type.charAt(0).toUpperCase() + type.slice(1)} Prediction`,
+    enabled: true,
+    isPrediction: true,
+    predictionType: type
+  }))
 ];
 
 const essentialWidgets = ['driver-profile', 'driver-standings'];
 
-const WidgetCustomizer: React.FC<WidgetCustomizerProps> = ({ onOrderChange, onVisibilityChange }) => {
+const WidgetCustomizer: React.FC<WidgetCustomizerProps> = ({
+  onOrderChange,
+  onVisibilityChange,
+  selectedSession,
+  selectedDriver,
+  isRaceSession
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [widgets, setWidgets] = useState<Widget[]>(defaultWidgets);
 
+  useEffect(() => {
+    const canEnablePrediction = selectedSession && selectedDriver && isRaceSession;
+    const updatedWidgets = widgets.map(widget => {
+      if (widget.isPrediction) {
+        if (!canEnablePrediction) {
+          // Désactive si les conditions ne sont pas remplies
+          return {
+            ...widget,
+            enabled: false
+          };
+        } else {
+          // Active automatiquement si les conditions sont réunies
+          // et que le widget n'a pas été explicitement désactivé avant
+          const wasExplicitlyDisabled = widget.hasOwnProperty('wasExplicitlyDisabled') && widget.wasExplicitlyDisabled;
+          return {
+            ...widget,
+            enabled: wasExplicitlyDisabled ? false : true
+          };
+        }
+      }
+      return widget;
+    });
+    
+    setWidgets(updatedWidgets);
+    onVisibilityChange?.(updatedWidgets);
+  }, [selectedSession, selectedDriver, isRaceSession]);
+
   const handleToggle = (id: string) => {
-    const newWidgets = widgets.map(widget => 
-      widget.id === id ? { ...widget, enabled: !widget.enabled } : widget
-    );
+    const newWidgets = widgets.map(widget => {
+      if (widget.id === id) {
+        if (widget.isPrediction) {
+          const canEnablePrediction = selectedSession && selectedDriver && isRaceSession;
+          if (!canEnablePrediction) return widget;
+          
+          return {
+            ...widget,
+            enabled: !widget.enabled,
+            wasExplicitlyDisabled: widget.enabled // Si on désactive, on marque comme explicitement désactivé
+          };
+        }
+        return { ...widget, enabled: !widget.enabled };
+      }
+      return widget;
+    });
+    
     setWidgets(newWidgets);
     onVisibilityChange?.(newWidgets);
   };
@@ -46,6 +107,14 @@ const WidgetCustomizer: React.FC<WidgetCustomizerProps> = ({ onOrderChange, onVi
   };
 
   const isEssentialWidget = (id: string) => essentialWidgets.includes(id);
+
+  const canToggleWidget = (widget: Widget) => {
+    if (isEssentialWidget(widget.id)) return false;
+    if (widget.isPrediction) {
+      return selectedSession && selectedDriver && isRaceSession;
+    }
+    return true;
+  };
 
   return (
     <div className="fixed right-8 top-32 z-50">
@@ -113,7 +182,7 @@ const WidgetCustomizer: React.FC<WidgetCustomizerProps> = ({ onOrderChange, onVi
                     </div>
                   </div>
 
-                  <div className="max-h-96 overflow-y-auto pr-2 custom-scrollbar"> {/* Conteneur avec scroll personnalisé */}
+                  <div className="max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                     <Reorder.Group
                       axis="y"
                       values={widgets}
@@ -130,13 +199,13 @@ const WidgetCustomizer: React.FC<WidgetCustomizerProps> = ({ onOrderChange, onVi
                             <GripVertical className="w-4 h-4 text-gray-500" />
                             <span className="text-gray-300 text-sm">{widget.name}</span>
                           </div>
-                          <label className={`relative inline-flex items-center ${isEssentialWidget(widget.id) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                          <label className={`relative inline-flex items-center ${!canToggleWidget(widget) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
                             <input
                               type="checkbox"
                               className="sr-only peer"
                               checked={widget.enabled}
-                              onChange={() => !isEssentialWidget(widget.id) && handleToggle(widget.id)}
-                              disabled={isEssentialWidget(widget.id)}
+                              onChange={() => canToggleWidget(widget) && handleToggle(widget.id)}
+                              disabled={!canToggleWidget(widget)}
                             />
                             <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]"></div>
                           </label>
@@ -144,37 +213,37 @@ const WidgetCustomizer: React.FC<WidgetCustomizerProps> = ({ onOrderChange, onVi
                       ))}
                     </Reorder.Group>
                   </div>
-
-                  <style jsx global>{`
-                    .custom-scrollbar {
-                      scrollbar-width: thin;
-                      scrollbar-color: #5382ec #1d1f20;
-                    }
-                    
-                    .custom-scrollbar::-webkit-scrollbar {
-                      width: 6px;
-                    }
-                    
-                    .custom-scrollbar::-webkit-scrollbar-track {
-                      background: #1d1f20;
-                      border-radius: 3px;
-                    }
-                    
-                    .custom-scrollbar::-webkit-scrollbar-thumb {
-                      background: linear-gradient(to bottom, #5382ec, #2dd4bf);
-                      border-radius: 3px;
-                    }
-                    
-                    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                      background: #5382ec;
-                    }
-                  `}</style>
                 </motion.div>
               )}
             </AnimatePresence>
           </CardContent>
         </Card>
       </motion.div>
+
+      <style jsx global>{`
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #5382ec #1d1f20;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #1d1f20;
+          border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: linear-gradient(to bottom, #5382ec, #2dd4bf);
+          border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #5382ec;
+        }
+      `}</style>
     </div>
   );
 };

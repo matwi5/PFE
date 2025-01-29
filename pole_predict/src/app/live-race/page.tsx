@@ -159,7 +159,7 @@ const RaceControlEvents = () => {
       'circuit-map',
       'sector-analysis',
       'event-display',
-      'prediction-widgets'
+      ...predictionTypes.map(type => `prediction-${type}`)
     ],
     visibility: {
       'driver-profile': true,
@@ -169,10 +169,9 @@ const RaceControlEvents = () => {
       'circuit-map': true,
       'sector-analysis': true,
       'event-display': true,
-      'prediction-widgets': true
+      ...Object.fromEntries(predictionTypes.map(type => [`prediction-${type}`, true]))
     }
   });
-
 
   useEffect(() => {
     const fetchMeetings = async () => {
@@ -446,20 +445,19 @@ const RaceControlEvents = () => {
         currentTime={currentTime}
       />
     ),
-    'prediction-widgets': selectedSession && selectedDriver && isRaceSession && (
-      <>
-        {predictionTypes.map((type) => (
-          <PredictionWidget
-            key={type}
-            type={type}
-            isExpertMode={isExpertMode}
-            sessionId={selectedSession}
-            driverId={selectedDriver.driver_number.toString()}
-            lapNumber={currentLap.toString()}
-          />
-        ))}
-      </>
-    ),
+    ...Object.fromEntries(predictionTypes.map(type => [
+      `prediction-${type}`,
+      selectedSession && selectedDriver && isRaceSession && (
+        <PredictionWidget
+          key={type}
+          type={type}
+          isExpertMode={isExpertMode}
+          sessionId={selectedSession}
+          driverId={selectedDriver.driver_number.toString()}
+          lapNumber={currentLap.toString()}
+        />
+      )
+    ]))
   };
 
   // Gestionnaires d'événements pour le WidgetCustomizer
@@ -496,7 +494,7 @@ const RaceControlEvents = () => {
             Live race monitoring with real-time telemetry and AI-powered predictions
           </p>
         </motion.div>
-  
+
         {/* Section de sélection */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -525,13 +523,16 @@ const RaceControlEvents = () => {
             onExpertModeToggle={() => setIsExpertMode(!isExpertMode)}
           />
         </motion.div>
-  
+
         {/* Widget Customizer */}
         <WidgetCustomizer
           onOrderChange={handleWidgetOrderChange}
           onVisibilityChange={handleWidgetVisibilityChange}
+          selectedSession={selectedSession}
+          selectedDriver={selectedDriver}
+          isRaceSession={isRaceSession}
         />
-  
+
         {/* Widgets Grid */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -539,154 +540,96 @@ const RaceControlEvents = () => {
           transition={{ duration: 0.5 }}
         >
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-            {widgetConfig.order.map((widgetId, index) => 
-              widgetConfig.visibility[widgetId] && widgetComponents[widgetId] && (
-                <motion.div
-                  key={widgetId}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="break-inside-avoid"
-                >
-                  {/* Driver Profile */}
-                  {widgetId === 'driver-profile' && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <DriverProfile
-                        selectedDriver={selectedDriver}
-                        selectedMeeting={selectedMeeting}
-                        selectedSession={selectedSession}
-                        viewMode={viewMode}
-                        currentLap={currentLap}
-                        totalLaps={totalLaps}
-                        currentTime={currentTime}
-                        meetings={meetings}
-                        sessions={sessions}
-                        onReturnToOverview={() => router.push("/live-race")}
-                      />
-                    </motion.div>
-                  )}
-  
-                  {/* Driver Standings */}
-                  {widgetId === 'driver-standings' && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <DriverStandings
-                        sessionKey={selectedSession}
-                        meetingKey={selectedMeeting}
-                        currentTime={currentTime}
-                        viewMode={viewMode}
-                        currentLap={currentLap}
-                      />
-                    </motion.div>
-                  )}
-  
-                  {/* Vital Statistics */}
-                  {widgetId === 'vital-statistics' && vitalStats && (
-                    <div className="break-inside-avoid">
-                      <VitalStatisticsWidget
-                        stats={vitalStats}
-                        circuit_layout={vitalStats.circuit_layout || ''}
-                        showCircuitLayout={false}
-                      />
-                    </div>
-                  )}
-  
-                  {/* Real-time Telemetry */}
-                  {widgetId === 'telemetry' && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      {realTimeDataContent}
-                    </motion.div>
-                  )}
-  
-                  {/* Circuit Map */}
-                  {widgetId === 'circuit-map' && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <CircuitMap />
-                    </motion.div>
-                  )}
-  
-                  {/* Sector Analysis */}
-                  {widgetId === 'sector-analysis' && selectedDriver && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <SectorAnalysis
-                        driverNumber={Number(driverNumber)}
-                        sessionKey={selectedSession}
-                        currentTime={currentTime}
-                        currentLap={currentLap}
-                        viewMode={viewMode}
-                      />
-                    </motion.div>
-                  )}
-  
-                  {/* Event Display */}
-                  {widgetId === 'event-display' && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <EventDisplay
-                        events={events}
-                        sessionName={
-                          sessions.find(
-                            (s) => s.session_key.toString() === selectedSession
-                          )?.session_name
-                        }
-                        loading={loading}
-                        viewMode={viewMode}
-                        currentLap={currentLap}
-                        currentTime={currentTime}
-                      />
-                    </motion.div>
-                  )}
-  
-                  {/* Prediction Widgets */}
-                  {widgetId === 'prediction-widgets' && 
-                    selectedSession && 
-                    selectedDriver && 
-                    isRaceSession && (
-                      <>
-                        {predictionTypes.map((type, predIndex) => (
-                          <motion.div
-                            key={type}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: (index + predIndex) * 0.05 }}
-                            className="break-inside-avoid"
-                          >
-                            <PredictionWidget
-                              type={type}
-                              isExpertMode={isExpertMode}
-                              sessionId={selectedSession}
-                              driverId={selectedDriver.driver_number.toString()}
-                              lapNumber={currentLap.toString()}
-                            />
-                          </motion.div>
-                        ))}
-                      </>
-                    )}
-                </motion.div>
-              )
-            )}
+          {widgetConfig.order.map((widgetId, index) => 
+  widgetConfig.visibility[widgetId] && widgetComponents[widgetId] && (
+    <motion.div
+      key={widgetId}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="break-inside-avoid"
+    >
+      {/* Rendu conditionnel pour chaque type de widget */}
+      {widgetId === 'driver-profile' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+        >
+          {widgetComponents['driver-profile']}
+        </motion.div>
+      )}
+      
+      {widgetId === 'driver-standings' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+        >
+          {widgetComponents['driver-standings']}
+        </motion.div>
+      )}
+      
+      {widgetId === 'vital-statistics' && vitalStats && (
+        <div className="break-inside-avoid">
+          {widgetComponents['vital-statistics']}
+        </div>
+      )}
+      
+      {widgetId === 'telemetry' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+        >
+          {widgetComponents['telemetry']}
+        </motion.div>
+      )}
+      
+      {widgetId === 'circuit-map' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+        >
+          {widgetComponents['circuit-map']}
+        </motion.div>
+      )}
+      
+      {widgetId === 'sector-analysis' && selectedDriver && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+        >
+          {widgetComponents['sector-analysis']}
+        </motion.div>
+      )}
+      
+      {widgetId === 'event-display' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+        >
+          {widgetComponents['event-display']}
+        </motion.div>
+      )}
+      
+      {/* Gestion des widgets de prédiction */}
+      {widgetId.startsWith('prediction-') && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+          className="break-inside-avoid"
+        >
+          {widgetComponents[widgetId]}
+        </motion.div>
+      )}
+    </motion.div>
+  )
+)}
           </div>
         </motion.div>
       </div>
