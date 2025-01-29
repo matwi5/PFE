@@ -179,12 +179,23 @@ const RaceControlEvents = () => {
         const response = await fetch("https://api.openf1.org/v1/meetings");
         if (!response.ok) throw new Error("Failed to fetch meetings");
         const data = await response.json();
-        const sortedMeetings = data.sort((a: Meeting, b: Meeting) =>
+  
+        // Filtrer les meetings de 2024 à partir de Monza
+        const monzaDate = new Date("2024-08-30T11:30:00+00:00");
+        const filteredMeetings = data.filter((meeting: Meeting) => {
+          const meetingDate = new Date(meeting.date_start);
+          return meeting.year === 2024 && meetingDate >= monzaDate;
+        });
+  
+        // Trier par date
+        const sortedMeetings = filteredMeetings.sort((a: Meeting, b: Meeting) =>
           new Date(b.date_start).getTime() - new Date(a.date_start).getTime()
         );
+  
         setMeetings(sortedMeetings);
-
+  
         if (sortedMeetings.length > 0) {
+          // Sélectionner le premier meeting disponible
           const latestMeeting = sortedMeetings[0];
           setSelectedMeeting(latestMeeting.meeting_key.toString());
           const responseSessions = await fetch(
@@ -193,7 +204,7 @@ const RaceControlEvents = () => {
           if (!responseSessions.ok) throw new Error("Failed to fetch sessions");
           const sessionsData = await responseSessions.json();
           setSessions(sessionsData);
-
+  
           if (sessionsData.length > 0) {
             const latestSession = sessionsData[0];
             setSelectedSession(latestSession.session_key.toString());
@@ -210,7 +221,7 @@ const RaceControlEvents = () => {
     };
     fetchMeetings();
   }, []);
-
+  
   useEffect(() => {
     if (!selectedMeeting) return;
     const fetchSessions = async () => {
