@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Activity } from 'lucide-react';
@@ -75,9 +73,17 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
 
   if (loading) {
     return (
-      <Card className="bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300">
-        <CardContent className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading sectorial data...</div>
+      <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[48vh]">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+              Sector Analysis
+            </CardTitle>
+            <Activity className="h-5 w-5 text-[#5382ec]" />
+          </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[calc(100%-4rem)]">
+          <div className="text-gray-400">Loading sectorial data...</div>
         </CardContent>
       </Card>
     );
@@ -85,16 +91,24 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
 
   if (!laps.length) {
     return (
-      <Card className="bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300">
-        <CardContent className="flex items-center justify-center h-64">
-          <div className="text-gray-500">No available sectorial data</div>
+      <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[48vh]">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+              Sector Analysis
+            </CardTitle>
+            <Activity className="h-5 w-5 text-[#5382ec]" />
+          </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[calc(100%-4rem)]">
+          <div className="text-gray-400">No available sectorial data</div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[48vh]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -103,44 +117,46 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
           <Activity className="h-5 w-5 text-[#5382ec]" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-6 h-64 overflow-y-auto
-      scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 
-            hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out">
-        {laps.map((lap) => (
-          <div
-            key={lap.lap_number}
-            className="bg-black/20 backdrop-blur-sm p-4 rounded-lg transition-transform duration-300 hover:scale-[1.02]"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                Lap {lap.lap_number}
-              </div>
-              {viewMode === 'chrono' && (
-                <div className="text-sm text-gray-400">
-                  {new Date(lap.date_start).toLocaleTimeString()}
+      <CardContent className="relative h-[calc(100%-4rem)]">
+        <div className="h-full overflow-y-auto pr-6 scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out">
+          <div className="pr-2 space-y-4">
+            {laps.map((lap) => (
+              <div
+                key={lap.lap_number}
+                className="p-4 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:bg-black/30"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                    Lap {lap.lap_number}
+                  </div>
+                  {viewMode === 'chrono' && (
+                    <div className="text-sm text-gray-400">
+                      {new Date(lap.date_start).toLocaleTimeString()}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="space-y-4">
-              <SectorSection
-                sectorNumber={1}
-                segments={lap.segments_sector_1}
-                duration={lap.duration_sector_1}
-              />
-              <SectorSection
-                sectorNumber={2}
-                segments={lap.segments_sector_2}
-                duration={lap.duration_sector_2}
-              />
-              <SectorSection
-                sectorNumber={3}
-                segments={lap.segments_sector_3}
-                duration={lap.duration_sector_3}
-              />
-            </div>
+                <div className="space-y-4">
+                  <SectorSection
+                    sectorNumber={1}
+                    segments={lap.segments_sector_1}
+                    duration={lap.duration_sector_1}
+                  />
+                  <SectorSection
+                    sectorNumber={2}
+                    segments={lap.segments_sector_2}
+                    duration={lap.duration_sector_2}
+                  />
+                  <SectorSection
+                    sectorNumber={3}
+                    segments={lap.segments_sector_3}
+                    duration={lap.duration_sector_3}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </CardContent>
     </Card>
   );

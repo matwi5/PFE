@@ -330,13 +330,13 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                     >
                       <div
                         className={`p-3 rounded-lg relative overflow-hidden transition-all duration-300 
-                          bg-black/20 backdrop-blur-sm hover:bg-black/30 
-                          ${isSelected ? 'ring-2 ring-[#5382ec] ring-offset-1 ring-offset-[#282a2c]' : ''}`}
+                        bg-black/20 backdrop-blur-sm hover:bg-black/30 
+                        ${isSelected ? 'ring-2 ring-inset ring-[#5382ec]' : ''}`}
                       >
                         <div className="flex items-center gap-3">
                           <div className={`text-lg font-bold ${isLeader
-                              ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent'
-                              : 'text-gray-400'
+                            ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent'
+                            : 'text-gray-400'
                             }`}>
                             {standing.position}
                           </div>
@@ -388,8 +388,8 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
                           <div className="text-right font-mono">
                             <div className={`text-sm font-medium ${isLeader
-                                ? 'text-[#5382ec]'
-                                : 'text-gray-300'
+                              ? 'text-[#5382ec]'
+                              : 'text-gray-300'
                               }`}>
                               {formatGap(displayValue, isLeader)}
                             </div>

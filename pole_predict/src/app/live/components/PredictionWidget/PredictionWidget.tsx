@@ -1,4 +1,3 @@
-// components/PredictionWidget/PredictionWidget.tsx
 "use client"
 
 import React, { useEffect, useState } from 'react';
@@ -21,6 +20,7 @@ interface PredictionWidgetProps {
   sessionId: string;
   driverId: string;
   lapNumber: string;
+  viewMode: "chrono" | "lap" | "final";
   className?: string;
 }
 
@@ -34,34 +34,40 @@ export const PredictionWidget = ({
   sessionId, 
   driverId, 
   lapNumber,
+  viewMode,
   className 
 }: PredictionWidgetProps) => {
     const [dataCache, setDataCache] = useState<LapDataCache>({});
     const [loading, setLoading] = useState(true);
+    const [prevLap, setPrevLap] = useState(lapNumber);
 
-    useEffect(() => {
-        console.log('PredictionWidget props:', {
-            type,
-            isExpertMode,
-            sessionId,
-            driverId,
-            lapNumber
-        });
-    }, [type, isExpertMode, sessionId, driverId, lapNumber]);
+    const loadData = async () => {
+        if (!sessionId || !driverId) {
+            setDataCache({});
+            setLoading(false);
+            return;
+        }
 
-    useEffect(() => {
-        const loadAllPredictions = async () => {
-            if (!sessionId || !driverId) {
-                setDataCache({});
-                setLoading(false);
-                return;
-            }
+        try {
+            setLoading(true);
+            const newCache: LapDataCache = {};
 
-            try {
-                setLoading(true);
-                const newCache: LapDataCache = {};
+            if (type === 'laptime') {
+                const response = await fetch(
+                    `https://api.openf1.org/v1/laps?session_key=${sessionId}&driver_number=${driverId}`
+                );
+                
+                if (!response.ok) throw new Error('OpenF1 fetch failed');
+                const openF1Data = await response.json();
+                
+                const lapsData = openF1Data
+                    .filter((lap: any) => lap.lap_duration !== null)
+                    .map((lap: any) => ({
+                        lap_number: lap.lap_number,
+                        lap_duration: parseFloat(lap.lap_duration),
+                        is_abnormal: false
+                    }));
 
-                // Charger toutes les données en une seule fois
                 const lapsCollectionRef = collection(
                     db, 
                     "predictions_ia", 
@@ -76,109 +82,114 @@ export const PredictionWidget = ({
                 const lapsSnapshot = await getDocs(lapsCollectionRef);
                 const lapDocs = lapsSnapshot.docs.filter(doc => doc.id !== "lap_keys");
 
-                if (type === 'laptime') {
-                    // Charger les données OpenF1 une seule fois
-                    const response = await fetch(
-                        `https://api.openf1.org/v1/laps?session_key=${sessionId}&driver_number=${driverId}`
-                    );
-                    
-                    if (!response.ok) throw new Error('OpenF1 fetch failed');
-                    const openF1Data = await response.json();
-                    
-                    const lapsData = openF1Data
-                        .filter((lap: any) => lap.lap_duration !== null)
-                        .map((lap: any) => ({
-                            lap_number: lap.lap_number,
-                            lap_duration: parseFloat(lap.lap_duration),
-                            is_abnormal: false
+                for (const lapDoc of lapDocs) {
+                    const lapNumber = lapDoc.id;
+                    const currentLapNumber = parseInt(lapNumber);
+                    const maxLap = Math.max(...lapsData.map((l: any) => l.lap_number), 0);
+
+                    if (currentLapNumber >= maxLap || lapsData.length === 0) {
+                        newCache[lapNumber] = { 
+                            predictions: { prediction: 0 }, 
+                            lap_predictions: [] 
+                        };
+                        continue;
+                    }
+
+                    const historicalLaps = lapsData
+                        .filter((l: any) => l.lap_number <= currentLapNumber)
+                        .sort((a: any, b: any) => a.lap_number - b.lap_number);
+
+                    const cleanedLaps = cleanLaptimeData(historicalLaps);
+                    const validLaps = cleanedLaps.filter((lap: any) => !lap.is_abnormal);
+
+                    if (validLaps.length > 0) {
+                        const futureLaps = Math.min(
+                            LAPTIME_CONFIG.FUTURE_LAPS,
+                            10,
+                            maxLap - currentLapNumber
+                        );
+
+                        const predictions = predictFutureLaptimes(
+                            validLaps,
+                            currentLapNumber,
+                            { ...LAPTIME_CONFIG, FUTURE_LAPS: futureLaps }
+                        );
+
+                        predictions.lap_predictions = predictions.lap_predictions.map((pred: any) => ({
+                            ...pred,
+                            actual_time: lapsData.find((l: any) => l.lap_number === pred.lap_number)?.lap_duration
                         }));
 
-                    // Calculer les prédictions pour chaque tour
-                    for (const lapDoc of lapDocs) {
-                        const lapNumber = lapDoc.id;
-                        const currentLapNumber = parseInt(lapNumber);
-                        const maxLap = Math.max(...lapsData.map(l => l.lap_number), 0);
-
-                        if (currentLapNumber >= maxLap || lapsData.length === 0) {
-                            newCache[lapNumber] = { 
-                                predictions: { prediction: 0 }, 
-                                lap_predictions: [] 
-                            };
-                            continue;
-                        }
-
-                        const historicalLaps = lapsData
-                            .filter(l => l.lap_number <= currentLapNumber)
-                            .sort((a, b) => a.lap_number - b.lap_number);
-
-                        const cleanedLaps = cleanLaptimeData(historicalLaps);
-                        const validLaps = cleanedLaps.filter(lap => !lap.is_abnormal);
-
-                        if (validLaps.length > 0) {
-                            const futureLaps = Math.min(
-                                LAPTIME_CONFIG.FUTURE_LAPS,
-                                10,
-                                maxLap - currentLapNumber
-                            );
-
-                            const predictions = predictFutureLaptimes(
-                                validLaps,
-                                currentLapNumber,
-                                { ...LAPTIME_CONFIG, FUTURE_LAPS: futureLaps }
-                            );
-
-                            predictions.lap_predictions = predictions.lap_predictions.map(pred => ({
-                                ...pred,
-                                actual_time: lapsData.find(l => l.lap_number === pred.lap_number)?.lap_duration
-                            }));
-
-                            newCache[lapNumber] = predictions;
-                        } else {
-                            newCache[lapNumber] = { 
-                                predictions: { prediction: 0 }, 
-                                lap_predictions: [] 
-                            };
-                        }
+                        newCache[lapNumber] = predictions;
+                    } else {
+                        newCache[lapNumber] = { 
+                            predictions: { prediction: 0 }, 
+                            lap_predictions: [] 
+                        };
                     }
-                } else {
-                    // Charger les autres types de prédictions
-                    await Promise.all(
-                        lapDocs.map(async (lapDoc) => {
-                            const lapNumber = lapDoc.id;
-                            const predictionRef = doc(
-                                db, 
-                                "predictions_ia", 
-                                "version 1", 
-                                "sessions", 
-                                sessionId,
-                                "drivers",
-                                driverId,
-                                "laps",
-                                lapNumber,
-                                "predictions",
-                                type
-                            );
-
-                            const predDoc = await getDoc(predictionRef);
-                            if (predDoc.exists()) {
-                                newCache[lapNumber] = predDoc.data() as PredictionData;
-                            }
-                        })
-                    );
                 }
+            } else {
+                const lapsCollectionRef = collection(
+                    db, 
+                    "predictions_ia", 
+                    "version 1", 
+                    "sessions", 
+                    sessionId,
+                    "drivers",
+                    driverId,
+                    "laps"
+                );
 
-                setDataCache(newCache);
-            } catch (error) {
-                console.error(`Error loading predictions for ${type}:`, error);
-            } finally {
-                setLoading(false);
+                const lapsSnapshot = await getDocs(lapsCollectionRef);
+                const lapDocs = lapsSnapshot.docs.filter(doc => doc.id !== "lap_keys");
+
+                await Promise.all(
+                    lapDocs.map(async (lapDoc) => {
+                        const lapNumber = lapDoc.id;
+                        const predictionRef = doc(
+                            db, 
+                            "predictions_ia", 
+                            "version 1", 
+                            "sessions", 
+                            sessionId,
+                            "drivers",
+                            driverId,
+                            "laps",
+                            lapNumber,
+                            "predictions",
+                            type
+                        );
+
+                        const predDoc = await getDoc(predictionRef);
+                        if (predDoc.exists()) {
+                            newCache[lapNumber] = predDoc.data() as PredictionData;
+                        }
+                    })
+                );
             }
-        };
 
-        loadAllPredictions();
-    }, [sessionId, driverId, type]);
+            setDataCache(newCache);
+        } catch (error) {
+            console.error(`Error loading predictions for ${type}:`, error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    // Ajouter une classe CSS pour l'animation
+    useEffect(() => {
+        // Chargement initial et rechargement quand les paramètres clés changent
+        loadData();
+        setPrevLap(lapNumber);
+    }, [sessionId, driverId, type]); 
+
+    useEffect(() => {
+        // Gestion spécifique du mode chrono et lap
+        if (viewMode === 'chrono' || lapNumber !== prevLap) {
+            loadData();
+            setPrevLap(lapNumber);
+        }
+    }, [lapNumber, viewMode]); // Dépendances pour le suivi temps réel
+    
     const getFlipContainerClass = () => {
         if (!isExpertMode) return "flip-container";
         return "flip-container flipped";

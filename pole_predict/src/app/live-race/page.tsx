@@ -140,17 +140,16 @@ const RaceControlEvents = () => {
   const [totalLaps, setTotalLaps] = useState<number>(0);
   const [viewMode, setViewMode] = useState<"chrono" | "lap" | "final">("final");
   const [lapsData, setLapsData] = useState<LapData[]>([]);
-  const router = useRouter();
   const [selectedDriverNumber, setSelectedDriverNumber] = useState<string | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [carData, setCarData] = useState<CarData[]>([]);
   const [carDataLoading, setCarDataLoading] = useState(false);
   const [isExpertMode, setIsExpertMode] = useState(false);
   const [vitalStats, setVitalStats] = useState<VitalStatistics | null>(null);
-  
+
   const currentSession = sessions.find(s => s.session_key.toString() === selectedSession);
   const isRaceSession = currentSession?.session_type === "Race";
-  
+
   const [widgetConfig, setWidgetConfig] = useState<WidgetConfig>({
     order: [
       'driver-profile',
@@ -188,7 +187,7 @@ const RaceControlEvents = () => {
         });
 
         const sortedMeetings = filteredMeetings.sort((a: Meeting, b: Meeting) =>
-          new Date(b.date_start).getTime() - new Date(a.date_start).getTime()
+          new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
         );
 
         setMeetings(sortedMeetings);
@@ -351,6 +350,22 @@ const RaceControlEvents = () => {
     fetchDriver();
   }, [selectedDriverNumber]);
 
+  useEffect(() => {
+    if (viewMode === 'chrono' && lapsData.length > 0 && currentTime) {
+      const sortedLaps = [...lapsData].sort((a, b) => 
+        new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
+      );
+      
+      const currentLapEntry = sortedLaps
+        .filter(lap => lap.date_start && new Date(lap.date_start) <= new Date(currentTime))
+        .pop();
+  
+      if (currentLapEntry) {
+        setCurrentLap(currentLapEntry.lap_number);
+      }
+    }
+  }, [currentTime, lapsData, viewMode]);
+
   const { throttle, rpm, speed, gear, drsStatus, brake } = useMemo(() => {
     const latest = carData[carData.length - 1] || {};
     return {
@@ -404,8 +419,8 @@ const RaceControlEvents = () => {
       </CardHeader>
       <CardContent className="h-[calc(100%-4rem)] flex items-center justify-center">
         <span className="text-gray-400">
-          {viewMode !== "chrono" 
-            ? "Telemetry only available in chrono mode" 
+          {viewMode !== "chrono"
+            ? "Telemetry only available in chrono mode"
             : "Select a pilot to see telemetry data"}
         </span>
       </CardContent>
@@ -495,12 +510,13 @@ const RaceControlEvents = () => {
       `prediction-${type}`,
       selectedSession && selectedDriver && isRaceSession && (
         <PredictionWidget
-          key={type}
+          key={`prediction-${type}-${currentTime}-${currentLap}`}
           type={type}
           isExpertMode={isExpertMode}
           sessionId={selectedSession}
           driverId={selectedDriverNumber}
           lapNumber={currentLap.toString()}
+          viewMode={viewMode}
         />
       )
     ]))
@@ -561,6 +577,7 @@ const RaceControlEvents = () => {
           selectedSession={selectedSession}
           selectedDriver={selectedDriver}
           isRaceSession={isRaceSession}
+          isFinal={viewMode === "final"}
         />
 
         {/* Widgets Grid */}
@@ -654,7 +671,18 @@ const RaceControlEvents = () => {
                       transition={{ delay: index * 0.05 }}
                       className="break-inside-avoid"
                     >
-                      {widgetComponents[widgetId]}
+                      {selectedSession && selectedDriver && isRaceSession && (
+                        <PredictionWidget
+                          key={`${widgetId}-${currentTime}-${currentLap}`}
+                          type={widgetId.replace('prediction-', '')}
+                          isExpertMode={isExpertMode}
+                          sessionId={selectedSession}
+                          driverId={selectedDriverNumber}
+                          lapNumber={currentLap.toString()}
+                          currentTime={currentTime}
+                          viewMode={viewMode}
+                        />
+                      )}
                     </motion.div>
                   )}
                 </motion.div>

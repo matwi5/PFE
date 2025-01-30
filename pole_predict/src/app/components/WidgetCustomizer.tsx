@@ -20,6 +20,7 @@ interface WidgetCustomizerProps {
   selectedSession?: string;
   selectedDriver?: any;
   isRaceSession?: boolean;
+  isFinal?: boolean;
 }
 
 const defaultWidgets: Widget[] = [
@@ -46,14 +47,15 @@ const WidgetCustomizer: React.FC<WidgetCustomizerProps> = ({
   onVisibilityChange,
   selectedSession,
   selectedDriver,
-  isRaceSession
+  isRaceSession,
+  isFinal
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [widgets, setWidgets] = useState<Widget[]>(defaultWidgets);
 
   useEffect(() => {
-    const canEnablePrediction = selectedSession && selectedDriver && isRaceSession;
+    const canEnablePrediction = selectedSession && selectedDriver && isRaceSession && !isFinal;
     const updatedWidgets = widgets.map(widget => {
       if (widget.isPrediction) {
         if (!canEnablePrediction) {
@@ -77,13 +79,13 @@ const WidgetCustomizer: React.FC<WidgetCustomizerProps> = ({
     
     setWidgets(updatedWidgets);
     onVisibilityChange?.(updatedWidgets);
-  }, [selectedSession, selectedDriver, isRaceSession]);
+  }, [selectedSession, selectedDriver, isRaceSession, isFinal]);
 
   const handleToggle = (id: string) => {
     const newWidgets = widgets.map(widget => {
       if (widget.id === id) {
         if (widget.isPrediction) {
-          const canEnablePrediction = selectedSession && selectedDriver && isRaceSession;
+          const canEnablePrediction = selectedSession && selectedDriver && isRaceSession && !isFinal;
           if (!canEnablePrediction) return widget;
           
           return {
@@ -111,7 +113,7 @@ const WidgetCustomizer: React.FC<WidgetCustomizerProps> = ({
   const canToggleWidget = (widget: Widget) => {
     if (isEssentialWidget(widget.id)) return false;
     if (widget.isPrediction) {
-      return selectedSession && selectedDriver && isRaceSession;
+      return selectedSession && selectedDriver && isRaceSession && !isFinal;
     }
     return true;
   };

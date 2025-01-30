@@ -95,6 +95,11 @@ const RaceSelection = ({
     }
   }, [selectedMeeting, sessions]);
 
+  // Reset view mode to "final" when session changes
+  useEffect(() => {
+    onViewModeChange("final");
+  }, [selectedSession, onViewModeChange]);
+
   // Fetch laps data when session changes
   useEffect(() => {
     const fetchLaps = async () => {
