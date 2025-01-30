@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { User } from 'lucide-react';
+import { User, X } from 'lucide-react';
 
 interface Driver {
   driver_number: number;
@@ -25,7 +25,7 @@ interface DriverProfileProps {
   currentTime: string;
   meetings: any[];
   sessions: any[];
-  onReturnToOverview: () => void;
+  onDriverDeselect: () => void;  // Nouvelle prop
 }
 
 const DriverProfile = ({
@@ -38,7 +38,7 @@ const DriverProfile = ({
   currentTime,
   meetings,
   sessions,
-  onReturnToOverview
+  onDriverDeselect  // Nouvelle prop
 }: DriverProfileProps) => {
   return (
     <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300">
@@ -54,10 +54,12 @@ const DriverProfile = ({
         {selectedDriver ? (
           <motion.div className="space-y-4">
             <Button
-              onClick={onReturnToOverview}
-              className="bg-gradient-to-r from-[#5382ec] to-[#436cbf] hover:from-[#436cbf] hover:to-[#325299] transition-all duration-300"
+              onClick={onDriverDeselect}
+              variant="outline"
+              className="flex items-center gap-2 text-[#5382ec] border-[#5382ec] hover:bg-[#5382ec]/10"
             >
-              Return to Race Overview
+              <X size={16} />
+              Deselect Driver
             </Button>
             <div className="flex items-center gap-4">
               {selectedDriver.headshot_url && (
@@ -81,6 +83,7 @@ const DriverProfile = ({
             </div>
           </motion.div>
         ) : (
+          // Le reste du code reste inchangé
           <div className="space-y-3">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
               {meetings.find(m => m.meeting_key.toString() === selectedMeeting)?.meeting_name || 'Select Event'}

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect, useMemo } from "react";
 import RaceSelection from "../components/raceComponent/RaceSelection";
@@ -13,7 +13,7 @@ import {
   CardTitle,
   CardContent,
 } from "../../components/ui/card";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/button";
 import RaceCarTelemetry from "../components/raceComponent/RaceCarTelemetry";
 import SectorAnalysis from "../components/raceComponent/SectorAnalysis";
@@ -141,15 +141,16 @@ const RaceControlEvents = () => {
   const [viewMode, setViewMode] = useState<"chrono" | "lap" | "final">("final");
   const [lapsData, setLapsData] = useState<LapData[]>([]);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const driverNumber = searchParams.get("driver");
+  const [selectedDriverNumber, setSelectedDriverNumber] = useState<string | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [carData, setCarData] = useState<CarData[]>([]);
   const [carDataLoading, setCarDataLoading] = useState(false);
-  const [isExpertMode, setIsExpertMode] = useState(false); // Ajout de la variable pour le mode expert
+  const [isExpertMode, setIsExpertMode] = useState(false);
   const [vitalStats, setVitalStats] = useState<VitalStatistics | null>(null);
+  
   const currentSession = sessions.find(s => s.session_key.toString() === selectedSession);
   const isRaceSession = currentSession?.session_type === "Race";
+  
   const [widgetConfig, setWidgetConfig] = useState<WidgetConfig>({
     order: [
       'driver-profile',
@@ -180,14 +181,12 @@ const RaceControlEvents = () => {
         if (!response.ok) throw new Error("Failed to fetch meetings");
         const data = await response.json();
 
-        // Filtrer les meetings de 2024 à partir de Monza
         const monzaDate = new Date("2024-08-30T11:30:00+00:00");
         const filteredMeetings = data.filter((meeting: Meeting) => {
           const meetingDate = new Date(meeting.date_start);
           return meeting.year === 2024 && meetingDate >= monzaDate;
         });
 
-        // Trier par date
         const sortedMeetings = filteredMeetings.sort((a: Meeting, b: Meeting) =>
           new Date(b.date_start).getTime() - new Date(a.date_start).getTime()
         );
@@ -195,7 +194,6 @@ const RaceControlEvents = () => {
         setMeetings(sortedMeetings);
 
         if (sortedMeetings.length > 0) {
-          // Sélectionner le premier meeting disponible
           const latestMeeting = sortedMeetings[0];
           setSelectedMeeting(latestMeeting.meeting_key.toString());
           const responseSessions = await fetch(
@@ -300,12 +298,12 @@ const RaceControlEvents = () => {
 
   useEffect(() => {
     const fetchCarData = async () => {
-      if (driverNumber && selectedSession && currentTime) {
+      if (selectedDriverNumber && selectedSession && currentTime) {
         try {
           setCarDataLoading(true);
           const response = await fetch(
             `https://api.openf1.org/v1/car_data?` +
-            `driver_number=${driverNumber}&` +
+            `driver_number=${selectedDriverNumber}&` +
             `session_key=${selectedSession}&` +
             `date<=${currentTime}`
           );
@@ -324,14 +322,14 @@ const RaceControlEvents = () => {
       }
     };
     fetchCarData();
-  }, [driverNumber, selectedSession, currentTime]);
+  }, [selectedDriverNumber, selectedSession, currentTime]);
 
   useEffect(() => {
     const fetchDriver = async () => {
-      if (driverNumber) {
+      if (selectedDriverNumber) {
         try {
           const response = await fetch(
-            `https://api.openf1.org/v1/drivers?driver_number=${driverNumber}`
+            `https://api.openf1.org/v1/drivers?driver_number=${selectedDriverNumber}`
           );
           const data = await response.json();
           setSelectedDriver(data[0] || null);
@@ -343,7 +341,7 @@ const RaceControlEvents = () => {
       }
     };
     fetchDriver();
-  }, [driverNumber]);
+  }, [selectedDriverNumber]);
 
   const { throttle, rpm, speed, gear, drsStatus, brake } = useMemo(() => {
     const latest = carData[carData.length - 1] || {};
@@ -404,6 +402,29 @@ const RaceControlEvents = () => {
     </Card>
   );
 
+  const handleDriverSelection = (driverNumber: string | null) => {
+    setSelectedDriverNumber(driverNumber);
+    if (!driverNumber) {
+      setCarData([]);
+      setSelectedDriver(null);
+    }
+  };
+
+  const handleWidgetOrderChange = (newWidgets: Widget[]) => {
+    setWidgetConfig(prev => ({
+      ...prev,
+      order: newWidgets.map(w => w.id),
+      visibility: Object.fromEntries(newWidgets.map(w => [w.id, w.enabled]))
+    }));
+  };
+
+  const handleWidgetVisibilityChange = (newWidgets: Widget[]) => {
+    setWidgetConfig(prev => ({
+      ...prev,
+      visibility: Object.fromEntries(newWidgets.map(w => [w.id, w.enabled]))
+    }));
+  };
+
   const widgetComponents: { [key: string]: JSX.Element } = {
     'driver-profile': (
       <DriverProfile
@@ -416,7 +437,7 @@ const RaceControlEvents = () => {
         currentTime={currentTime}
         meetings={meetings}
         sessions={sessions}
-        onReturnToOverview={() => router.push("/live-race")}
+        onDriverDeselect={() => handleDriverSelection(null)}
       />
     ),
     'driver-standings': (
@@ -426,6 +447,8 @@ const RaceControlEvents = () => {
         currentTime={currentTime}
         viewMode={viewMode}
         currentLap={currentLap}
+        onDriverSelect={handleDriverSelection}
+        selectedDriverNumber={selectedDriverNumber}
       />
     ),
     'vital-statistics': vitalStats && (
@@ -439,7 +462,7 @@ const RaceControlEvents = () => {
     'circuit-map': <CircuitMap />,
     'sector-analysis': selectedDriver && (
       <SectorAnalysis
-        driverNumber={Number(driverNumber)}
+        driverNumber={Number(selectedDriverNumber)}
         sessionKey={selectedSession}
         currentTime={currentTime}
         currentLap={currentLap}
@@ -466,27 +489,11 @@ const RaceControlEvents = () => {
           type={type}
           isExpertMode={isExpertMode}
           sessionId={selectedSession}
-          driverId={selectedDriver.driver_number.toString()}
+          driverId={selectedDriverNumber}
           lapNumber={currentLap.toString()}
         />
       )
     ]))
-  };
-
-  // Gestionnaires d'événements pour le WidgetCustomizer
-  const handleWidgetOrderChange = (newWidgets: Widget[]) => {
-    setWidgetConfig(prev => ({
-      ...prev,
-      order: newWidgets.map(w => w.id),
-      visibility: Object.fromEntries(newWidgets.map(w => [w.id, w.enabled]))
-    }));
-  };
-
-  const handleWidgetVisibilityChange = (newWidgets: Widget[]) => {
-    setWidgetConfig(prev => ({
-      ...prev,
-      visibility: Object.fromEntries(newWidgets.map(w => [w.id, w.enabled]))
-    }));
   };
 
   return (

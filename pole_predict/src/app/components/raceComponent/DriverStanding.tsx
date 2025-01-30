@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
 import { Trophy } from 'lucide-react';
 
 interface Driver {
@@ -58,7 +57,9 @@ interface DriverStandingsProps {
   meetingKey: string;
   currentTime: string;
   viewMode: 'chrono' | 'lap' | 'final';
-  currentLap?: number;
+  currentLap: number;
+  onDriverSelect: (driverNumber: string | null) => void;
+  selectedDriverNumber: string | null;
 }
 
 const DriverStandings: React.FC<DriverStandingsProps> = ({
@@ -66,10 +67,11 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
   meetingKey,
   currentTime,
   viewMode,
-  currentLap = 0
+  currentLap,
+  onDriverSelect,
+  selectedDriverNumber
 }) => {
   const [selectedDriver, setSelectedDriver] = useState<number | null>(null);
-  const router = useRouter();
   const [positions, setPositions] = useState<DriverPosition[]>([]);
   const [intervals, setIntervals] = useState<Interval[]>([]);
   const [lapTimes, setLapTimes] = useState<LapTime[]>([]);
@@ -80,7 +82,6 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
   const [leaderLapStartTimes, setLeaderLapStartTimes] = useState<Map<number, string>>(new Map());
   const [gapMode, setGapMode] = useState<'interval' | 'leader'>('interval');
 
-  // Fetch initial data
   useEffect(() => {
     if (!sessionKey || !meetingKey) return;
 
@@ -110,7 +111,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
         // Fetch lap times
         const lapTimesResponse = await fetch(`https://api.openf1.org/v1/laps?session_key=${sessionKey}`);
-        const lapTimesData = await lapTimesResponse.json();
+        const lapTimesData = await response.json();
         setLapTimes(lapTimesData);
 
         // Process leader lap start times
@@ -119,16 +120,15 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
         );
 
-        // Pour chaque tour, trouver le moment où le leader a commencé le tour
         sortedLapTimes.forEach(lap => {
           const positions = positionsData.filter((pos: { date: string | number | Date; }) => 
             new Date(pos.date).getTime() <= new Date(lap.date_start).getTime()
           );
           
           if (positions.length > 0) {
-            // Trouver le leader à ce moment
             const leaderPosition = positions
-              .sort((a: { date: string | number | Date; }, b: { date: string | number | Date; }) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .sort((a: { date: string | number | Date; }, b: { date: string | number | Date; }) => 
+                new Date(b.date).getTime() - new Date(a.date).getTime())
               .find((pos: { position: number; }) => pos.position === 1);
 
             if (leaderPosition && leaderPosition.driver_number === lap.driver_number) {
@@ -196,7 +196,6 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           if (lapStartTime) {
             const lapStartMs = new Date(lapStartTime).getTime();
             
-            // Get positions at the start of the lap
             positions.forEach(pos => {
               const posTime = new Date(pos.date).getTime();
               if (posTime <= lapStartMs) {
@@ -207,7 +206,6 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
               }
             });
 
-            // Get intervals at the start of the lap
             intervals.forEach(int => {
               const intTime = new Date(int.date).getTime();
               if (intTime <= lapStartMs) {
@@ -221,7 +219,6 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           break;
 
         case 'final':
-          // Get final positions and intervals
           positions.forEach(pos => {
             const existing = relevantPositions.get(pos.driver_number);
             if (!existing || new Date(pos.date) > new Date(existing.date)) {
@@ -268,26 +265,25 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
     processStandings();
   }, [positions, intervals, drivers, currentTime, viewMode, currentLap, leaderLapStartTimes]);
 
-
   return (
     <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 h-[70vh]">
       <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                  {viewMode === 'final' ? 'Final Ranking' : 'Driver Standings'}
-          {viewMode === 'lap' && ` - Lap ${currentLap}`}
-        </CardTitle>
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost"
-            size="sm"
-            onClick={() => setGapMode(prev => prev === 'interval' ? 'leader' : 'interval')}
-            className="text-xs bg-black/20 hover:bg-black/30 text-gray-300"
-          >
-            {gapMode === 'interval' ? 'Gaps to leader' : 'Intervals'}
-          </Button>
-          <Trophy className="h-5 w-5 text-[#5382ec]" />
-        </div>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+            {viewMode === 'final' ? 'Final Ranking' : 'Driver Standings'}
+            {viewMode === 'lap' && ` - Lap ${currentLap}`}
+          </CardTitle>
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => setGapMode(prev => prev === 'interval' ? 'leader' : 'interval')}
+              className="text-xs bg-black/20 hover:bg-black/30 text-gray-300"
+            >
+              {gapMode === 'interval' ? 'Gaps to leader' : 'Intervals'}
+            </Button>
+            <Trophy className="h-5 w-5 text-[#5382ec]" />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="relative h-[calc(100%-4rem)]">
@@ -307,7 +303,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                     : standing.gap_to_leader;
                   const teamColor = standing.driver_details?.team_colour || '2b2b2b';
                   const headshotUrl = standing.driver_details?.headshot_url;
-                  const isSelected = selectedDriver === standing.driver_number;
+                  const isSelected = selectedDriverNumber === standing.driver_number.toString();
 
                   return (
                     <motion.button
@@ -327,7 +323,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                       className="w-full text-left p-0 bg-transparent border-none"
                       onClick={() => {
                         setSelectedDriver(standing.driver_number);
-                        router.push(`/live-race?driver=${standing.driver_number}`);
+                        onDriverSelect(standing.driver_number.toString());
                       }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
