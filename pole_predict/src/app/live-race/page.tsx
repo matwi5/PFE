@@ -154,11 +154,11 @@ const RaceControlEvents = () => {
     order: [
       'driver-profile',
       'driver-standings',
-      'vital-statistics',
       'telemetry',
       'circuit-map',
       'sector-analysis',
       'event-display',
+      'vital-statistics',
       ...predictionTypes.map(type => `prediction-${type}`)
     ],
     visibility: {

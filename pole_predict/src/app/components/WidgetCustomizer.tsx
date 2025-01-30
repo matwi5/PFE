@@ -25,10 +25,10 @@ interface WidgetCustomizerProps {
 const defaultWidgets: Widget[] = [
   { id: 'driver-profile', name: 'Driver Profile', enabled: true },
   { id: 'driver-standings', name: 'Driver Standings', enabled: true },
-  { id: 'vital-statistics', name: 'Vital Statistics', enabled: true },
   { id: 'telemetry', name: 'Real-time Telemetry', enabled: true },
   { id: 'circuit-map', name: 'Circuit Map', enabled: true },
   { id: 'sector-analysis', name: 'Sector Analysis', enabled: true },
+  { id: 'vital-statistics', name: 'Vital Statistics', enabled: true },
   { id: 'event-display', name: 'Event Display', enabled: true },
   ...predictionTypes.map(type => ({
     id: `prediction-${type}`,

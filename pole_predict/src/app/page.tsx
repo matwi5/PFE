@@ -228,7 +228,7 @@ const HomePage: React.FC = () => {
           <img
             src="/images/f1car.png"
             alt="F1 Car"
-            className="w-96 mb-8 transition-transform duration-500 hover:scale-110"
+            className="w-[40rem]  mb-20 transition-transform duration-500 hover:scale-110"
           />
         </motion.div>
 

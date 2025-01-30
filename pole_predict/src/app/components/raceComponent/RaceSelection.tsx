@@ -226,195 +226,202 @@ const RaceSelection = ({
   };
 
   return (
-    <Card className="bg-[#282a2c] border-none border border-gray-800 hover:border-[#5382ec]">
-      <CardContent className="p-6">
-        <div className="relative h-16 flex items-center">
-          <div className="absolute inset-0 rounded-lg p-0.5">
-            <div className="flex items-center h-full px-6 gap-6">
-              {/* Sélection GP */}
-              <div className="w-64">
-                <Select value={selectedMeeting} onValueChange={onMeetingChange}>
-                  <SelectTrigger
-                    className={`h-10 border-0 transition-all ${selectedMeeting
-                      ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
-                      : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
-                      }`}
-                  >
-                    <SelectValue placeholder="Select GP" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#282a2c] border-0">
-                    {meetings.map((m) => (
-                      <SelectItem
-                        key={m.meeting_key}
-                        value={m.meeting_key.toString()}
-                        className="text-gray-300 hover:bg-[#5382ec]/20 focus:bg-[#5382ec]/30"
-                      >
-                        {m.meeting_name} ({m.year})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Sélection Session */}
-              {selectedMeeting && (
-                <div className="w-56">
-                  <Select value={selectedSession} onValueChange={onSessionChange}>
+    <motion.div
+      className="bg-[#282a2c] border-none border border-gray-800 hover:border-[#5382ec]"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="bg-transparent border-none">
+        <CardContent className="p-6">
+          <div className="relative h-16 flex items-center">
+            <div className="absolute inset-0 rounded-lg p-0.5">
+              <div className="flex items-center h-full px-6 gap-6">
+                {/* Sélection GP */}
+                <motion.div className="w-64" layout>
+                  <Select value={selectedMeeting} onValueChange={onMeetingChange}>
                     <SelectTrigger
-                      className={`h-10 border-0 transition-all ${selectedSession
+                      className={`h-10 border-0 transition-all ${selectedMeeting
                         ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
                         : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
                         }`}
                     >
-                      <SelectValue placeholder="Session" />
+                      <SelectValue placeholder="Select GP" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#282a2c] border-0">
-                      {sessions.map((s) => (
+                      {meetings.map((m) => (
                         <SelectItem
-                          key={s.session_key}
-                          value={s.session_key.toString()}
+                          key={m.meeting_key}
+                          value={m.meeting_key.toString()}
                           className="text-gray-300 hover:bg-[#5382ec]/20 focus:bg-[#5382ec]/30"
                         >
-                          {s.session_name}
+                          {m.meeting_name} ({m.year})
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              )}
-              <div className="flex-1">
-                <div className="bg-[#1d1f20] rounded-[6px] p-2">
-                  <div className="flex items-center gap-4">
-                    {/* Mode de vue */}
-                    <motion.div className="flex gap-2" layout>
-                      {["chrono", "lap", "final"].map((mode) => (
-                        <motion.button
-                          key={mode}
-                          onClick={() => onViewModeChange(mode as any)}
-                          className={`
+                </motion.div>
+
+                {/* Sélection Session */}
+                {selectedMeeting && (
+                  <motion.div className="w-56" layout>
+                    <Select value={selectedSession} onValueChange={onSessionChange}>
+                      <SelectTrigger
+                        className={`h-10 border-0 transition-all ${selectedSession
+                          ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
+                          : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
+                          }`}
+                      >
+                        <SelectValue placeholder="Session" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#282a2c] border-0">
+                        {sessions.map((s) => (
+                          <SelectItem
+                            key={s.session_key}
+                            value={s.session_key.toString()}
+                            className="text-gray-300 hover:bg-[#5382ec]/20 focus:bg-[#5382ec]/30"
+                          >
+                            {s.session_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </motion.div>
+                )}
+                <motion.div className="flex-1" layout>
+                  <div className="bg-[#1d1f20] rounded-[6px] p-2">
+                    <div className="flex items-center gap-4">
+                      {/* Mode de vue */}
+                      <motion.div className="flex gap-2" layout>
+                        {["chrono", "lap", "final"].map((mode) => (
+                          <motion.button
+                            key={mode}
+                            onClick={() => onViewModeChange(mode as any)}
+                            className={`
                     px-4 py-2 rounded-md text-sm font-medium transition-colors
                     ${viewMode === mode
-                              ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
-                              : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
-                            }
+                                ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
+                                : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
+                              }
                   `}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                        </motion.button>
-                      ))}
-                    </motion.div>
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                          </motion.button>
+                        ))}
+                      </motion.div>
 
-                    {/* Contrôle principal avec fond sombre - Inspiré de LapSlider */}
+                      {/* Contrôle principal avec fond sombre - Inspiré de LapSlider */}
 
-                    <motion.button
-                      onClick={() => setIsRunning(!isRunning)}
-                      className={`
+                      <motion.button
+                        onClick={() => setIsRunning(!isRunning)}
+                        className={`
                         w-10 h-10 rounded-lg flex items-center justify-center
                         ${isRunning ? "text-[#2dd4bf]" : "text-[#2dd4bf]"}
                         hover:bg-white/5 transition-colors
                       `}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      {isRunning ? (
-                        <Pause className="w-5 h-5" />
-                      ) : (
-                        <Play className="w-5 h-5" />
-                      )}
-                    </motion.button>
-
-                    {/* Affichage actuel */}
-                    <div className="w-16">
-                      <div className="text-sm text-gray-400">
-                        {viewMode === "chrono" ? "TIME" : "LAP"}
-                      </div>
-                      <div className="text-xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                        {viewMode === "chrono"
-                          ? formatTime(currentTime).split(":").slice(0, 2).join(":")
-                          : currentLap}
-                      </div>
-                    </div>
-
-                    {/* Slider personnalisé */}
-                    <div className="flex-1">
-                      <Slider.Root
-                        className="relative flex items-center select-none touch-none h-5 cursor-pointer"
-                        value={[getCurrentValue()]}
-                        max={100}
-                        step={0.1}
-                        onValueChange={([v]) => handleSliderChange(v)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                       >
-                        <Slider.Track className="bg-gray-700 relative grow h-[3px] rounded-full">
-                          <Slider.Range className="absolute h-full rounded-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]" />
-                        </Slider.Track>
-                        <Slider.Thumb className="block w-5 h-5 bg-[#1d1f20] border-2 border-[#5382ec] rounded-full focus:outline-none transition-transform hover:scale-110" />
-                      </Slider.Root>
-                    </div>
+                        {isRunning ? (
+                          <Pause className="w-5 h-5" />
+                        ) : (
+                          <Play className="w-5 h-5" />
+                        )}
+                      </motion.button>
 
-                    {/* Affichage max */}
-                    <div className="w-16 text-right">
-                      <div className="text-sm text-gray-400">MAX</div>
-                      <div className="text-xl font-bold text-gray-500">
-                        {viewMode === "chrono"
-                          ? formatTime(sessionEndTime).split(":").slice(0, 2).join(":")
-                          : totalLaps}
-                      </div>
+                      {/* Affichage actuel */}
+                      <motion.div className="w-16" layout>
+                        <div className="text-sm text-gray-400">
+                          {viewMode === "chrono" ? "TIME" : "LAP"}
+                        </div>
+                        <div className="text-xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                          {viewMode === "chrono"
+                            ? formatTime(currentTime).split(":").slice(0, 2).join(":")
+                            : currentLap}
+                        </div>
+                      </motion.div>
+
+                      {/* Slider personnalisé */}
+                      <motion.div className="flex-1" layout>
+                        <Slider.Root
+                          className="relative flex items-center select-none touch-none h-5 cursor-pointer"
+                          value={[getCurrentValue()]}
+                          max={100}
+                          step={0.1}
+                          onValueChange={([v]) => handleSliderChange(v)}
+                        >
+                          <Slider.Track className="bg-gray-700 relative grow h-[3px] rounded-full">
+                            <Slider.Range className="absolute h-full rounded-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]" />
+                          </Slider.Track>
+                          <Slider.Thumb className="block w-5 h-5 bg-[#1d1f20] border-2 border-[#5382ec] rounded-full focus:outline-none transition-transform hover:scale-110" />
+                        </Slider.Root>
+                      </motion.div>
+
+                      {/* Affichage max */}
+                      <motion.div className="w-16 text-right" layout>
+                        <div className="text-sm text-gray-400">MAX</div>
+                        <div className="text-xl font-bold text-gray-500">
+                          {viewMode === "chrono"
+                            ? formatTime(sessionEndTime).split(":").slice(0, 2).join(":")
+                            : totalLaps}
+                        </div>
+                      </motion.div>
                     </div>
                   </div>
-                </div>
-              </div>
-              {/* Switch Mode Simple/Expert - Inspiré de PredictionControls */}
-              {selectedSession && (
-                <motion.div
-                  className={`
+                </motion.div>
+                {/* Switch Mode Simple/Expert - Inspiré de PredictionControls */}
+                {selectedSession && (
+                  <motion.div
+                    className={`
                   relative h-12 w-32 rounded-lg cursor-pointer overflow-hidden
                   bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]
                   p-0.5
                 `}
-                  onClick={onExpertModeToggle}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <motion.div
-                    className={`
+                    onClick={onExpertModeToggle}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <motion.div
+                      className={`
                     absolute inset-0 bg-[#1d1f20] m-0.5 rounded-[6px]
                     flex items-center justify-center
                     overflow-hidden
                   `}
-                    initial={false}
-                  >
-                    <motion.div
-                      className="absolute inset-0 flex"
-                      animate={{ x: isExpertMode ? "-100%" : "0%" }}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      initial={false}
                     >
-                      <div className="w-full h-full flex items-center justify-center flex-shrink-0">
-                        <span
-                          className={`text-sm font-medium transition-colors ${!isExpertMode ? "text-[#5382ec]" : "text-gray-400"
-                            }`}
-                        >
-                          Simple
-                        </span>
-                      </div>
-                      <div className="w-full h-full flex items-center justify-center flex-shrink-0">
-                        <span
-                          className={`text-sm font-medium transition-colors ${isExpertMode ? "text-[#2dd4bf]" : "text-gray-400"
-                            }`}
-                        >
-                          Expert
-                        </span>
-                      </div>
+                      <motion.div
+                        className="absolute inset-0 flex"
+                        animate={{ x: isExpertMode ? "-100%" : "0%" }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      >
+                        <div className="w-full h-full flex items-center justify-center flex-shrink-0">
+                          <span
+                            className={`text-sm font-medium transition-colors ${!isExpertMode ? "text-[#5382ec]" : "text-gray-400"
+                              }`}
+                          >
+                            Simple
+                          </span>
+                        </div>
+                        <div className="w-full h-full flex items-center justify-center flex-shrink-0">
+                          <span
+                            className={`text-sm font-medium transition-colors ${isExpertMode ? "text-[#2dd4bf]" : "text-gray-400"
+                              }`}
+                          >
+                            Expert
+                          </span>
+                        </div>
+                      </motion.div>
                     </motion.div>
                   </motion.div>
-                </motion.div>
-              )}
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 
