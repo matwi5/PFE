@@ -75,7 +75,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
 
   if (loading) {
     return (
-      <Card className="bg-[#282a2c] border-0 transition-shadow duration-300">
+      <Card className="bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300">
         <CardContent className="flex items-center justify-center h-64">
           <div className="text-gray-500">Loading sectorial data...</div>
         </CardContent>
@@ -85,7 +85,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
 
   if (!laps.length) {
     return (
-      <Card className="bg-[#282a2c] border-0 transition-shadow duration-300">
+      <Card className="bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300">
         <CardContent className="flex items-center justify-center h-64">
           <div className="text-gray-500">No available sectorial data</div>
         </CardContent>
@@ -94,7 +94,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
   }
 
   return (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300">
       <CardHeader className="pb-2 flex justify-between items-start">
         <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
           Sector Analysis

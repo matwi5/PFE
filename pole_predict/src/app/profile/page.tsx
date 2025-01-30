@@ -1,17 +1,19 @@
 "use client"
+
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { auth, db } from '../../firebaseConfig'
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore'
 import { User } from 'firebase/auth'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "lucide-react"
+import { Badge as LucideBadge, User as UserIcon } from 'lucide-react'
+import { motion } from 'framer-motion'
+import Typewriter from "typewriter-effect"
 
-// Interface pour la structure d'un badge
 interface UserBadge {
   name: string
   description: string
@@ -19,7 +21,6 @@ interface UserBadge {
   type: string
 }
 
-// Mise à jour de l'interface UserProfile
 interface UserProfile {
   username: string
   email: string
@@ -30,20 +31,36 @@ interface UserProfile {
   badges: UserBadge[]
 }
 
-// Composant pour afficher un badge individuel
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.3, delayChildren: 0.2 }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.5 }
+  }
+};
+
 const BadgeCard = ({ badge }: { badge: UserBadge }) => {
   return (
-    <Card className="w-full">
+    <Card className="bg-[#1d1f20] border-gray-800 hover:border-[#5382ec] transition-all duration-300">
       <CardHeader className="p-4">
         <div className="flex items-center space-x-2">
-          <Badge className="h-6 w-6 text-blue-500" />
-          <CardTitle className="text-lg">{badge.name}</CardTitle>
+          <LucideBadge className="h-6 w-6 text-[#5382ec]" />
+          <CardTitle className="text-lg text-white">{badge.name}</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        <p className="text-sm text-gray-600 dark:text-gray-400">{badge.description}</p>
-        <p className="text-xs text-gray-500 mt-2">
-          Obtenu le : {new Date(badge.obtainedAt).toLocaleDateString()}
+        <p className="text-gray-300">{badge.description}</p>
+        <p className="text-[#2dd4bf] mt-2 text-sm">
+          Obtained on: {new Date(badge.obtainedAt).toLocaleDateString()}
         </p>
       </CardContent>
     </Card>
@@ -64,10 +81,7 @@ export default function ProfilePage() {
         const docSnap = await getDoc(docRef)
         
         if (docSnap.exists()) {
-          // Récupérer les données du profil
           const profileData = docSnap.data()
-          
-          // Convertir les timestamps en Date pour les badges
           const badgesWithDates = profileData.badges?.map((badge: any) => ({
             ...badge,
             obtainedAt: badge.obtainedAt?.toDate() || new Date()
@@ -88,67 +102,127 @@ export default function ProfilePage() {
   }, [router])
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Chargement...</div>
+    return (
+      <div className="min-h-screen bg-[#1B1C1D] flex justify-center items-center">
+        <div className="text-[#5382ec] text-2xl">Loading...</div>
+      </div>
+    )
   }
 
   if (!user || !profile) {
-    return <div className="flex justify-center items-center h-screen">Utilisateur non trouvé</div>
-  }
-
-  const handleEditClick = () => {
-    router.push(`profile/edit`)
+    return (
+      <div className="min-h-screen bg-[#1B1C1D] flex justify-center items-center">
+        <div className="text-red-500">User not found</div>
+      </div>
+    )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <div className="flex items-center space-x-4">
-            <Avatar className="w-20 h-20">
-              <AvatarImage src={profile.avatarUrl} alt={profile.username} />
-              <AvatarFallback>{profile.username.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle className="text-2xl">{profile.username}</CardTitle>
-              <CardDescription>{profile.email}</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="phone">Téléphone</Label>
-            <Input id="phone" value={profile.phone} readOnly />
-          </div>
-          <div>
-            <Label htmlFor="points">VerstaCoins</Label>
-            <Input id="points" value={profile.points} readOnly />
-          </div>
-          <div>
-            <Label htmlFor="favoriteDriver">Pilote favori</Label>
-            <Input id="favoriteDriver" value={profile.favoriteDriver} readOnly />
-          </div>
-          
-          {/* Section des badges */}
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-4">Mes badges</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {profile.badges?.map((badge, index) => (
-                <BadgeCard key={index} badge={badge} />
-              ))}
-            </div>
-            {(!profile.badges || profile.badges.length === 0) && (
-              <p className="text-center text-gray-500">Aucun badge pour le moment</p>
-            )}
-          </div>
-        </CardContent>
+    <motion.div
+      className="min-h-screen bg-[#1B1C1D] text-white py-24 px-8"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <motion.main 
+        className="flex flex-col items-center justify-center"
+        variants={containerVariants}
+      >
+        <motion.div variants={itemVariants}>
+          <UserIcon className="w-24 h-24 mb-8 text-[#5382ec]" />
+        </motion.div>
 
-        <CardFooter>
-          <Button className="w-full" onClick={handleEditClick}>
-            Modifier le profil
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+        <motion.h1
+          className="text-4xl h-20 md:text-6xl font-bold mb-12 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center"
+          variants={itemVariants}
+        >
+          <Typewriter
+            options={{
+              strings: [
+                "My Profile",
+                `Welcome back, ${profile.username}`,
+                "Your F1 Dashboard",
+              ],
+              autoStart: true,
+              loop: true,
+            }}
+          />
+        </motion.h1>
+
+        <motion.div className="max-w-2xl w-full" variants={itemVariants}>
+          <Card className="bg-[#1d1f20] border-gray-800 hover:border-[#5382ec] transition-all duration-300">
+            <CardHeader>
+              <div className="flex items-center space-x-4">
+                <Avatar className="w-20 h-20 border-2 border-[#5382ec]">
+                  <AvatarImage src={profile.avatarUrl} alt={profile.username} />
+                  <AvatarFallback className="bg-[#282a2c] text-[#5382ec]">
+                    {profile.username.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <CardTitle className="text-2xl bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                    {profile.username}
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">{profile.email}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="space-y-6">
+              <div>
+                <Label htmlFor="phone" className="text-[#5382ec]">Phone</Label>
+                <Input 
+                  id="phone" 
+                  value={profile.phone} 
+                  readOnly 
+                  className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0"
+                />
+              </div>
+              <div>
+                <Label htmlFor="points" className="text-[#5382ec]">VerstaCoins</Label>
+                <Input 
+                  id="points" 
+                  value={profile.points} 
+                  readOnly 
+                  className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0"
+                />
+              </div>
+              <div>
+                <Label htmlFor="favoriteDriver" className="text-[#5382ec]">Favorite Driver</Label>
+                <Input 
+                  id="favoriteDriver" 
+                  value={profile.favoriteDriver} 
+                  readOnly 
+                  className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0"
+                />
+              </div>
+              
+              <div className="pt-4">
+                <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                  My Badges
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {profile.badges?.map((badge, index) => (
+                    <BadgeCard key={index} badge={badge} />
+                  ))}
+                </div>
+                {(!profile.badges || profile.badges.length === 0) && (
+                  <p className="text-center text-gray-500">No badges yet</p>
+                )}
+              </div>
+            </CardContent>
+
+            <CardFooter>
+              <Button 
+                className="w-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white hover:opacity-90 transition-opacity"
+                onClick={() => router.push('profile/edit')}
+              >
+                Edit Profile
+              </Button>
+            </CardFooter>
+          </Card>
+        </motion.div>
+      </motion.main>
+    </motion.div>
   )
 }

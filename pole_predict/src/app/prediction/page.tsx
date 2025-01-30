@@ -1,4 +1,3 @@
-// PredictionPage.tsx
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -10,6 +9,9 @@ import { toast } from "@/hooks/use-toast"
 import PredictionForm from '../components/betComponent/betForm'
 import PredictionDisplay from '../components/betComponent/betDisplay'
 import router from 'next/router'
+import { motion } from 'framer-motion'
+import { Trophy, AlertCircle } from 'lucide-react'
+import Typewriter from "typewriter-effect"
 
 interface Prediction {
   id: string
@@ -23,8 +25,27 @@ interface Prediction {
   points: number
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.3,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.5 }
+  }
+};
+
 export default function PredictionPage() {
-  // ... [Garder tous les states et useEffects existants] ...
 
   const [user, setUser] = useState<User | null>(null)
 const [hasPredicted, setHasPredicted] = useState(false)
@@ -304,42 +325,94 @@ const handleSubmitPrediction = async (predictionData: {
 
   if (error) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen">
-        <p className="text-red-500 mb-4">{error}</p>
+      <div className="min-h-screen bg-[#1B1C1D] flex flex-col justify-center items-center p-8">
+        <AlertCircle className="w-24 h-24 text-red-500 mb-6" />
+        <p className="text-red-500 text-xl mb-6">{error}</p>
         <Button 
           onClick={() => window.location.reload()}
-          variant="outline"
+          className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
         >
-          Réessayer
+          Try Again
         </Button>
       </div>
     )
   }
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Chargement...</div>
+    return (
+      <div className="min-h-screen bg-[#1B1C1D] flex justify-center items-center">
+        <div className="text-[#5382ec] text-2xl">Loading...</div>
+      </div>
+    )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">
-        Prédictions pour {latestMeeting?.meeting_name || "la prochaine course"}
-      </h1>
-      <h2 className="text-3xl font-bold mb-8 text-center">
-        Session : {latestSession?.session_name || "Unknown"}
-      </h2>
+    <motion.div
+      className="min-h-screen bg-[#1B1C1D] text-white py-24 px-8"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <motion.main 
+        className="flex flex-col items-center justify-center"
+        variants={containerVariants}
+      >
+        <motion.div variants={itemVariants}>
+          <Trophy className="w-24 h-24 mb-8 text-[#5382ec]" />
+        </motion.div>
 
-      <PredictionDisplay
-        predictions={predictions}
-        trends={trends}
-      />
+        <motion.div variants={itemVariants}>
+          <h1 className="text-4x h-20 md:text-6xl font-bold mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center">
+            <Typewriter
+              options={{
+                strings: [
+                  "Make Your Predictions",
+                  "Win Points",
+                  "Climb the Leaderboard",
+                ],
+                autoStart: true,
+                loop: true,
+              }}
+            />
+          </h1>
+        </motion.div>
 
-      <PredictionForm
-        drivers={drivers}
-        userPoints={userPoints}
-        hasPredicted={hasPredicted}
-        onSubmit={handleSubmitPrediction}
-      />
-    </div>
+        <motion.div 
+          className="w-full max-w-6xl mx-auto space-y-12"
+          variants={containerVariants}
+        >
+          <motion.div variants={itemVariants} className="text-center">
+            <h2 className="text-2xl font-bold mb-2 text-[#5382ec]">
+              {latestMeeting?.meeting_name || "Next Race"}
+            </h2>
+            <p className="text-xl text-[#2dd4bf]">
+              Session: {latestSession?.session_name || "Unknown"}
+            </p>
+          </motion.div>
+
+          <motion.div 
+            variants={itemVariants}
+            className="bg-[#282a2c] rounded-xl p-8 border border-gray-800"
+          >
+            <PredictionDisplay
+              predictions={predictions}
+              trends={trends}
+            />
+          </motion.div>
+
+          <motion.div 
+            variants={itemVariants}
+            className="bg-[#282a2c] rounded-xl p-8 border border-gray-800"
+          >
+            <PredictionForm
+              drivers={drivers}
+              userPoints={userPoints}
+              hasPredicted={hasPredicted}
+              onSubmit={handleSubmitPrediction}
+            />
+          </motion.div>
+        </motion.div>
+      </motion.main>
+    </motion.div>
   )
 }

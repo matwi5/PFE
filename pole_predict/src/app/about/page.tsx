@@ -3,8 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import ProfileImageWithPopup from './ProfileImageWithPopup';
 import { motion } from 'framer-motion';
+import { ArrowRight, Users } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import Typewriter from "typewriter-effect";
 
 interface TeamMember {
   name: string;
@@ -16,47 +20,41 @@ interface TeamMember {
   tasks: string[];
 }
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeInOut" } },
-  hover: { scale: 1.03, transition: { duration: 0.2 } },
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.3,
+      delayChildren: 0.2
+    }
+  }
 };
 
-const buttonVariants = {
-  hover: {
-    scale: 1.05,
-    backgroundColor: "rgba(255, 165, 0, 0.8)",
-    color: "black",
-  },
-  rest: {
-    scale: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    color: "white",
-    transition: { duration: 0.3, type: "spring", stiffness: 100 }
-  },
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.5 }
+  }
 };
-
-// Create a motion component from the Card component
-const MotionCard = motion(Card);
 
 export default function About() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [error, setError] = useState('');
-  const [showTasks, setShowTasks] = useState<{ [key: string]: boolean }>({});
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isHoveringCardIndex, setIsHoveringCardIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("Début de la requête fetch");
-        const usResponse = await fetch('/api/members');
-        console.log("Réponse reçue:", usResponse.status);
-        if (!usResponse.ok) throw new Error('Erreur lors de la récupération des pilotes');
-        const usData = await usResponse.json();
-        console.log("Données reçues:", usData);
-        setTeamMembers(usData.data);
+        const response = await fetch('/api/members');
+        if (!response.ok) throw new Error('Erreur lors de la récupération des membres');
+        const data = await response.json();
+        setTeamMembers(data.data);
       } catch (error) {
-        console.error("Erreur détaillée:", error);
         setError("Impossible de récupérer les données.");
       }
     };
@@ -64,122 +62,155 @@ export default function About() {
     fetchData();
   }, []);
 
-  const toggleTasks = (e: React.MouseEvent, name: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setShowTasks((prevState) => ({
-      ...prevState,
-      [name]: !prevState[name],
-    }));
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>, index: number) => {
+    const cardRect = e.currentTarget.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - cardRect.left,
+      y: e.clientY - cardRect.top,
+    });
+    setIsHoveringCardIndex(index);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHoveringCardIndex(null);
   };
 
   return (
     <motion.div
-      className="min-h-screen bg-gray-900 text-white p-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1, transition: { duration: 0.7 } }}
+      className="min-h-screen bg-[#1B1C1D] text-white py-24 px-8"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
     >
-      <motion.h1
-        className="text-4xl font-bold text-center mb-6 text-orange-500"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0, transition: { duration: 0.8, delay: 0.2 } }}
+      <motion.main 
+        className="flex flex-col items-center justify-center h-full"
+        variants={containerVariants}
       >
-        À propos de nous
-      </motion.h1>
-      <motion.p
-        className="text-xl text-center mb-12 text-gray-400"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0, transition: { duration: 0.8, delay: 0.4 } }}
+        <motion.div variants={itemVariants}>
+          <Users 
+            className="w-24 h-24 mb-8 text-[#5382ec]"
+          />
+        </motion.div>
+
+        <motion.h1
+          className="text-4xl md:text-6xl font-bold mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent"
+          variants={itemVariants}
+        >
+          <Typewriter
+            options={{
+              strings: [
+                "Meet Our Team",
+                "Formula 1 Enthusiasts",
+                "Web Development Experts",
+              ],
+              autoStart: true,
+              loop: true,
+            }}
+          />
+        </motion.h1>
+      </motion.main>
+
+      <motion.section
+        className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 max-w-6xl mx-auto"
+        variants={containerVariants}
       >
-        Découvrez notre équipe passionnée et notre expertise en Formule 1.
-      </motion.p>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {teamMembers.map((member, index) => (
           <motion.div
             key={member.name}
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            whileHover="hover"
-            transition={{ delay: index * 0.1 }}
+            variants={itemVariants}
           >
-            {/* Use MotionCard here instead of Card */}
-            <MotionCard
-              className="bg-gray-800 hover:bg-gray-700 transition-colors duration-300 text-white"
-              initial={{ boxShadow: 'none' }}
-              whileHover={{
-                boxShadow: '0 0 30px rgba(255, 165, 0, 0.8)',
-                scale: 1.03,
-                transition: {
-                  boxShadow: { duration: 0.3, ease: "easeOut" },
-                  scale: { duration: 0.2 }
-                },
+            <Card
+              className="relative transition-all duration-300 bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] overflow-hidden"
+              onMouseMove={(e) => handleMouseMove(e, index)}
+              onMouseLeave={handleMouseLeave}
+              style={{
+                background: isHoveringCardIndex === index
+                  ? `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(45, 212, 191, 0.3), rgba(45, 212, 191, 0) 50%), #282a2c`
+                  : '#282a2c',
               }}
             >
               <CardHeader className="text-center">
-                <a
-                  href={member.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="no-underline"
-                >
-                  <ProfileImageWithPopup
-                    image={member.image}
-                    name={member.name}
-                    linkedin={member.linkedin}
-                  />
-                  <CardTitle>{member.name}</CardTitle>
-                  <p className="text-sm text-gray-400">{member.role}</p>
-                </a>
+                <Dialog>
+                  <DialogTrigger>
+                    <ProfileImageWithPopup
+                      image={member.image}
+                      name={member.name}
+                      linkedin={member.linkedin}
+                    />
+                    <CardTitle className="text-2xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                      {member.name}
+                    </CardTitle>
+                    <p className="text-gray-400">{member.role}</p>
+                  </DialogTrigger>
+                  <DialogContent className="bg-[#1d1f20] border-none p-6 overflow-hidden rounded-lg shadow-[0_0_15px_rgba(83,130,236,0.3)] hover:shadow-[0_0_25px_rgba(83,130,236,0.5)]">
+                    <div className="relative h-[90vh] overflow-y-auto">
+                      <div className="absolute inset-x-0 h-12 top-0 bg-gradient-to-b from-[#1d1f20] to-transparent z-10" />
+                      
+                      <div className="p-4">
+                        <h2 className="text-2xl font-bold text-center mb-4 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                          {member.name}
+                        </h2>
+                        <p className="text-gray-300 mb-6">{member.description}</p>
+                        
+                        <div className="bg-[#282a2c] p-4 rounded-lg mb-6">
+                          <h3 className="font-semibold text-[#5382ec] mb-4">Compétences</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {member.skills?.map((skill) => (
+                              <Badge key={skill} className="bg-[#383a3c] text-white hover:bg-[#484a4c]">
+                                {skill}
+                              </Badge>
+                            )) || <p className="text-gray-400">Aucune compétence renseignée</p>}
+                          </div>
+                        </div>
+
+                        <div className="bg-[#282a2c] p-4 rounded-lg">
+                          <h3 className="font-semibold text-[#5382ec] mb-4">Tâches réalisées</h3>
+                          <ul className="space-y-2">
+                            {member.tasks?.map((task, taskIndex) => (
+                              <li key={taskIndex} className="text-gray-300">{task}</li>
+                            )) || <p className="text-gray-400">Aucune tâche renseignée</p>}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="absolute inset-x-0 h-12 bottom-0 bg-gradient-to-t from-[#1d1f20] to-transparent z-10" />
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </CardHeader>
               <CardContent>
-                <p className="text-center mb-4 text-gray-300">{member.description}</p>
-                {Array.isArray(member.skills) && member.skills.length > 0 ? (
-                  <div className="flex flex-wrap justify-center gap-2 mb-4">
-                    {member.skills.map((skill: string) => (
-                      <Badge key={skill} variant="secondary" className="bg-gray-700 border-none text-gray-200">{skill}</Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-500">Aucune compétence disponible</p>
-                )}
-                <motion.button
-                  onClick={(e) => toggleTasks(e, member.name)}
-                  onMouseEnter={() => setHoveredButton(member.name)}
-                  onMouseLeave={() => setHoveredButton(null)}
-                  variants={buttonVariants}
-                  initial="rest"
-                  whileHover="hover"
-                  animate="rest"
-                  className="mt-4 w-full py-2 px-4 rounded-md font-bold border border-white transition-all duration-300"
-                  style={{ backgroundColor: hoveredButton === member.name ? "rgba(255, 165, 0, 0.8)" : "rgba(255, 255, 255, 0.1)", color: "white" }}
-                >
-                  {showTasks[member.name] ? "Masquer les tâches" : "Voir les tâches"}
-                </motion.button>
-                {showTasks[member.name] && (
-                  <motion.div
-                    className="mt-4"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0, transition: { duration: 0.4 } }}
-                    exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}
+                <p className="text-gray-300 mb-4 text-center">{member.description}</p>
+                <div className="flex flex-wrap justify-center gap-2 mb-4">
+                  {member.skills?.map((skill) => (
+                    <Badge 
+                      key={skill} 
+                      className="bg-[#383a3c] text-white hover:bg-[#484a4c]"
+                    >
+                      {skill}
+                    </Badge>
+                  )) || <p className="text-gray-400">Aucune compétence renseignée</p>}
+                </div>
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open(member.linkedin, '_blank')}
+                    className="relative z-10"
+                    style={{
+                      background: hoveredButton === member.name ? 'linear-gradient(to right, #5382ec, #2dd4bf)' : 'transparent',
+                      color: 'white',
+                      border: '1px solid #5382ec',
+                    }}
+                    onMouseEnter={() => setHoveredButton(member.name)}
+                    onMouseLeave={() => setHoveredButton(null)}
                   >
-                    <h3 className="text-lg font-semibold mb-2 text-orange-500">Tâches travaillées :</h3>
-                    {Array.isArray(member.tasks) && member.tasks.length > 0 ? (
-                      <ul className="list-disc pl-5 text-gray-300">
-                        {member.tasks.map((task, index) => (
-                          <li key={index}>{task}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-gray-500">Aucune tâche disponible</p>
-                    )}
-                  </motion.div>
-                )}
+                    Voir profil <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
-            </MotionCard>
+            </Card>
           </motion.div>
         ))}
-      </div>
+      </motion.section>
     </motion.div>
   );
 }

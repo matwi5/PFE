@@ -1,13 +1,14 @@
-"use client"
+"use client";
 
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ArrowRight, Info, BarChart, Medal } from "lucide-react";
+import { Info, BarChart, Medal } from "lucide-react";
 import Typewriter from "typewriter-effect";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
+import { motion } from "framer-motion";
+import CustomDialog from "./components/generalDataComponent/CustomDialog";
+import GeneralDataCard from "./components/generalDataComponent/GeneralDataCard";
+import GPDetailCard from "./components/generalDataComponent/GPDetailCard";
+import DriverDetailCard from "./components/generalDataComponent/DriverDetailCard";
+import TeamDetailCard from "./components/generalDataComponent/TeamDetailCard";
 
 interface Driver {
   flagColors: string[];
@@ -52,178 +53,6 @@ interface GrandPrix {
   recordman_circuit: string;
   image_circuit: string;
 }
-
-const GPDetailCard: React.FC<{ gp: GrandPrix }> = ({ gp }) => {
-
-  return (
-    <div
-      className="relative bg-[#1d1f20] backdrop-blur-md p-8 rounded-xl border border-transparent transition-all duration-300 overflow-hidden"
-    >
-      <div className="relative z-10 flex flex-col items-center mb-6">
-        <img
-          src={gp.pays_flag}
-          alt={`Drapeau ${gp.grand_prix}`}
-          className="w-32 h-20 object-cover rounded-lg mb-4 border-2 border-[#5382ec]"
-        />
-        <h2 className="text-3xl font-bold text-center text-white bg-clip-text bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]">
-          {gp.grand_prix}
-        </h2>
-        <p className="text-xl text-[#2dd4bf] mt-2">{gp.ville}</p>
-      </div>
-
-      <div className="relative z-10 my-6">
-        <img
-          src={gp.image_circuit}
-          alt={`Circuit ${gp.grand_prix}`}
-          className="w-full h-56 object-cover rounded-lg border-2 border-[#5382ec]"
-        />
-      </div>
-
-      <div className="relative z-10 grid grid-cols-2 gap-6">
-        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-          <p className="font-semibold text-[#5382ec] mb-2">Nombre de tours</p>
-          <p className="text-white text-2xl font-bold text-center">{gp.nombre_de_tours}</p>
-        </div>
-
-        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-          <p className="font-semibold text-[#5382ec] mb-2">Record du circuit</p>
-          <p className="text-white text-xl font-mono text-center">{gp.record_de_circuit}</p>
-          <p className="text-sm text-gray-400 text-center mt-1">par {gp.recordman_circuit}</p>
-        </div>
-
-        <div className="col-span-2 bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-          <p className="font-semibold text-[#5382ec] mb-2">Particularités</p>
-          <p className="text-white">{gp.particularites}</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const DriverDetailCard: React.FC<{ driver: Driver }> = ({ driver }) => {
-
-  return (
-    <div
-      className="relative bg-[#1d1f20] backdrop-blur-md p-8 rounded-xl border border-transparent transition-all duration-300 overflow-hidden"
-    >
-      <div className="relative z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 rounded-full"></div>
-        <img
-          src={driver.headshot_url}
-          alt={`${driver.name} headshot`}
-          className="w-48 h-48 rounded-full mx-auto mb-6 object-cover border-4 border-[#5382ec] transition-transform duration-300 hover:scale-105"
-        />
-      </div>
-      <h2 className="relative z-10 text-3xl font-bold text-center mb-6 text-white bg-clip-text bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]">
-        {driver.name}
-      </h2>
-      <div className="relative z-10 grid grid-cols-2 gap-6 text-center">
-        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-          <p className="font-semibold text-[#5382ec] mb-2">Équipe</p>
-          <p className="text-white">{driver.team_name}</p>
-        </div>
-        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-          <p className="font-semibold text-[#5382ec] mb-2">Numéro</p>
-          <p className="text-white text-2xl font-bold">{driver.driver_number}</p>
-        </div>
-        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-          <p className="font-semibold text-[#5382ec] mb-2">Nationalité</p>
-          <div className="flex items-center justify-center gap-2">
-            <img
-              src={driver.flag_url}
-              alt={`${driver.country_code} flag`}
-              className="w-6 h-4"
-            />
-            <p className="text-white">{driver.country_code}</p>
-          </div>
-        </div>
-        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-          <p className="font-semibold text-[#5382ec] mb-2">Code</p>
-          <p className="text-white text-xl font-mono">{driver.broadcast_name}</p>
-        </div>
-        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-          <p className="font-semibold text-[#5382ec] mb-2">Nombre de Victoires</p>
-          <p className="text-white text-2xl font-bold">{driver.NumberOfVictories}</p>
-        </div>
-        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-          <p className="font-semibold text-[#5382ec] mb-2">Nombre de Podiums</p>
-          <p className="text-white text-2xl font-bold">{driver.NumberOfPodiums}</p>
-        </div>
-      </div>
-      <div className="relative z-10 mt-4 flex justify-center flex-wrap gap-2">
-        {driver.WorldChampionships > 0 && (
-          Array.from({ length: driver.WorldChampionships }).map((_, index) => (
-            <img
-              key={index}
-              src="/images/coupe.webp"
-              alt={`Championship Trophy ${index + 1}`}
-              className="w-20 h-20"
-            />
-          ))
-        )}
-      </div>
-    </div>
-  );
-};
-
-const TeamDetailCard: React.FC<{ team: Team }> = ({ team }) => {
-
-  return (
-    <div
-      className="relative bg-[#1d1f20] backdrop-blur-md p-8 rounded-xl border border-transparent transition-all duration-300 overflow-hidden"
-    >
-      <div className="relative z-10 grid grid-cols-12 gap-6">
-        <div className="col-span-4">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 rounded-lg"></div>
-            <img
-              src={team.logo_url}
-              alt={`${team.name} logo`}
-            />
-          </div>
-          <h2
-            className="text-xl font-bold text-center mt-4"
-            style={{ color: team.color }}
-          >
-            {team.name}
-          </h2>
-        </div>
-
-        <div className="col-span-8 space-y-6">
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-              <p className="font-semibold mb-2" style={{ color: team.color }}>Base</p>
-              <div className="flex items-center gap-2">
-                <img src={team.country_flag} alt={`${team.country} flag`} className="w-6 h-6" />
-                <p className="text-white">{team.base}</p>
-              </div>
-            </div>
-            <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-              <p className="font-semibold mb-2" style={{ color: team.color }}>Team Principal</p>
-              <p className="text-white">{team.team_principal}</p>
-            </div>
-          </div>
-
-          <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-            <p className="font-semibold mb-2" style={{ color: team.color }}>Power Unit</p>
-            <p className="text-white">{team.power_unit}</p>
-          </div>
-        </div>
-
-        <div className="col-span-12">
-          <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
-            <p className="font-semibold mb-4 text-center" style={{ color: team.color }}>Car</p>
-            <img
-              src={team.car_image}
-              alt={`${team.name} car`}
-              className="w-full rounded-lg transition-transform duration-300 hover:scale-105"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const HomePage: React.FC = () => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -298,10 +127,9 @@ const HomePage: React.FC = () => {
   ) => {
     const target = e.currentTarget;
     if (customColors && customColors.length > 1) {
-      target.style.background =
-        isEntering
-          ? `linear-gradient(to right, ${customColors.join(", ")})`
-          : "none";
+      target.style.background = isEntering
+        ? `linear-gradient(to right, ${customColors.join(", ")})`
+        : "none";
       target.style.color = "white";
     } else if (customColors && customColors.length === 1) {
       target.style.background = isEntering ? customColors[0] : "none";
@@ -310,32 +138,12 @@ const HomePage: React.FC = () => {
       target.style.background = isEntering ? "orange" : "none";
       target.style.color = isEntering ? "black" : "white";
     }
-    // Remove the scale transform to prevent size change on hover
-    // target.style.transform = isEntering ? "scale(1.05)" : "scale(1)";
   };
 
-  // Variantes d'animation modifiées
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.3,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 }
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>, index: number) => {
+  const handleMouseMove = (
+    e: React.MouseEvent<HTMLDivElement>,
+    index: number
+  ) => {
     const cardRect = e.currentTarget.getBoundingClientRect();
     setMousePos({
       x: e.clientX - cardRect.left,
@@ -347,6 +155,63 @@ const HomePage: React.FC = () => {
   const handleMouseLeave = () => {
     setIsHoveringCardIndex(null);
   };
+
+  const cardData = [
+    {
+      icon: <Info className="mr-2" />,
+      title: "GRAND PRIX",
+      content: "Know more about Grand Prix",
+      onClick: () => setShowGPs(!showGPs),
+      linkText: "See GPs",
+      showList: showGPs,
+      data: gp,
+      DetailComponent: GPDetailCard,
+      customColors: [],
+    },
+    {
+      icon: <Medal className="mr-2" />,
+      title: "TEAMS",
+      content: "Infos about the teams on the grid",
+      onClick: () => setShowTeams(!showTeams),
+      linkText: "See Teams",
+      showList: showTeams,
+      data: teams,
+      DetailComponent: TeamDetailCard,
+      customColors: [],
+    },
+    {
+      icon: <BarChart className="mr-2" />,
+      title: "DRIVERS",
+      content: "Have a look on the drivers",
+      onClick: () => setShowDrivers(!showDrivers),
+      linkText: "See Drivers",
+      showList: showDrivers,
+      data: filteredDrivers,
+      DetailComponent: DriverDetailCard,
+      customColors: [],
+    },
+  ];
+
+    // Variantes d'animation modifiées
+    const containerVariants = {
+      hidden: { opacity: 0 },
+      visible: {
+        opacity: 1,
+        transition: {
+          staggerChildren: 0.3,
+          delayChildren: 0.2
+        }
+      }
+    };
+  
+    const itemVariants = {
+      hidden: { y: 20, opacity: 0 },
+      visible: {
+        y: 0,
+        opacity: 1,
+        transition: { duration: 0.5 }
+      }
+    };
 
   return (
     <motion.div
@@ -368,7 +233,7 @@ const HomePage: React.FC = () => {
         </motion.div>
 
         <motion.h1
-          className="text-4xl md:text-6xl font-bold mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent"
+          className="text-4xl h-20 md:text-6xl font-bold mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent"
           variants={itemVariants}
         >
           <Typewriter
@@ -389,348 +254,92 @@ const HomePage: React.FC = () => {
         className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 max-w-6xl mx-auto"
         variants={containerVariants}
       >
-        {[
-          {
-            icon: <Info className="mr-2" />,
-            title: "GRAND PRIX",
-            content: "Know more about Grand Prix",
-            onClick: () => setShowGPs(!showGPs),
-            linkText: "See GPs",
-          },
-          {
-            icon: <Medal className="mr-2" />,
-            title: "TEAMS",
-            content: "Infos about the teams on the grid",
-            onClick: () => setShowTeams(!showTeams),
-            linkText: "See Teams",
-          },
-          {
-            icon: <BarChart className="mr-2" />,
-            title: "DRIVERS",
-            content: "Have a look on the drivers",
-            onClick: () => setShowDrivers(!showDrivers),
-            linkText: "See Drivers",
-          },
-        ].map((card, index) => (
-          <motion.div
-            key={index}
-            variants={itemVariants}
-          >
-            <Card
-              className={`relative transition-all duration-300 bg-[#282a2c] 
-                   border border-gray-800 hover:border-[#5382ec] overflow-hidden
-                   ${hoveredCard === index ? 'scale-105' : ''}`}
-              onMouseEnter={() => setHoveredCard(index)}
-              onMouseLeave={() => {
-                setHoveredCard(null);
-                setIsHoveringCardIndex(null);
-              }}
-              onMouseMove={(e) => handleMouseMove(e, index)}
-              style={{
-                background: isHoveringCardIndex === index
-                  ? `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(45, 212, 191, 0.3), rgba(45, 212, 191, 0) 50%) , ${'#282a2c'}` // #111827 is bg-gray-900 in hex
-                  : '#282a2c',
-              }}
-            >
-              <CardHeader className="relative z-10">
-                <CardTitle className="flex items-center justify-center text-2xl font-bold">
-                  <span className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent inline-flex items-center">
-                    {React.cloneElement(card.icon, {
-                      className: "mr-2",
-                      style: { color: '#5382ec' }
-                    })}
-                    {card.title}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="relative z-10">
-                <p className="text-gray-300">{card.content}</p>
-                <div className="flex items-center mt-4">
-                  {index === 2 && (
-                    <select
-                      value={selectedYear}
-                      onChange={(e) => setSelectedYear(Number(e.target.value))}
-                      className="p-2 bg-[#282a2c] text-white border border-[#5382ec] rounded mr-2 relative z-10"
+        {cardData.map((card, index) => (
+          <motion.div key={index} variants={itemVariants}>
+            <GeneralDataCard
+              icon={card.icon}
+              title={card.title}
+              content={card.content}
+              linkText={card.linkText}
+              onClick={card.onClick}
+              index={index}
+              selectedYear={selectedYear}
+              setSelectedYear={setSelectedYear}
+              hoveredCard={hoveredCard}
+              setHoveredCard={setHoveredCard}
+              isHoveringCardIndex={isHoveringCardIndex}
+              setIsHoveringCardIndex={setIsHoveringCardIndex}
+              handleMouseMove={handleMouseMove}
+              mousePos={mousePos}
+            />
+
+            {card.showList && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-4 grid grid-cols-2 gap-2 overflow-hidden"
+              >
+                {card.data.length > 0 ? (
+                  card.data.map((item, itemIndex) => (
+                    <CustomDialog
+                      key={itemIndex}
+                      buttonStyle={{
+                        ...buttonStyle,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "0.5rem",
+                        minWidth: "150px",
+                      }}
+                      getHoverStyles={getHoverStyles}
+                      triggerContent={
+                        index === 0 ? (
+                          <>
+                            <img
+                              src={item.pays_flag}
+                              alt={item.grand_prix}
+                              className="w-5 h-5 mr-2"
+                            />
+                            {item.grand_prix}
+                          </>
+                        ) : index === 1 ? (
+                          <>
+                            <img
+                              src={item.logo_url}
+                              alt={`${item.name} logo`}
+                              className="w-5 h-5 mr-2"
+                            />
+                            {item.name}
+                          </>
+                        ) : (
+                          <>
+                            <img
+                              src={item.headshot_url}
+                              alt={`${item.name} headshot`}
+                              className="w-5 h-5 mr-2 rounded-full"
+                            />
+                            {item.name}
+                          </>
+                        )
+                      }
+                      customColors={
+                        index === 1
+                          ? [item.color]
+                          : index === 2
+                          ? item.flagColors
+                          : undefined
+                      }
                     >
-                      <option value={2023}>2023</option>
-                      <option value={2024}>2024</option>
-                      <option value={2025}>2025</option>
-                    </select>
-                  )}
-                  <Button
-                    variant="outline"
-                    onClick={card.onClick}
-                    onMouseEnter={() => setHoveredButton(index)}
-                    onMouseLeave={() => setHoveredButton(null)}
-                    className="relative z-10"
-                    style={{
-                      background: hoveredButton === index ? 'linear-gradient(to right, #5382ec, #2dd4bf)' : 'transparent',
-                      color: 'white',
-                      border: '1px solid #5382ec',
-                      transition: 'background 0.3s, color 0.3s',
-                      ...(hoveredButton === index && { color: 'white' }),
-                    }}
-                  >
-                    {card.linkText} <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {index === 0 && showGPs && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="mt-4 grid grid-cols-2 gap-2 overflow-hidden"
-              >
-                {gp.length > 0 ? (
-                  gp.map((gp, gpIndex) => (
-                    <Dialog key={gpIndex}>
-                      <DialogTrigger asChild>
-                        <button
-                          style={{
-                            ...buttonStyle,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '0.5rem',
-                            minWidth: '150px'
-                          }}
-                          onMouseEnter={(e) => getHoverStyles(e, true)}
-                          onMouseLeave={(e) => getHoverStyles(e, false)}
-                        >
-                          <img
-                            src={gp.pays_flag}
-                            alt={gp.grand_prix}
-                            className="w-5 h-5 mr-2"
-                          />
-                          {gp.grand_prix}
-                        </button>
-                      </DialogTrigger>
-                      <DialogContent className="group fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#1d1f20] border-none p-6 overflow-hidden rounded-lg
-                        transition-all duration-300
-                        shadow-[0_0_15px_rgba(83,130,236,0.3)]
-                        hover:shadow-[0_0_25px_rgba(83,130,236,0.5)]">
-                        <div className="relative w-full max-w-3xl h-[90vh]">
-                          {/* Effet de flou en haut */}
-                          <div className="absolute inset-x-0 h-12 top-0 bg-gradient-to-b from-[#1d1f20] to-transparent z-10" />
-
-                          {/* Bouton de fermeture amélioré */}
-                          <button
-                            className="absolute -top-3 -right-3 z-20 w-8 h-8 rounded-full 
-                 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]
-                 flex items-center justify-center
-                 transition-transform duration-200 hover:scale-110"
-                            onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { 'key': 'Escape' }))}
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 14 14"
-                              fill="none"
-                              className="text-white"
-                            >
-                              <path
-                                d="M1 1L13 13M1 13L13 1"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                              />
-                            </svg>
-                          </button>
-
-                          {/* Contenu avec scroll caché mais fonctionnel */}
-                          <div
-                            className="h-full overflow-y-auto scrollbar-none"
-                            style={{
-                              msOverflowStyle: 'none',
-                              scrollbarWidth: 'none',
-                            }}
-                          >
-                            <GPDetailCard gp={gp} />
-                          </div>
-
-                          {/* Effet de flou en bas */}
-                          <div className="absolute inset-x-0 h-12 bottom-0 bg-gradient-to-t from-[#1d1f20] to-transparent z-10" />
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                      <card.DetailComponent {...{ [index === 0 ? "gp" : index === 1 ? "team" : "driver"]: item }} />
+                    </CustomDialog>
                   ))
                 ) : (
-                  <p>Loading grands prix...</p>
+                  <p>Loading {card.title.toLowerCase()}...</p>
                 )}
               </motion.div>
             )}
-
-            {index === 1 && showTeams && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="mt-4 grid grid-cols-1 gap-2 overflow-hidden"
-              >
-                {teams.length > 0 ? (
-                  teams.map((team, teamIndex) => (
-                    <Dialog key={teamIndex}>
-                      <DialogTrigger asChild>
-                        <button
-                          style={buttonStyle}
-                          onMouseEnter={(e) => getHoverStyles(e, true, [team.color])}
-                          onMouseLeave={(e) => getHoverStyles(e, false)}
-                        >
-                          <img
-                            src={team.logo_url}
-                            alt={`${team.name} logo`}
-                            className="w-5 h-5 mr-2"
-                          />
-                          {team.name}
-                        </button>
-                      </DialogTrigger>
-                      <DialogContent className="group fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#1d1f20] border-none p-6 overflow-hidden rounded-lg
-                        transition-all duration-300
-                        shadow-[0_0_15px_rgba(83,130,236,0.3)]
-                        hover:shadow-[0_0_25px_rgba(83,130,236,0.5)]">
-                        <div className="relative w-full max-w-3xl h-[90vh]">
-                          {/* Effet de flou en haut */}
-                          <div className="absolute inset-x-0 h-12 top-0 bg-gradient-to-b from-[#1d1f20] to-transparent z-10" />
-
-                          {/* Bouton de fermeture amélioré */}
-                          <button
-                            className="absolute -top-3 -right-3 z-20 w-8 h-8 rounded-full 
-                 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]
-                 flex items-center justify-center
-                 transition-transform duration-200 hover:scale-110"
-                            onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { 'key': 'Escape' }))}
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 14 14"
-                              fill="none"
-                              className="text-white"
-                            >
-                              <path
-                                d="M1 1L13 13M1 13L13 1"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                              />
-                            </svg>
-                          </button>
-
-                          {/* Contenu avec scroll caché mais fonctionnel */}
-                          <div
-                            className="h-full overflow-y-auto scrollbar-none"
-                            style={{
-                              msOverflowStyle: 'none',
-                              scrollbarWidth: 'none',
-                            }}
-                          >
-                            <TeamDetailCard team={team} />
-                          </div>
-
-                          {/* Effet de flou en bas */}
-                          <div className="absolute inset-x-0 h-12 bottom-0 bg-gradient-to-t from-[#1d1f20] to-transparent z-10" />
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  ))
-                ) : (
-                  <p>Loading teams...</p>
-                )}
-              </motion.div>
-            )}
-
-            {index === 2 && showDrivers && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="mt-4 grid grid-cols-2 gap-2 overflow-hidden"
-              >
-                {filteredDrivers.length > 0 ? (
-                  filteredDrivers.map((driver, driverIndex) => (
-                    <Dialog key={driverIndex}>
-                      <DialogTrigger asChild>
-                        <button
-                          style={{
-                            ...buttonStyle,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '0.5rem',
-                            minWidth: '150px'
-                          }}
-                          onMouseEnter={(e) => getHoverStyles(e, true, driver.flagColors)}
-                          onMouseLeave={(e) => getHoverStyles(e, false)}
-                        >
-                          <img
-                            src={driver.headshot_url}
-                            alt={`${driver.name} headshot`}
-                            className="w-5 h-5 mr-2 rounded-full"
-                          />
-                          {driver.name}
-                        </button>
-                      </DialogTrigger>
-                      <DialogContent className="group fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#1d1f20] border-none p-6 overflow-hidden rounded-lg
-                        transition-all duration-300
-                        shadow-[0_0_15px_rgba(83,130,236,0.3)]
-                        hover:shadow-[0_0_25px_rgba(83,130,236,0.5)]">
-                        <div className="relative w-full max-w-3xl h-[85vh]">
-                          {/* Effet de flou en haut */}
-                          <div className="absolute inset-x-0 h-12 top-0 bg-gradient-to-b from-[#1d1f20] to-transparent z-10" />
-
-                          {/* Bouton de fermeture amélioré */}
-                          <button
-                            className="absolute -top-3 -right-3 z-20 w-8 h-8 rounded-full 
-                 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]
-                 flex items-center justify-center
-                 transition-transform duration-200 hover:scale-110"
-                            onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { 'key': 'Escape' }))}
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 14 14"
-                              fill="none"
-                              className="text-white"
-                            >
-                              <path
-                                d="M1 1L13 13M1 13L13 1"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                              />
-                            </svg>
-                          </button>
-
-                          {/* Contenu avec scroll caché mais fonctionnel */}
-                          <div
-                            className="h-full overflow-y-auto scrollbar-none"
-                            style={{
-                              msOverflowStyle: 'none',
-                              scrollbarWidth: 'none',
-                            }}
-                          >
-                            <DriverDetailCard driver={driver} />
-                          </div>
-
-                          {/* Effet de flou en bas */}
-                          <div className="absolute inset-x-0 h-12 bottom-0 bg-gradient-to-t from-[#1d1f20] to-transparent z-10" />
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  ))
-                ) : (
-                  <p>Loading drivers...</p>
-                )}
-              </motion.div>
-            )}
-
           </motion.div>
         ))}
       </motion.section>

@@ -113,7 +113,7 @@ const EventDisplay = ({
 
   if (loading) {
     return (
-      <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-all duration-300 ease-out">
+      <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out">
         <CardHeader className="pb-2 flex justify-between items-start">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
             Race Control
@@ -135,7 +135,7 @@ const EventDisplay = ({
   }
 
   return (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-all duration-300 ease-out h-[70vh]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[70vh]">
       <CardHeader className="pb-2 flex justify-between items-start">
         <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
           Race Control

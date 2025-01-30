@@ -226,7 +226,7 @@ const RaceSelection = ({
   };
 
   return (
-    <Card className="bg-[#282a2c] border-none">
+    <Card className="bg-[#282a2c] border-none border border-gray-800 hover:border-[#5382ec]">
       <CardContent className="p-6">
         <div className="relative h-16 flex items-center">
           <div className="absolute inset-0 rounded-lg p-0.5">

@@ -33,7 +33,7 @@ const itemVariants = {
 
 const CurrentFormWidget: React.FC<CurrentFormWidgetProps> = ({ form }) => (
   <motion.div initial={fadeInUp.initial} animate={fadeInUp.animate} transition={{ ...fadeInUp.transition, delay: 0.2 }}>
-    <Card className="bg-[#282a2c] border-0">
+    <Card className="bg-[#282a2c] border border-gray-800 hover:border-[#5382ec]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">

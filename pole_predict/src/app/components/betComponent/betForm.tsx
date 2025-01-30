@@ -1,4 +1,3 @@
-// PredictionForm.tsx
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -36,8 +35,8 @@ export default function PredictionForm({ drivers, userPoints, hasPredicted, onSu
     
     if (newPrediction.points < 1 || newPrediction.points > userPoints) {
       toast({
-        title: "Erreur",
-        description: `Vous devez miser entre 1 et ${userPoints} points.`,
+        title: "Error",
+        description: `You must bet between 1 and ${userPoints} points.`,
         variant: "destructive",
       })
       return
@@ -49,31 +48,39 @@ export default function PredictionForm({ drivers, userPoints, hasPredicted, onSu
   }
 
   return (
-    <Card>
+    <Card className="bg-[#1d1f20] border-gray-800 hover:border-[#5382ec] transition-all duration-300">
       <CardHeader>
-        <CardTitle>Faites votre prédiction</CardTitle>
-        <CardDescription>Remplissez le formulaire pour ajouter votre prédiction.</CardDescription>
+        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+          Make Your Prediction
+        </CardTitle>
+        <CardDescription className="text-gray-400">
+          Fill out the form to submit your prediction.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {hasPredicted ? (
           <p className="text-center text-red-500">
-            Vous avez déjà soumis une prédiction pour cette session.
+            You have already submitted a prediction for this session.
           </p>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="pole">Pole Position</Label>
+                <Label htmlFor="pole" className="text-[#5382ec]">Pole Position</Label>
                 <Select
                   value={newPrediction.pole}
                   onValueChange={(value) => setNewPrediction({ ...newPrediction, pole: value })}
                 >
-                  <SelectTrigger id="pole">
-                    <SelectValue placeholder="Sélectionnez un pilote" />
+                  <SelectTrigger id="pole" className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0">
+                    <SelectValue placeholder="Select driver" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#282a2c] border-gray-700">
                     {drivers.map((driver) => (
-                      <SelectItem key={driver} value={driver}>
+                      <SelectItem 
+                        key={driver} 
+                        value={driver}
+                        className="text-white hover:bg-[#383a3c] focus:bg-[#383a3c] focus:text-white"
+                      >
                         {driver}
                       </SelectItem>
                     ))}
@@ -81,17 +88,21 @@ export default function PredictionForm({ drivers, userPoints, hasPredicted, onSu
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="winner">Vainqueur</Label>
+                <Label htmlFor="winner" className="text-[#5382ec]">Winner</Label>
                 <Select
                   value={newPrediction.winner}
                   onValueChange={(value) => setNewPrediction({ ...newPrediction, winner: value })}
                 >
-                  <SelectTrigger id="winner">
-                    <SelectValue placeholder="Sélectionnez un pilote" />
+                  <SelectTrigger id="winner" className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0">
+                    <SelectValue placeholder="Select driver" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#282a2c] border-gray-700">
                     {drivers.map((driver) => (
-                      <SelectItem key={driver} value={driver}>
+                      <SelectItem 
+                        key={driver} 
+                        value={driver}
+                        className="text-white hover:bg-[#383a3c] focus:bg-[#383a3c] focus:text-white"
+                      >
                         {driver}
                       </SelectItem>
                     ))}
@@ -99,17 +110,21 @@ export default function PredictionForm({ drivers, userPoints, hasPredicted, onSu
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fastestLap">Tour le plus rapide</Label>
+                <Label htmlFor="fastestLap" className="text-[#5382ec]">Fastest Lap</Label>
                 <Select
                   value={newPrediction.fastestLap}
                   onValueChange={(value) => setNewPrediction({ ...newPrediction, fastestLap: value })}
                 >
-                  <SelectTrigger id="fastestLap">
-                    <SelectValue placeholder="Sélectionnez un pilote" />
+                  <SelectTrigger id="fastestLap" className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0">
+                    <SelectValue placeholder="Select driver" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#282a2c] border-gray-700">
                     {drivers.map((driver) => (
-                      <SelectItem key={driver} value={driver}>
+                      <SelectItem 
+                        key={driver} 
+                        value={driver}
+                        className="text-white hover:bg-[#383a3c] focus:bg-[#383a3c] focus:text-white"
+                      >
                         {driver}
                       </SelectItem>
                     ))}
@@ -117,7 +132,9 @@ export default function PredictionForm({ drivers, userPoints, hasPredicted, onSu
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="points">Points à miser (max: {userPoints})</Label>
+                <Label htmlFor="points" className="text-[#5382ec]">
+                  Points to Bet (max: {userPoints})
+                </Label>
                 <Input
                   id="points"
                   type="number"
@@ -126,10 +143,16 @@ export default function PredictionForm({ drivers, userPoints, hasPredicted, onSu
                   value={newPrediction.points}
                   onChange={(e) => setNewPrediction({ ...newPrediction, points: parseInt(e.target.value) })}
                   required
+                  className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0"
                 />
               </div>
             </div>
-            <Button type="submit" className="w-full">Soumettre la prédiction</Button>
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white hover:opacity-90 transition-opacity"
+            >
+              Submit Prediction
+            </Button>
           </form>
         )}
       </CardContent>

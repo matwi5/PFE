@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -10,6 +8,9 @@ import { User } from 'firebase/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
+import { motion } from 'framer-motion'
+import { History } from 'lucide-react'
+import Typewriter from 'typewriter-effect'
 
 interface Prediction {
   id: string
@@ -21,8 +22,27 @@ interface Prediction {
   createdAt: Date
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.3,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.5 }
+  }
+};
+
 export default function UserPredictionsPage() {
-  
   const [user, setUser] = useState<User | null>(null)
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [loading, setLoading] = useState(true)
@@ -72,50 +92,104 @@ export default function UserPredictionsPage() {
   }
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Chargement...</div>
+    return (
+      <div className="min-h-screen bg-[#1B1C1D] flex justify-center items-center">
+        <div className="text-[#5382ec] text-2xl">Loading...</div>
+      </div>
+    )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">Mes Prédictions</CardTitle>
-          <CardDescription>Historique de toutes vos prédictions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {predictions.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Grand Prix</TableHead>
-                  <TableHead>Session</TableHead>
-                  <TableHead>Pole Position</TableHead>
-                  <TableHead>Vainqueur</TableHead>
-                  <TableHead>Tour le plus rapide</TableHead>
-                  <TableHead>Date de prédiction</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {predictions.map((prediction) => (
-                  <TableRow key={prediction.id}>
-                    <TableCell>{prediction.meetingName}</TableCell>
-                    <TableCell>{prediction.sessionName}</TableCell>
-                    <TableCell>{prediction.pole}</TableCell>
-                    <TableCell>{prediction.winner}</TableCell>
-                    <TableCell>{prediction.fastestLap}</TableCell>
-                    <TableCell>{prediction.createdAt.toLocaleDateString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p className="text-center py-4">Vous n&apos;avez pas encore fait de prédictions.</p>
-          )}
-        </CardContent>
-      </Card>
-      <div className="mt-4 text-center">
-        <Button onClick={() => router.push('/prediction')}>Faire une nouvelle prédiction</Button>
-      </div>
-    </div>
+    <motion.div
+      className="min-h-screen bg-[#1B1C1D] text-white py-24 px-8"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <motion.main 
+        className="flex flex-col items-center justify-center"
+        variants={containerVariants}
+      >
+        <motion.div variants={itemVariants}>
+          <History className="w-24 h-24 mb-8 text-[#5382ec]" />
+        </motion.div>
+
+        <motion.h1
+          className="text-4xl h-20 md:text-6xl font-bold mb-12 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center"
+          variants={itemVariants}
+        >
+          <Typewriter
+            options={{
+              strings: [
+                "My Predictions",
+                "Prediction History",
+                "Past Bets",
+              ],
+              autoStart: true,
+              loop: true,
+            }}
+          />
+        </motion.h1>
+
+        <motion.div className="w-full max-w-6xl" variants={itemVariants}>
+          <Card className="bg-[#1d1f20] border-gray-800 hover:border-[#5382ec] transition-all duration-300">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                Predictions History
+              </CardTitle>
+              <CardDescription className="text-gray-400">
+                View all your past predictions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {predictions.length > 0 ? (
+                <div className="rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b border-gray-800">
+                        <TableHead className="text-[#5382ec]">Grand Prix</TableHead>
+                        <TableHead className="text-[#5382ec]">Session</TableHead>
+                        <TableHead className="text-[#5382ec]">Pole Position</TableHead>
+                        <TableHead className="text-[#5382ec]">Winner</TableHead>
+                        <TableHead className="text-[#5382ec]">Fastest Lap</TableHead>
+                        <TableHead className="text-[#5382ec]">Prediction Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {predictions.map((prediction) => (
+                        <TableRow 
+                          key={prediction.id}
+                          className="border-b border-gray-800 hover:bg-[#282a2c] transition-colors"
+                        >
+                          <TableCell className="text-white">{prediction.meetingName}</TableCell>
+                          <TableCell className="text-gray-300">{prediction.sessionName}</TableCell>
+                          <TableCell className="text-gray-300">{prediction.pole}</TableCell>
+                          <TableCell className="text-gray-300">{prediction.winner}</TableCell>
+                          <TableCell className="text-gray-300">{prediction.fastestLap}</TableCell>
+                          <TableCell className="text-[#2dd4bf]">
+                            {prediction.createdAt.toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <p className="text-center py-8 text-gray-400">You haven't made any predictions yet.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="mt-8 text-center">
+            <Button 
+              onClick={() => router.push('/prediction')}
+              className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white hover:opacity-90 transition-opacity"
+            >
+              Make a New Prediction
+            </Button>
+          </div>
+        </motion.div>
+      </motion.main>
+    </motion.div>
   )
 }

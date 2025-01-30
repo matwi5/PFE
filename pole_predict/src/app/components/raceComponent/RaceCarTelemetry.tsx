@@ -25,7 +25,7 @@ const RaceCarTelemetry: React.FC<RaceCarTelemetryProps> = ({
   const center = 200;
 
   return (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border-0 transition-shadow duration-300">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300">
       <CardHeader className="pb-2 flex justify-between items-start">
         <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
           Live Telemetry

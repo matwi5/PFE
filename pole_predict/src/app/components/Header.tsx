@@ -123,12 +123,12 @@ const Header: FC<HeaderProps> = ({ title }) => {
                 transition={{ duration: 1.5, repeat: Infinity }}
                 className="text-gray-400"
               >
-                Chargement...
+                Loading...
               </motion.div>
             ) : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" 
+                  <Button variant="ghost"
                     className="bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20">
                     <User className="mr-2 h-4 w-4" /> {user.username}
                   </Button>
@@ -141,14 +141,14 @@ const Header: FC<HeaderProps> = ({ title }) => {
                   </DropdownMenuItem>
                   <DropdownMenuItem className="text-gray-300 hover:bg-[#5382ec]/20">
                     <Link href="/profile/predictions" className="flex items-center w-full">
-                      <TrendingUpDown className="mr-2 h-4 w-4" /> Mes prédictions
+                      <TrendingUpDown className="mr-2 h-4 w-4" /> My predictions
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={handleSignOut}
                     className="text-gray-300 hover:bg-[#5382ec]/20"
                   >
-                    <LogOut className="mr-2 h-4 w-4" /> Se déconnecter
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -157,15 +157,15 @@ const Header: FC<HeaderProps> = ({ title }) => {
                 asChild
                 className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white hover:opacity-90"
               >
-                <Link href="/login">Se connecter</Link>
+                <Link href="/login">Login</Link>
               </Button>
             )}
 
             {/* Hamburger Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
                 >
                   <Menu className="h-6 w-6" />
@@ -173,13 +173,13 @@ const Header: FC<HeaderProps> = ({ title }) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[#282a2c] border-none">
                 <DropdownMenuItem className="text-gray-300 hover:bg-[#5382ec]/20">
-                  <Link href="/about" className="w-full">À propos</Link>
+                  <Link href="/prediction" className="w-full">Predictions</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="text-gray-300 hover:bg-[#5382ec]/20">
-                  <Link href="/prediction" className="w-full">Prédictions</Link>
+                  <Link href="/about" className="w-full">About</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="text-gray-300 hover:bg-[#5382ec]/20">
-                  <Link href="/drivers" className="w-full">Pilotes</Link>
+                  <Link href="/contact" className="w-full">Contact</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
