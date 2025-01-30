@@ -42,7 +42,7 @@ const IconicMomentWidget: React.FC<IconicMomentWidgetProps> = ({ moment }) => (
         <motion.div variants={itemVariants}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#fbbf24] to-[#d56676] bg-clip-text text-transparent">
+              <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#fbbf24] to-[#d56676] bg-clip-text text-transparent">
                 Iconic Moment
               </CardTitle>
               <motion.span variants={itemVariants}>

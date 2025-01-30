@@ -38,7 +38,7 @@ const VitalStatisticsWidget: React.FC<VitalStatisticsWidgetProps> = ({ stats, ci
     <Card className="bg-[#282a2c] border border-gray-800 hover:border-[#5382ec]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
             Circuit Statistics
           </CardTitle>
           <Info className="h-5 w-5 text-[#5382ec]" />

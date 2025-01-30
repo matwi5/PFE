@@ -42,16 +42,18 @@ const DriverProfile = ({
 }: DriverProfileProps) => {
   return (
     <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300">
-      <CardHeader className="pb-2 flex justify-between items-start">
-        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-          {selectedDriver ? 'Driver Profile' : 'Event Overview'}
-        </CardTitle>
-        <User className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text" />
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+            {selectedDriver ? 'Driver Profile' : 'Event Overview'}
+          </CardTitle>
+          <User className="h-5 w-5 text-[#5382ec]" />
+        </div>
       </CardHeader>
       <CardContent>
         {selectedDriver ? (
           <motion.div className="space-y-4">
-            <Button 
+            <Button
               onClick={onReturnToOverview}
               className="bg-gradient-to-r from-[#5382ec] to-[#436cbf] hover:from-[#436cbf] hover:to-[#325299] transition-all duration-300"
             >
@@ -71,7 +73,7 @@ const DriverProfile = ({
                   {selectedDriver.full_name}
                 </h2>
                 <p className="text-[#2dd4bf]">{selectedDriver.team_name}</p>
-                <div 
+                <div
                   className="w-8 h-8 rounded-full border-2 border-[#5382ec] transition-transform duration-300 hover:scale-110"
                   style={{ backgroundColor: `#${selectedDriver.team_colour}` }}
                 />
@@ -94,7 +96,7 @@ const DriverProfile = ({
               </p>
               <p className="text-gray-300 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#2dd4bf]" />
-                {viewMode === 'lap' 
+                {viewMode === 'lap'
                   ? `Lap ${currentLap}/${totalLaps}`
                   : `Time: ${currentTime ? new Date(currentTime).toLocaleTimeString() : '-'}`}
               </p>

@@ -36,7 +36,7 @@ const LastWinnersWidget: React.FC<LastWinnersWidgetProps> = ({ winners }) => (
     <Card className="bg-[#282a2c] border border-gray-800 hover:border-[#d56676]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#d56676] to-[#5382ec] bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#d56676] to-[#5382ec] bg-clip-text text-transparent">
             Recent Winners
           </CardTitle>
           <Trophy className="h-5 w-5 text-[#d56676]" />

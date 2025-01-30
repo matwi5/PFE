@@ -36,7 +36,7 @@ const TyreStrategyWidget: React.FC<TyreStrategyWidgetProps> = ({ insights }) => 
     <Card className="bg-[#282a2c] border border-gray-800 hover:border-[#D4582D]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#D4582D] to-[#D42D62] bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#D4582D] to-[#D42D62] bg-clip-text text-transparent">
             Tyre Strategy
           </CardTitle>
           <Cog className="h-5 w-5 text-[#D4582D]" />

@@ -47,7 +47,7 @@ const QualifyingPredictionsWidget: React.FC<QualifyingPredictionsWidgetProps> = 
     <AnimatedBorderCard>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#8B5CF6] to-[#EC4899] bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#8B5CF6] to-[#EC4899] bg-clip-text text-transparent">
             Qualifications Predictions
           </CardTitle>
           <AlarmClock className="h-5 w-5 text-[#8B5CF6]" />

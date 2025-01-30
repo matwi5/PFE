@@ -26,11 +26,13 @@ const RaceCarTelemetry: React.FC<RaceCarTelemetryProps> = ({
 
   return (
     <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300">
-      <CardHeader className="pb-2 flex justify-between items-start">
-        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-          Live Telemetry
-        </CardTitle>
-        <Gauge className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text" />
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+            Live Telemetry
+          </CardTitle>
+          <Gauge className="h-5 w-5 text-[#5382ec]" />
+        </div>
       </CardHeader>
       <CardContent className="relative h-[calc(100%-4rem)] p-2 sm:p-4 md:p-6 flex items-center justify-center">
         {/* Speed Gauge */}
@@ -41,17 +43,17 @@ const RaceCarTelemetry: React.FC<RaceCarTelemetryProps> = ({
               <stop offset="100%" stopColor="#2dd4bf" />
             </linearGradient>
           </defs>
-          
+
           {/* Background Circle */}
-          <circle 
-            cx={center} 
-            cy={center} 
-            r="180" 
-            className="stroke-gray-700" 
+          <circle
+            cx={center}
+            cy={center}
+            r="180"
+            className="stroke-gray-700"
             strokeWidth="25"
             fill="none"
           />
-          
+
           {/* Active Speed Gauge */}
           <circle
             cx={center}
@@ -70,7 +72,7 @@ const RaceCarTelemetry: React.FC<RaceCarTelemetryProps> = ({
             const angle = ((marker / 360) * 360 + 90) * (Math.PI / 180);
             const x = center + 190 * Math.cos(angle);
             const y = center + 190 * Math.sin(angle);
-            
+
             return (
               <text
                 key={marker}
@@ -170,11 +172,10 @@ const RaceCarTelemetry: React.FC<RaceCarTelemetryProps> = ({
             </div>
           </div>
 
-          <div className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full ${
-            drsStatus === 'ACTIF' 
-              ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]' 
+          <div className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full ${drsStatus === 'ACTIF'
+              ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]'
               : 'bg-gray-700'
-          }`}>
+            }`}>
             <div className="text-white text-[10px] sm:text-xs md:text-sm">{drsStatus}</div>
           </div>
 

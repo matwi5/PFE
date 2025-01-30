@@ -36,7 +36,7 @@ const RaceDatesWidget: React.FC<RaceDatesWidgetProps> = ({ dates }) => (
     <Card className="bg-[#282a2c] border border-gray-800 hover:border-[#2DD45B]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#2DD45B] to-[#2dd4bf] bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#2DD45B] to-[#2dd4bf] bg-clip-text text-transparent">
             Race Weekend Schedule
           </CardTitle>
           <Calendar className="h-5 w-5 text-[#2DD45B]" />

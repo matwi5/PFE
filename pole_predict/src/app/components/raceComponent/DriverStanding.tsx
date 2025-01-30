@@ -271,9 +271,10 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
   return (
     <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 h-[70vh]">
-      <CardHeader className="pb-2 flex justify-between items-start">
-        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-          {viewMode === 'final' ? 'Final Ranking' : 'Driver Standings'}
+      <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                  {viewMode === 'final' ? 'Final Ranking' : 'Driver Standings'}
           {viewMode === 'lap' && ` - Lap ${currentLap}`}
         </CardTitle>
         <div className="flex items-center gap-4">
@@ -285,7 +286,8 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           >
             {gapMode === 'interval' ? 'Gaps to leader' : 'Intervals'}
           </Button>
-          <Trophy className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text" />
+          <Trophy className="h-5 w-5 text-[#5382ec]" />
+        </div>
         </div>
       </CardHeader>
       <CardContent className="relative h-[calc(100%-4rem)]">

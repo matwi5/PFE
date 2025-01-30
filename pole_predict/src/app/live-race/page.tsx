@@ -179,21 +179,21 @@ const RaceControlEvents = () => {
         const response = await fetch("https://api.openf1.org/v1/meetings");
         if (!response.ok) throw new Error("Failed to fetch meetings");
         const data = await response.json();
-  
+
         // Filtrer les meetings de 2024 à partir de Monza
         const monzaDate = new Date("2024-08-30T11:30:00+00:00");
         const filteredMeetings = data.filter((meeting: Meeting) => {
           const meetingDate = new Date(meeting.date_start);
           return meeting.year === 2024 && meetingDate >= monzaDate;
         });
-  
+
         // Trier par date
         const sortedMeetings = filteredMeetings.sort((a: Meeting, b: Meeting) =>
           new Date(b.date_start).getTime() - new Date(a.date_start).getTime()
         );
-  
+
         setMeetings(sortedMeetings);
-  
+
         if (sortedMeetings.length > 0) {
           // Sélectionner le premier meeting disponible
           const latestMeeting = sortedMeetings[0];
@@ -204,7 +204,7 @@ const RaceControlEvents = () => {
           if (!responseSessions.ok) throw new Error("Failed to fetch sessions");
           const sessionsData = await responseSessions.json();
           setSessions(sessionsData);
-  
+
           if (sessionsData.length > 0) {
             const latestSession = sessionsData[0];
             setSelectedSession(latestSession.session_key.toString());
@@ -221,7 +221,7 @@ const RaceControlEvents = () => {
     };
     fetchMeetings();
   }, []);
-  
+
   useEffect(() => {
     if (!selectedMeeting) return;
     const fetchSessions = async () => {
@@ -388,11 +388,13 @@ const RaceControlEvents = () => {
     />
   ) : (
     <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300">
-      <CardHeader className="pb-2 flex justify-between items-start">
-        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-          Live Telemetry
-        </CardTitle>
-        <Gauge className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text" />
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+            Live Telemetry
+          </CardTitle>
+          <Gauge className="h-5 w-5 text-[#5382ec]" />
+        </div>
       </CardHeader>
       <CardContent className="h-[calc(100%-4rem)] flex items-center justify-center">
         <span className="text-gray-400">
@@ -551,96 +553,96 @@ const RaceControlEvents = () => {
           transition={{ duration: 0.5 }}
         >
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-          {widgetConfig.order.map((widgetId, index) => 
-  widgetConfig.visibility[widgetId] && widgetComponents[widgetId] && (
-    <motion.div
-      key={widgetId}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className="break-inside-avoid"
-    >
-      {/* Rendu conditionnel pour chaque type de widget */}
-      {widgetId === 'driver-profile' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-        >
-          {widgetComponents['driver-profile']}
-        </motion.div>
-      )}
-      
-      {widgetId === 'driver-standings' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-        >
-          {widgetComponents['driver-standings']}
-        </motion.div>
-      )}
-      
-      {widgetId === 'vital-statistics' && vitalStats && (
-        <div className="break-inside-avoid">
-          {widgetComponents['vital-statistics']}
-        </div>
-      )}
-      
-      {widgetId === 'telemetry' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-        >
-          {widgetComponents['telemetry']}
-        </motion.div>
-      )}
-      
-      {widgetId === 'circuit-map' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-        >
-          {widgetComponents['circuit-map']}
-        </motion.div>
-      )}
-      
-      {widgetId === 'sector-analysis' && selectedDriver && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-        >
-          {widgetComponents['sector-analysis']}
-        </motion.div>
-      )}
-      
-      {widgetId === 'event-display' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-        >
-          {widgetComponents['event-display']}
-        </motion.div>
-      )}
-      
-      {/* Gestion des widgets de prédiction */}
-      {widgetId.startsWith('prediction-') && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-          className="break-inside-avoid"
-        >
-          {widgetComponents[widgetId]}
-        </motion.div>
-      )}
-    </motion.div>
-  )
-)}
+            {widgetConfig.order.map((widgetId, index) =>
+              widgetConfig.visibility[widgetId] && widgetComponents[widgetId] && (
+                <motion.div
+                  key={widgetId}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="break-inside-avoid"
+                >
+                  {/* Rendu conditionnel pour chaque type de widget */}
+                  {widgetId === 'driver-profile' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      {widgetComponents['driver-profile']}
+                    </motion.div>
+                  )}
+
+                  {widgetId === 'driver-standings' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      {widgetComponents['driver-standings']}
+                    </motion.div>
+                  )}
+
+                  {widgetId === 'vital-statistics' && vitalStats && (
+                    <div className="break-inside-avoid">
+                      {widgetComponents['vital-statistics']}
+                    </div>
+                  )}
+
+                  {widgetId === 'telemetry' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      {widgetComponents['telemetry']}
+                    </motion.div>
+                  )}
+
+                  {widgetId === 'circuit-map' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      {widgetComponents['circuit-map']}
+                    </motion.div>
+                  )}
+
+                  {widgetId === 'sector-analysis' && selectedDriver && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      {widgetComponents['sector-analysis']}
+                    </motion.div>
+                  )}
+
+                  {widgetId === 'event-display' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      {widgetComponents['event-display']}
+                    </motion.div>
+                  )}
+
+                  {/* Gestion des widgets de prédiction */}
+                  {widgetId.startsWith('prediction-') && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="break-inside-avoid"
+                    >
+                      {widgetComponents[widgetId]}
+                    </motion.div>
+                  )}
+                </motion.div>
+              )
+            )}
           </div>
         </motion.div>
       </div>

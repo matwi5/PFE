@@ -41,7 +41,7 @@ const RacePredictionsWidget: React.FC<RacePredictionsWidgetProps> = ({ predictio
     <AnimatedBorderCard>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-[#10B981] to-[#3B82F6] bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#10B981] to-[#3B82F6] bg-clip-text text-transparent">
             Race Predictions
           </CardTitle>
           <BarChart className="h-5 w-5 text-[#10B981]" />

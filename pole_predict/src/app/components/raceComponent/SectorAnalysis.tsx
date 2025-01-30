@@ -34,7 +34,7 @@ const getSegmentColor = (value: number): string => {
   }
 };
 
-const SectorAnalysis: React.FC<SectorAnalysisProps> = ({ 
+const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
   driverNumber,
   sessionKey,
   currentTime,
@@ -51,7 +51,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
           `https://api.openf1.org/v1/laps?driver_number=${driverNumber}&session_key=${sessionKey}`
         );
         const data: LapData[] = await response.json();
-        
+
         const filteredData = data.filter(lap => {
           if (viewMode === 'chrono') {
             return new Date(lap.date_start) <= new Date(currentTime);
@@ -95,16 +95,20 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
 
   return (
     <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300">
-      <CardHeader className="pb-2 flex justify-between items-start">
-        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-          Sector Analysis
-        </CardTitle>
-        <Activity className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text" />
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+            Sector Analysis
+          </CardTitle>
+          <Activity className="h-5 w-5 text-[#5382ec]" />
+        </div>
       </CardHeader>
-      <CardContent className="space-y-6 h-64 overflow-y-auto">
+      <CardContent className="space-y-6 h-64 overflow-y-auto
+      scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 
+            hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out">
         {laps.map((lap) => (
-          <div 
-            key={lap.lap_number} 
+          <div
+            key={lap.lap_number}
             className="bg-black/20 backdrop-blur-sm p-4 rounded-lg transition-transform duration-300 hover:scale-[1.02]"
           >
             <div className="flex items-center justify-between mb-3">
@@ -119,17 +123,17 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
             </div>
 
             <div className="space-y-4">
-              <SectorSection 
+              <SectorSection
                 sectorNumber={1}
                 segments={lap.segments_sector_1}
                 duration={lap.duration_sector_1}
               />
-              <SectorSection 
+              <SectorSection
                 sectorNumber={2}
                 segments={lap.segments_sector_2}
                 duration={lap.duration_sector_2}
               />
-              <SectorSection 
+              <SectorSection
                 sectorNumber={3}
                 segments={lap.segments_sector_3}
                 duration={lap.duration_sector_3}
@@ -142,11 +146,11 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
   );
 };
 
-const SectorSection = ({ 
-  sectorNumber, 
-  segments, 
-  duration 
-}: { 
+const SectorSection = ({
+  sectorNumber,
+  segments,
+  duration
+}: {
   sectorNumber: number;
   segments: number[];
   duration?: number;

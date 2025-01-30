@@ -24,21 +24,21 @@ interface EventDisplayProps {
   currentTime: string;
 }
 
-const EventDisplay = ({ 
-  events, 
-  sessionName, 
-  loading, 
-  viewMode, 
+const EventDisplay = ({
+  events,
+  sessionName,
+  loading,
+  viewMode,
   currentLap,
-  currentTime 
+  currentTime
 }: EventDisplayProps) => {
   const filteredAndSortedEvents = useMemo(() => {
     const now = new Date(currentTime);
-    
+
     const filtered = events.filter(event => {
       const eventDate = new Date(event.date);
-      
-      switch(viewMode) {
+
+      switch (viewMode) {
         case 'chrono':
           return eventDate <= now;
         case 'lap':
@@ -50,7 +50,7 @@ const EventDisplay = ({
       }
     });
 
-    return [...filtered].sort((a, b) => 
+    return [...filtered].sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   }, [events, currentTime, viewMode, currentLap]);
@@ -66,16 +66,16 @@ const EventDisplay = ({
     }
   }, []);
 
-  const formatEventTime = (date: string) => 
-    new Date(date).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      second: '2-digit' 
+  const formatEventTime = (date: string) =>
+    new Date(date).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
     });
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
       transition: {
         staggerChildren: 0.05,
@@ -85,13 +85,13 @@ const EventDisplay = ({
   };
 
   const itemVariants = {
-    hidden: { 
-      opacity: 0, 
+    hidden: {
+      opacity: 0,
       y: 20,
       scale: 0.95
     },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       scale: 1,
       transition: {
@@ -114,14 +114,16 @@ const EventDisplay = ({
   if (loading) {
     return (
       <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out">
-        <CardHeader className="pb-2 flex justify-between items-start">
-          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-            Race Control
-          </CardTitle>
-          <Bell className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text" />
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+              Race Control
+            </CardTitle>
+            <Bell className="h-5 w-5 text-[#5382ec]" />
+          </div>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[calc(100%-4rem)]">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -136,19 +138,21 @@ const EventDisplay = ({
 
   return (
     <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[70vh]">
-      <CardHeader className="pb-2 flex justify-between items-start">
-        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-          Race Control
-        </CardTitle>
-        <Bell className="w-5 h-5 text-transparent bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text" />
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+            Race Control
+          </CardTitle>
+          <Bell className="h-5 w-5 text-[#5382ec]" />
+        </div>
       </CardHeader>
       <CardContent className="relative h-[calc(100%-4rem)]">
-        <div 
+        <div
           className="h-full overflow-y-auto pr-6
             scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 
             hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out"
         >
-          <motion.div 
+          <motion.div
             className="pr-2 space-y-4"
             variants={containerVariants}
             initial="hidden"
@@ -156,7 +160,7 @@ const EventDisplay = ({
           >
             <AnimatePresence mode="popLayout">
               {filteredAndSortedEvents.length === 0 ? (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
