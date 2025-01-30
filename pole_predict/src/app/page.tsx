@@ -7,6 +7,7 @@ import { ArrowRight, Info, BarChart, Medal } from "lucide-react";
 import Typewriter from "typewriter-effect";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 interface Driver {
   flagColors: string[];
@@ -53,52 +54,45 @@ interface GrandPrix {
 }
 
 const GPDetailCard: React.FC<{ gp: GrandPrix }> = ({ gp }) => {
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
-      className="relative bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 transition-all duration-300 hover:border-orange-500 overflow-hidden"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        boxShadow: isHovered ? '0 0 0 2px orange, 0 0 12px orange' : '0 0 0 0 rgba(0,0,0,0), 0 0 0 0 rgba(0,0,0,0)'
-      }}
+      className="relative bg-[#1d1f20] backdrop-blur-md p-8 rounded-xl border border-transparent transition-all duration-300 overflow-hidden"
     >
-      {/* ... GPDetailCard component code ... */}
       <div className="relative z-10 flex flex-col items-center mb-6">
         <img
           src={gp.pays_flag}
           alt={`Drapeau ${gp.grand_prix}`}
-          className="w-32 h-20 object-cover rounded-lg mb-4 border-2 border-orange-500"
+          className="w-32 h-20 object-cover rounded-lg mb-4 border-2 border-[#5382ec]"
         />
-        <h2 className="text-3xl font-bold text-center text-white bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">
+        <h2 className="text-3xl font-bold text-center text-white bg-clip-text bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]">
           {gp.grand_prix}
         </h2>
-        <p className="text-xl text-orange-400 mt-2">{gp.ville}</p>
+        <p className="text-xl text-[#2dd4bf] mt-2">{gp.ville}</p>
       </div>
 
       <div className="relative z-10 my-6">
         <img
           src={gp.image_circuit}
           alt={`Circuit ${gp.grand_prix}`}
-          className="w-full h-56 object-cover rounded-lg border-2 border-orange-500"
+          className="w-full h-56 object-cover rounded-lg border-2 border-[#5382ec]"
         />
       </div>
 
       <div className="relative z-10 grid grid-cols-2 gap-6">
-        <div className="bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
-          <p className="font-semibold text-orange-400 mb-2">Nombre de tours</p>
+        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
+          <p className="font-semibold text-[#5382ec] mb-2">Nombre de tours</p>
           <p className="text-white text-2xl font-bold text-center">{gp.nombre_de_tours}</p>
         </div>
 
-        <div className="bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
-          <p className="font-semibold text-orange-400 mb-2">Record du circuit</p>
+        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
+          <p className="font-semibold text-[#5382ec] mb-2">Record du circuit</p>
           <p className="text-white text-xl font-mono text-center">{gp.record_de_circuit}</p>
           <p className="text-sm text-gray-400 text-center mt-1">par {gp.recordman_circuit}</p>
         </div>
 
-        <div className="col-span-2 bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
-          <p className="font-semibold text-orange-400 mb-2">Particularités</p>
+        <div className="col-span-2 bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
+          <p className="font-semibold text-[#5382ec] mb-2">Particularités</p>
           <p className="text-white">{gp.particularites}</p>
         </div>
       </div>
@@ -107,40 +101,33 @@ const GPDetailCard: React.FC<{ gp: GrandPrix }> = ({ gp }) => {
 };
 
 const DriverDetailCard: React.FC<{ driver: Driver }> = ({ driver }) => {
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
-      className="relative bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 transition-all duration-300 hover:border-orange-500 overflow-hidden"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        boxShadow: isHovered ? '0 0 0 2px orange, 0 0 12px orange' : '0 0 0 0 rgba(0,0,0,0), 0 0 0 0 rgba(0,0,0,0)'
-      }}
+      className="relative bg-[#1d1f20] backdrop-blur-md p-8 rounded-xl border border-transparent transition-all duration-300 overflow-hidden"
     >
-      {/* ... DriverDetailCard component code ... */}
       <div className="relative z-10">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 rounded-full"></div>
         <img
           src={driver.headshot_url}
           alt={`${driver.name} headshot`}
-          className="w-48 h-48 rounded-full mx-auto mb-6 object-cover border-4 border-orange-500 transition-transform duration-300 hover:scale-105"
+          className="w-48 h-48 rounded-full mx-auto mb-6 object-cover border-4 border-[#5382ec] transition-transform duration-300 hover:scale-105"
         />
       </div>
-      <h2 className="relative z-10 text-3xl font-bold text-center mb-6 text-white bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">
+      <h2 className="relative z-10 text-3xl font-bold text-center mb-6 text-white bg-clip-text bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]">
         {driver.name}
       </h2>
       <div className="relative z-10 grid grid-cols-2 gap-6 text-center">
-        <div className="bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
-          <p className="font-semibold text-orange-400 mb-2">Équipe</p>
+        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
+          <p className="font-semibold text-[#5382ec] mb-2">Équipe</p>
           <p className="text-white">{driver.team_name}</p>
         </div>
-        <div className="bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
-          <p className="font-semibold text-orange-400 mb-2">Numéro</p>
+        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
+          <p className="font-semibold text-[#5382ec] mb-2">Numéro</p>
           <p className="text-white text-2xl font-bold">{driver.driver_number}</p>
         </div>
-        <div className="bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
-          <p className="font-semibold text-orange-400 mb-2">Nationalité</p>
+        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
+          <p className="font-semibold text-[#5382ec] mb-2">Nationalité</p>
           <div className="flex items-center justify-center gap-2">
             <img
               src={driver.flag_url}
@@ -150,16 +137,16 @@ const DriverDetailCard: React.FC<{ driver: Driver }> = ({ driver }) => {
             <p className="text-white">{driver.country_code}</p>
           </div>
         </div>
-        <div className="bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
-          <p className="font-semibold text-orange-400 mb-2">Code</p>
+        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
+          <p className="font-semibold text-[#5382ec] mb-2">Code</p>
           <p className="text-white text-xl font-mono">{driver.broadcast_name}</p>
         </div>
-        <div className="bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
-          <p className="font-semibold text-orange-400 mb-2">Nombre de Victoires</p>
+        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
+          <p className="font-semibold text-[#5382ec] mb-2">Nombre de Victoires</p>
           <p className="text-white text-2xl font-bold">{driver.NumberOfVictories}</p>
         </div>
-        <div className="bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
-          <p className="font-semibold text-orange-400 mb-2">Nombre de Podiums</p>
+        <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
+          <p className="font-semibold text-[#5382ec] mb-2">Nombre de Podiums</p>
           <p className="text-white text-2xl font-bold">{driver.NumberOfPodiums}</p>
         </div>
       </div>
@@ -180,17 +167,10 @@ const DriverDetailCard: React.FC<{ driver: Driver }> = ({ driver }) => {
 };
 
 const TeamDetailCard: React.FC<{ team: Team }> = ({ team }) => {
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
-      className={`relative bg-gray-900 p-8 rounded-2xl shadow-2xl border border-gray-800 transition-all duration-300 hover:border-orange-500 w-full max-w-6xl mx-auto overflow-hidden`}
-      style={{
-        borderColor: team.color,
-        boxShadow: isHovered ? `0 0 0 2px ${team.color}, 0 0 12px ${team.color}` : '0 0 0 0 rgba(0,0,0,0), 0 0 0 0 rgba(0,0,0,0)'
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className="relative bg-[#1d1f20] backdrop-blur-md p-8 rounded-xl border border-transparent transition-all duration-300 overflow-hidden"
     >
       <div className="relative z-10 grid grid-cols-12 gap-6">
         <div className="col-span-4">
@@ -211,27 +191,27 @@ const TeamDetailCard: React.FC<{ team: Team }> = ({ team }) => {
 
         <div className="col-span-8 space-y-6">
           <div className="grid grid-cols-2 gap-6">
-            <div className="bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
+            <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
               <p className="font-semibold mb-2" style={{ color: team.color }}>Base</p>
               <div className="flex items-center gap-2">
                 <img src={team.country_flag} alt={`${team.country} flag`} className="w-6 h-6" />
                 <p className="text-white">{team.base}</p>
               </div>
             </div>
-            <div className="bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
+            <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
               <p className="font-semibold mb-2" style={{ color: team.color }}>Team Principal</p>
               <p className="text-white">{team.team_principal}</p>
             </div>
           </div>
 
-          <div className="bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
+          <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
             <p className="font-semibold mb-2" style={{ color: team.color }}>Power Unit</p>
             <p className="text-white">{team.power_unit}</p>
           </div>
         </div>
 
         <div className="col-span-12">
-          <div className="bg-gray-800 p-4 rounded-lg transition-all duration-300 hover:bg-gray-700">
+          <div className="bg-[#282a2c] p-4 rounded-lg transition-all duration-300 hover:bg-[#383a3c]">
             <p className="font-semibold mb-4 text-center" style={{ color: team.color }}>Car</p>
             <img
               src={team.car_image}
@@ -256,11 +236,10 @@ const HomePage: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [gp, setGP] = useState<GrandPrix[]>([]);
   const [error, setError] = useState('');
-  const [selectedYear, setSelectedYear] = useState<number>(2024); // État pour l'année sélectionnée
+  const [selectedYear, setSelectedYear] = useState<number>(2024);
   const [filteredDrivers, setFilteredDrivers] = useState<Driver[]>([]);
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isHoveringCardIndex, setIsHoveringCardIndex] = useState<number | null>(null);
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -369,10 +348,9 @@ const HomePage: React.FC = () => {
     setIsHoveringCardIndex(null);
   };
 
-
   return (
     <motion.div
-      className="min-h-screen bg-black text-white p-8"
+      className="min-h-screen bg-[#1B1C1D] text-white py-24 px-8"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -390,7 +368,7 @@ const HomePage: React.FC = () => {
         </motion.div>
 
         <motion.h1
-          className="text-4xl md:text-6xl font-bold mb-8"
+          className="text-4xl md:text-6xl font-bold mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent"
           variants={itemVariants}
         >
           <Typewriter
@@ -405,26 +383,6 @@ const HomePage: React.FC = () => {
             }}
           />
         </motion.h1>
-
-        <div className="flex gap-4">
-          {[
-            { text: "PAST", link: "/pastSessions" },
-            { text: "UPCOMING", link: "/upcomingSessions" },
-            { text: "LIVE", link: "/liveSessions" },
-            { text: "ABOUT US", link: "/about" }
-          ].map(({ text, link }, index) => (
-            <Button
-              key={index}
-              asChild
-              size="lg"
-              className="mt-8 px-6 py-2 border border-white rounded-lg transition-all duration-300 hover:bg-orange-500 hover:text-black" // Removed hover:scale-110 class
-            >
-              <a href={link}>
-                → {text}
-              </a>
-            </Button>
-          ))}
-        </div>
       </motion.main>
 
       <motion.section
@@ -434,24 +392,24 @@ const HomePage: React.FC = () => {
         {[
           {
             icon: <Info className="mr-2" />,
-            title: "Grand Prix",
+            title: "GRAND PRIX",
             content: "Know more about Grand Prix",
             onClick: () => setShowGPs(!showGPs),
             linkText: "See GPs",
           },
           {
             icon: <Medal className="mr-2" />,
-            title: "Teams",
+            title: "TEAMS",
             content: "Infos about the teams on the grid",
             onClick: () => setShowTeams(!showTeams),
             linkText: "See Teams",
           },
           {
             icon: <BarChart className="mr-2" />,
-            title: "Pilotes",
-            content: "Have a look on the pilotes",
+            title: "DRIVERS",
+            content: "Have a look on the drivers",
             onClick: () => setShowDrivers(!showDrivers),
-            linkText: "See Pilotes",
+            linkText: "See Drivers",
           },
         ].map((card, index) => (
           <motion.div
@@ -459,20 +417,30 @@ const HomePage: React.FC = () => {
             variants={itemVariants}
           >
             <Card
-              className={`relative transition-all duration-300 bg-gray-900 border border-gray-800 hover:border-orange-500 ${hoveredCard === index ? 'scale-105' : ''} overflow-hidden`}
+              className={`relative transition-all duration-300 bg-[#282a2c] 
+                   border border-gray-800 hover:border-[#5382ec] overflow-hidden
+                   ${hoveredCard === index ? 'scale-105' : ''}`}
               onMouseEnter={() => setHoveredCard(index)}
-              onMouseLeave={() => setHoveredCard(null) }
+              onMouseLeave={() => {
+                setHoveredCard(null);
+                setIsHoveringCardIndex(null);
+              }}
               onMouseMove={(e) => handleMouseMove(e, index)}
-              onMouseLeave={handleMouseLeave}
               style={{
                 background: isHoveringCardIndex === index
-                  ? `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0) 50%) , ${'#111827'}` // #111827 is bg-gray-900 in hex
-                  : '#111827',
+                  ? `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(45, 212, 191, 0.3), rgba(45, 212, 191, 0) 50%) , ${'#282a2c'}` // #111827 is bg-gray-900 in hex
+                  : '#282a2c',
               }}
             >
               <CardHeader className="relative z-10">
-                <CardTitle className="flex items-center justify-center text-white">
-                  {card.icon} {card.title}
+                <CardTitle className="flex items-center justify-center text-2xl font-bold">
+                  <span className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent inline-flex items-center">
+                    {React.cloneElement(card.icon, {
+                      className: "mr-2",
+                      style: { color: '#5382ec' }
+                    })}
+                    {card.title}
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="relative z-10">
@@ -482,7 +450,7 @@ const HomePage: React.FC = () => {
                     <select
                       value={selectedYear}
                       onChange={(e) => setSelectedYear(Number(e.target.value))}
-                      className="p-2 bg-gray-800 text-white border border-white rounded mr-2 relative z-10"
+                      className="p-2 bg-[#282a2c] text-white border border-[#5382ec] rounded mr-2 relative z-10"
                     >
                       <option value={2023}>2023</option>
                       <option value={2024}>2024</option>
@@ -496,11 +464,11 @@ const HomePage: React.FC = () => {
                     onMouseLeave={() => setHoveredButton(null)}
                     className="relative z-10"
                     style={{
-                      background: hoveredButton === index ? 'orange' : 'transparent',
+                      background: hoveredButton === index ? 'linear-gradient(to right, #5382ec, #2dd4bf)' : 'transparent',
                       color: 'white',
-                      border: '1px solid white',
+                      border: '1px solid #5382ec',
                       transition: 'background 0.3s, color 0.3s',
-                      ...(hoveredButton === index && { color: 'black' }),
+                      ...(hoveredButton === index && { color: 'white' }),
                     }}
                   >
                     {card.linkText} <ArrowRight className="ml-2 h-4 w-4" />
@@ -541,8 +509,52 @@ const HomePage: React.FC = () => {
                           {gp.grand_prix}
                         </button>
                       </DialogTrigger>
-                      <DialogContent className="bg-transparent border-none">
-                        <GPDetailCard gp={gp} />
+                      <DialogContent className="group fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#1d1f20] border-none p-6 overflow-hidden rounded-lg
+                        transition-all duration-300
+                        shadow-[0_0_15px_rgba(83,130,236,0.3)]
+                        hover:shadow-[0_0_25px_rgba(83,130,236,0.5)]">
+                        <div className="relative w-full max-w-3xl h-[90vh]">
+                          {/* Effet de flou en haut */}
+                          <div className="absolute inset-x-0 h-12 top-0 bg-gradient-to-b from-[#1d1f20] to-transparent z-10" />
+
+                          {/* Bouton de fermeture amélioré */}
+                          <button
+                            className="absolute -top-3 -right-3 z-20 w-8 h-8 rounded-full 
+                 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]
+                 flex items-center justify-center
+                 transition-transform duration-200 hover:scale-110"
+                            onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { 'key': 'Escape' }))}
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 14 14"
+                              fill="none"
+                              className="text-white"
+                            >
+                              <path
+                                d="M1 1L13 13M1 13L13 1"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+
+                          {/* Contenu avec scroll caché mais fonctionnel */}
+                          <div
+                            className="h-full overflow-y-auto scrollbar-none"
+                            style={{
+                              msOverflowStyle: 'none',
+                              scrollbarWidth: 'none',
+                            }}
+                          >
+                            <GPDetailCard gp={gp} />
+                          </div>
+
+                          {/* Effet de flou en bas */}
+                          <div className="absolute inset-x-0 h-12 bottom-0 bg-gradient-to-t from-[#1d1f20] to-transparent z-10" />
+                        </div>
                       </DialogContent>
                     </Dialog>
                   ))
@@ -577,8 +589,52 @@ const HomePage: React.FC = () => {
                           {team.name}
                         </button>
                       </DialogTrigger>
-                      <DialogContent className="bg-transparent border-none">
-                        <TeamDetailCard team={team} />
+                      <DialogContent className="group fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#1d1f20] border-none p-6 overflow-hidden rounded-lg
+                        transition-all duration-300
+                        shadow-[0_0_15px_rgba(83,130,236,0.3)]
+                        hover:shadow-[0_0_25px_rgba(83,130,236,0.5)]">
+                        <div className="relative w-full max-w-3xl h-[90vh]">
+                          {/* Effet de flou en haut */}
+                          <div className="absolute inset-x-0 h-12 top-0 bg-gradient-to-b from-[#1d1f20] to-transparent z-10" />
+
+                          {/* Bouton de fermeture amélioré */}
+                          <button
+                            className="absolute -top-3 -right-3 z-20 w-8 h-8 rounded-full 
+                 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]
+                 flex items-center justify-center
+                 transition-transform duration-200 hover:scale-110"
+                            onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { 'key': 'Escape' }))}
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 14 14"
+                              fill="none"
+                              className="text-white"
+                            >
+                              <path
+                                d="M1 1L13 13M1 13L13 1"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+
+                          {/* Contenu avec scroll caché mais fonctionnel */}
+                          <div
+                            className="h-full overflow-y-auto scrollbar-none"
+                            style={{
+                              msOverflowStyle: 'none',
+                              scrollbarWidth: 'none',
+                            }}
+                          >
+                            <TeamDetailCard team={team} />
+                          </div>
+
+                          {/* Effet de flou en bas */}
+                          <div className="absolute inset-x-0 h-12 bottom-0 bg-gradient-to-t from-[#1d1f20] to-transparent z-10" />
+                        </div>
                       </DialogContent>
                     </Dialog>
                   ))
@@ -620,8 +676,52 @@ const HomePage: React.FC = () => {
                           {driver.name}
                         </button>
                       </DialogTrigger>
-                      <DialogContent className="bg-transparent border-none">
-                        <DriverDetailCard driver={driver} />
+                      <DialogContent className="group fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#1d1f20] border-none p-6 overflow-hidden rounded-lg
+                        transition-all duration-300
+                        shadow-[0_0_15px_rgba(83,130,236,0.3)]
+                        hover:shadow-[0_0_25px_rgba(83,130,236,0.5)]">
+                        <div className="relative w-full max-w-3xl h-[85vh]">
+                          {/* Effet de flou en haut */}
+                          <div className="absolute inset-x-0 h-12 top-0 bg-gradient-to-b from-[#1d1f20] to-transparent z-10" />
+
+                          {/* Bouton de fermeture amélioré */}
+                          <button
+                            className="absolute -top-3 -right-3 z-20 w-8 h-8 rounded-full 
+                 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]
+                 flex items-center justify-center
+                 transition-transform duration-200 hover:scale-110"
+                            onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { 'key': 'Escape' }))}
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 14 14"
+                              fill="none"
+                              className="text-white"
+                            >
+                              <path
+                                d="M1 1L13 13M1 13L13 1"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+
+                          {/* Contenu avec scroll caché mais fonctionnel */}
+                          <div
+                            className="h-full overflow-y-auto scrollbar-none"
+                            style={{
+                              msOverflowStyle: 'none',
+                              scrollbarWidth: 'none',
+                            }}
+                          >
+                            <DriverDetailCard driver={driver} />
+                          </div>
+
+                          {/* Effet de flou en bas */}
+                          <div className="absolute inset-x-0 h-12 bottom-0 bg-gradient-to-t from-[#1d1f20] to-transparent z-10" />
+                        </div>
                       </DialogContent>
                     </Dialog>
                   ))
