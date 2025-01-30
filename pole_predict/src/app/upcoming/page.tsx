@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, collection, getDocs, query } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from 'framer-motion';
 
@@ -85,11 +85,10 @@ interface Race {
 interface RaceDisplayPageProps {}
 
 export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
-  const [races, setRaces] = useState<Race[]>([]);
+  const [races, setRaces] = useState<Race[] | null>(null); // Initialisation à null
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [selectedRaceName, setSelectedRaceName] = useState<string>("");
   const [selectedRaceData, setSelectedRaceData] = useState<Race | null>(null);
-  const [loadingRaces, setLoadingRaces] = useState(true);
   const [loadingRaceData, setLoadingRaceData] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,7 +105,6 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
     };
 
     const fetchRaces = async () => {
-      setLoadingRaces(true);
       setError(null);
       try {
         const racesCollectionRef = collection(db, "upcoming_races");
@@ -116,11 +114,12 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
           racesList.push(doc.data() as Race);
         });
         setRaces(racesList);
-        setLoadingRaces(false);
+        if (racesList.length > 0) {
+          setSelectedRaceName(racesList[0].id.toString());
+        }
       } catch (e: any) {
         setError("Failed to load races. Please check your connection.");
         console.error("Error fetching races:", e);
-        setLoadingRaces(false);
       }
     };
 
@@ -157,14 +156,22 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
     fetchRaceData();
   }, [selectedRaceName]);
 
-  const handleRaceChange = (value: string) => {
-    setSelectedRaceName(value);
-  };
-
   const getMeetingName = (id: number) => {
     const meeting = meetings.find(m => m.meeting_key === Number(id));
     return meeting ? meeting.meeting_name : `Race ${id}`;
   };
+
+    // État de chargement global pour RaceDisplayPage
+    const isLoading = races === null; 
+
+    if (isLoading) {
+      return (
+        <div className="min-h-screen bg-[#1B1C1D] flex justify-center items-center">
+          <div className="text-[#5382ec] text-2xl">Loading...</div>
+        </div>
+      );
+    }
+  
 
   return (
     <div className="min-h-screen bg-[#1B1C1D]">
@@ -174,7 +181,7 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-16 space-y-4"
         >
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+          <h1 className="text-4xl h-20 md:text-6xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
             Upcoming
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
@@ -182,38 +189,45 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
           </p>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md mx-auto mb-12"
-        >
-          <Card className="bg-[#282a2c] border-0">
-            <CardContent className="pt-6">
-              <Select value={selectedRaceName} onValueChange={handleRaceChange}>
-                <SelectTrigger className="w-full bg-[#1d1f20] border-0 text-white h-12">
-                  <SelectValue placeholder="Select a Race" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1d1f20] border-0">
-                  {races.map((race) => {
-                    const meetingName = getMeetingName(race.id);
-                    return (
-                      <SelectItem
-                        key={race.id}
-                        value={race.id.toString()}
-                        className="text-white hover:bg-[#282a2c] focus:bg-[#282a2c]"
-                      >
-                        {meetingName}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-        </motion.div>
+        {/* Gestion du cas où il n'y a pas de courses ou si les courses sont en cours de chargement */}
+        {races && races.length > 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-md mx-auto mb-12"
+          >
+            <Card className="bg-[#282a2c] border-0">
+              <CardContent className="pt-6">
+                <Select value={selectedRaceName} onValueChange={(value) => setSelectedRaceName(value)}>
+                  <SelectTrigger className="w-full bg-[#1d1f20] border-0 text-white h-12">
+                      <SelectValue placeholder={getMeetingName(Number(selectedRaceName))}/>
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1d1f20] border-0">
+                    {races.map((race) => {
+                      const meetingName = getMeetingName(race.id);
+                      return (
+                        <SelectItem
+                          key={race.id}
+                          value={race.id.toString()}
+                          className="text-white hover:bg-[#282a2c] focus:bg-[#282a2c]"
+                        >
+                          {meetingName}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ) : (
+          <div className="text-center text-gray-400">
+            No upcoming races found.
+          </div>
+        )}
 
         {selectedRaceData && !loadingRaceData && (
-        <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
             <div className="break-inside-avoid">
               <VitalStatisticsWidget 
                 stats={selectedRaceData.vital_statistics}
@@ -245,7 +259,7 @@ export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
             <div className="break-inside-avoid">
               <IconicMomentWidget moment={selectedRaceData.iconic_moment} />
             </div>
-        </div>
+          </div>
         )}
 
         {loadingRaceData && (

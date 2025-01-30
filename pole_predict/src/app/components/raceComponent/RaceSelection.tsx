@@ -80,6 +80,20 @@ const RaceSelection = ({
   const [laps, setLaps] = useState<Lap[]>([]);
   const [isLoadingLaps, setIsLoadingLaps] = useState(false);
   const [validLaps, setValidLaps] = useState<Lap[]>([]);
+  const [temporaryValue, setTemporaryValue] = useState<number>(0);
+  const [temporaryDisplayTime, setTemporaryDisplayTime] = useState<string | null>(null);
+
+  // Set default session to "Race" when meeting changes
+  useEffect(() => {
+    if (selectedMeeting) {
+      const raceSession = sessions.find((s) => s.session_name === "Race");
+      if (raceSession) {
+        onSessionChange(raceSession.session_key.toString());
+      } else {
+        onSessionChange(""); // Reset session if "Race" is not found
+      }
+    }
+  }, [selectedMeeting, sessions]);
 
   // Fetch laps data when session changes
   useEffect(() => {
@@ -186,24 +200,20 @@ const RaceSelection = ({
       const startMs = new Date(sessionStartTime).getTime();
       const endMs = new Date(sessionEndTime).getTime();
       const newTimeMs = startMs + (endMs - startMs) * (value / 100);
+      setTemporaryDisplayTime(new Date(newTimeMs).toISOString());
+    } else if (viewMode === "lap") {
+      const newLap = Math.max(1, Math.round((totalLaps * value) / 100));
+      onLapChange(newLap);
+    }
+  };
+
+  const handleSliderCommit = (value: number) => {
+    if (viewMode === "chrono") {
+      const startMs = new Date(sessionStartTime).getTime();
+      const endMs = new Date(sessionEndTime).getTime();
+      const newTimeMs = startMs + (endMs - startMs) * (value / 100);
       onTimeChange(new Date(newTimeMs).toISOString());
-    } else if (viewMode === "lap" && validLaps.length > 0) {
-      const newLap = Math.max(1, Math.round((totalLaps * value) / 100));
-      const lapData = validLaps.find((lap) => lap.lap_number === newLap);
-      if (lapData) {
-        onLapChange(newLap);
-        onTimeChange(lapData.date_start);
-      }
-    } else if (viewMode === "lap" && validLaps.length > 0) {
-      const newLap = Math.max(1, Math.round((totalLaps * value) / 100));
-      // Trouver le premier tour correspondant au numéro (début le plus tôt)
-      const lapData = validLaps
-        .filter((lap) => lap.lap_number === newLap)
-        .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime())[0];
-      if (lapData) {
-        onLapChange(newLap);
-        onTimeChange(lapData.date_start);
-      }
+      setTemporaryDisplayTime(null);
     }
   };
 
@@ -211,7 +221,7 @@ const RaceSelection = ({
     if (viewMode === "chrono") {
       const startMs = new Date(sessionStartTime).getTime();
       const endMs = new Date(sessionEndTime).getTime();
-      const currentMs = new Date(currentTime).getTime();
+      const currentMs = new Date(temporaryDisplayTime || currentTime).getTime();
       return ((currentMs - startMs) / (endMs - startMs)) * 100;
     } else if (viewMode === "lap" && totalLaps > 0) {
       return (currentLap / totalLaps) * 100;
@@ -226,25 +236,34 @@ const RaceSelection = ({
 
   const handleViewModeChange = (newMode: "chrono" | "lap" | "final") => {
     onViewModeChange(newMode);
-    if (newMode === "lap" && validLaps.length > 0) {
-      const firstLap = validLaps.find((lap) => lap.lap_number === 1);
+    if (newMode === "lap") {
+      onLapChange(1);
+      const firstLap = validLaps.find(lap => lap.lap_number === 1);
       if (firstLap) {
-        onLapChange(1);
         onTimeChange(firstLap.date_start);
       }
     } else if (newMode === "final") {
+      onLapChange(totalLaps);
       onTimeChange(sessionEndTime);
     } else if (newMode === "chrono") {
       onTimeChange(sessionStartTime);
     }
+    setTemporaryDisplayTime(null);
   };
 
   return (
     <motion.div
-      className="bg-[#282a2c] border-none border border-gray-800 hover:border-[#5382ec]"
+      className="bg-[#282a2c] border-none rounded-xl border border-gray-800 hover:border-[#5382ec]"
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        width: viewMode === "final" ? "1000px" : "100%"
+      }}
+      transition={{
+        duration: 0.3,
+        width: { type: "spring", stiffness: 100, damping: 20 }
+      }}
     >
       <Card className="bg-transparent border-none">
         <CardContent className="p-6">
@@ -302,7 +321,8 @@ const RaceSelection = ({
                     </Select>
                   </motion.div>
                 )}
-                <motion.div className="flex-1" layout>
+
+                <motion.div className="w-auto" layout>
                   <div className="bg-[#1d1f20] rounded-[6px] p-2">
                     <div className="flex items-center gap-4">
                       {/* Mode de vue */}
@@ -310,14 +330,14 @@ const RaceSelection = ({
                         {["chrono", "lap", "final"].map((mode) => (
                           <motion.button
                             key={mode}
-                            onClick={() => onViewModeChange(mode as any)}
+                            onClick={() => handleViewModeChange(mode as any)}
                             className={`
-                    px-4 py-2 rounded-md text-sm font-medium transition-colors
-                    ${viewMode === mode
+                              px-4 py-2 rounded-md text-sm font-medium transition-colors
+                              ${viewMode === mode
                                 ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
                                 : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
                               }
-                  `}
+                            `}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                           >
@@ -326,83 +346,112 @@ const RaceSelection = ({
                         ))}
                       </motion.div>
 
-                      {/* Contrôle principal avec fond sombre - Inspiré de LapSlider */}
-
-                      <motion.button
-                        onClick={() => setIsRunning(!isRunning)}
-                        className={`
-                        w-10 h-10 rounded-lg flex items-center justify-center
-                        ${isRunning ? "text-[#2dd4bf]" : "text-[#2dd4bf]"}
-                        hover:bg-white/5 transition-colors
-                      `}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                      {/* Container pour les éléments à masquer en mode final */}
+                      <motion.div
+                        className="flex items-center gap-4"
+                        layout
+                        initial={{ x: viewMode === "final" ? -20 : 0, opacity: viewMode === "final" ? 0 : 1 }}
+                        animate={{
+                          x: viewMode === "final" ? -100 : 0,
+                          opacity: viewMode === "final" ? 0 : 1,
+                          width: viewMode === "final" ? 0 : "auto",
+                        }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 200,
+                          damping: 30,
+                          opacity: { duration: 0.3 },
+                          x: { duration: 0.3 },
+                          width: { duration: 0.3 }
+                        }}
                       >
-                        {isRunning ? (
-                          <Pause className="w-5 h-5" />
-                        ) : (
-                          <Play className="w-5 h-5" />
+                        {(
+                          <>
+                            <motion.button
+                              onClick={() => setIsRunning(!isRunning)}
+                              className={`
+                              w-10 h-10 rounded-lg flex items-center justify-center
+                              ${isRunning ? "text-[#2dd4bf]" : "text-[#2dd4bf]"}
+                              hover:bg-white/5 transition-colors
+                            `}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              animate={{
+                                opacity: viewMode === "final" ? 0 : 1,
+                                scale: viewMode === "final" ? 0.8 : 1
+                              }}
+                              transition={{
+                                duration: 0.3,
+                                ease: "easeInOut"
+                              }}
+                            >
+                              {isRunning ? (
+                                <Pause className="w-5 h-5" />
+                              ) : (
+                                <Play className="w-5 h-5" />
+                              )}
+                            </motion.button>
+
+                            <motion.div className="w-16" layout>
+                              <div className="text-sm text-gray-400">
+                                {viewMode === "chrono" ? "TIME" : "LAP"}
+                              </div>
+                              <div className="text-xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                                {viewMode === "chrono"
+                                  ? formatTime(temporaryDisplayTime || currentTime).split(":").slice(0, 2).join(":")
+                                  : currentLap}
+                              </div>
+                            </motion.div>
+
+                            <motion.div className="w-64" layout>
+                              <Slider.Root
+                                className="relative flex items-center select-none touch-none h-5 cursor-pointer"
+                                value={[getCurrentValue()]}
+                                max={100}
+                                step={0.1}
+                                onValueChange={([v]) => handleSliderChange(v)}
+                                onValueCommit={([v]) => handleSliderCommit(v)}
+                              >
+                                <Slider.Track className="bg-gray-700 relative grow h-[3px] rounded-full">
+                                  <Slider.Range className="absolute h-full rounded-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]" />
+                                </Slider.Track>
+                                <Slider.Thumb className="block w-5 h-5 bg-[#1d1f20] border-2 border-[#5382ec] rounded-full focus:outline-none transition-transform hover:scale-110" />
+                              </Slider.Root>
+                            </motion.div>
+
+                            <motion.div className="w-16 text-right" layout>
+                              <div className="text-sm text-gray-400">MAX</div>
+                              <div className="text-xl font-bold text-gray-500">
+                                {viewMode === "chrono"
+                                  ? formatTime(sessionEndTime).split(":").slice(0, 2).join(":")
+                                  : totalLaps}
+                              </div>
+                            </motion.div>
+                          </>
                         )}
-                      </motion.button>
-
-                      {/* Affichage actuel */}
-                      <motion.div className="w-16" layout>
-                        <div className="text-sm text-gray-400">
-                          {viewMode === "chrono" ? "TIME" : "LAP"}
-                        </div>
-                        <div className="text-xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                          {viewMode === "chrono"
-                            ? formatTime(currentTime).split(":").slice(0, 2).join(":")
-                            : currentLap}
-                        </div>
-                      </motion.div>
-
-                      {/* Slider personnalisé */}
-                      <motion.div className="flex-1" layout>
-                        <Slider.Root
-                          className="relative flex items-center select-none touch-none h-5 cursor-pointer"
-                          value={[getCurrentValue()]}
-                          max={100}
-                          step={0.1}
-                          onValueChange={([v]) => handleSliderChange(v)}
-                        >
-                          <Slider.Track className="bg-gray-700 relative grow h-[3px] rounded-full">
-                            <Slider.Range className="absolute h-full rounded-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]" />
-                          </Slider.Track>
-                          <Slider.Thumb className="block w-5 h-5 bg-[#1d1f20] border-2 border-[#5382ec] rounded-full focus:outline-none transition-transform hover:scale-110" />
-                        </Slider.Root>
-                      </motion.div>
-
-                      {/* Affichage max */}
-                      <motion.div className="w-16 text-right" layout>
-                        <div className="text-sm text-gray-400">MAX</div>
-                        <div className="text-xl font-bold text-gray-500">
-                          {viewMode === "chrono"
-                            ? formatTime(sessionEndTime).split(":").slice(0, 2).join(":")
-                            : totalLaps}
-                        </div>
                       </motion.div>
                     </div>
                   </div>
                 </motion.div>
-                {/* Switch Mode Simple/Expert - Inspiré de PredictionControls */}
+
+                {/* Switch Mode Simple/Expert */}
                 {selectedSession && (
                   <motion.div
                     className={`
-                  relative h-12 w-32 rounded-lg cursor-pointer overflow-hidden
-                  bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]
-                  p-0.5
-                `}
+                      relative h-12 w-32 rounded-lg cursor-pointer overflow-hidden
+                      bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]
+                      p-0.5
+                    `}
                     onClick={onExpertModeToggle}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     <motion.div
                       className={`
-                    absolute inset-0 bg-[#1d1f20] m-0.5 rounded-[6px]
-                    flex items-center justify-center
-                    overflow-hidden
-                  `}
+                        absolute inset-0 bg-[#1d1f20] m-0.5 rounded-[6px]
+                        flex items-center justify-center
+                        overflow-hidden
+                      `}
                       initial={false}
                     >
                       <motion.div

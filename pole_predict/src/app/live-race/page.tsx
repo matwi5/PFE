@@ -235,6 +235,10 @@ const RaceControlEvents = () => {
       }
     };
     fetchSessions();
+
+    // Réinitialiser le pilote sélectionné lorsqu'on change de meeting
+    setSelectedDriverNumber(null);
+    setSelectedDriver(null);
   }, [selectedMeeting]);
 
   useEffect(() => {
@@ -276,6 +280,10 @@ const RaceControlEvents = () => {
       }
     };
     fetchEvents();
+
+    // Réinitialiser le pilote sélectionné lorsqu'on change de session
+    setSelectedDriverNumber(null);
+    setSelectedDriver(null);
   }, [selectedSession, sessions]);
 
   useEffect(() => {
@@ -375,7 +383,7 @@ const RaceControlEvents = () => {
     }
   };
 
-  const realTimeDataContent = selectedDriver ? (
+  const realTimeDataContent = selectedDriver && viewMode === "chrono" ? (
     <RaceCarTelemetry
       throttle={throttle}
       rpm={rpm}
@@ -396,7 +404,9 @@ const RaceControlEvents = () => {
       </CardHeader>
       <CardContent className="h-[calc(100%-4rem)] flex items-center justify-center">
         <span className="text-gray-400">
-          Select a pilot to see telemetry data
+          {viewMode !== "chrono" 
+            ? "Telemetry only available in chrono mode" 
+            : "Select a pilot to see telemetry data"}
         </span>
       </CardContent>
     </Card>
@@ -506,7 +516,7 @@ const RaceControlEvents = () => {
           className="mb-16 space-y-4"
         >
           <div className="relative flex justify-center items-center gap-4">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center">
+            <h1 className="text-4xl h-20 md:text-6xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center">
               Live
             </h1>
           </div>
@@ -519,7 +529,7 @@ const RaceControlEvents = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="mb-16"
+          className="mb-16 flex justify-center w-full"
         >
           <RaceSelection
             meetings={meetings}
