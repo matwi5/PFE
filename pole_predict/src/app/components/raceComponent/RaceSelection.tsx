@@ -114,12 +114,16 @@ const RaceSelection = ({
         setValidLaps(filtered);
 
         // Set initial lap data when switching to lap mode
+        // Dans le useEffect qui fetch les laps de RaceSelection
         if (viewMode === "lap" && filtered.length > 0) {
           const maxLap = Math.max(...filtered.map((lap) => lap.lap_number));
           onTotalLapsChange(maxLap);
           if (currentLap === 0) {
             onLapChange(1);
-            const firstLap = filtered.find((lap) => lap.lap_number === 1);
+            // Prendre le premier tour le plus tôt
+            const firstLap = filtered
+              .filter((lap) => lap.lap_number === 1)
+              .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime())[0];
             if (firstLap) {
               onTimeChange(firstLap.date_start);
             }
@@ -186,6 +190,16 @@ const RaceSelection = ({
     } else if (viewMode === "lap" && validLaps.length > 0) {
       const newLap = Math.max(1, Math.round((totalLaps * value) / 100));
       const lapData = validLaps.find((lap) => lap.lap_number === newLap);
+      if (lapData) {
+        onLapChange(newLap);
+        onTimeChange(lapData.date_start);
+      }
+    } else if (viewMode === "lap" && validLaps.length > 0) {
+      const newLap = Math.max(1, Math.round((totalLaps * value) / 100));
+      // Trouver le premier tour correspondant au numéro (début le plus tôt)
+      const lapData = validLaps
+        .filter((lap) => lap.lap_number === newLap)
+        .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime())[0];
       if (lapData) {
         onLapChange(newLap);
         onTimeChange(lapData.date_start);

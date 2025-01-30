@@ -111,23 +111,23 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
         // Fetch lap times
         const lapTimesResponse = await fetch(`https://api.openf1.org/v1/laps?session_key=${sessionKey}`);
-        const lapTimesData = await response.json();
+        const lapTimesData = await lapTimesResponse.json(); // Corriger la variable (anciennement 'response')
         setLapTimes(lapTimesData);
 
         // Process leader lap start times
         const lapStartMap = new Map<number, string>();
-        const sortedLapTimes = [...lapTimesData].sort((a, b) => 
+        const sortedLapTimes = [...lapTimesData].sort((a, b) =>
           new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
         );
 
         sortedLapTimes.forEach(lap => {
-          const positions = positionsData.filter((pos: { date: string | number | Date; }) => 
+          const positions = positionsData.filter((pos: { date: string | number | Date; }) =>
             new Date(pos.date).getTime() <= new Date(lap.date_start).getTime()
           );
-          
+
           if (positions.length > 0) {
             const leaderPosition = positions
-              .sort((a: { date: string | number | Date; }, b: { date: string | number | Date; }) => 
+              .sort((a: { date: string | number | Date; }, b: { date: string | number | Date; }) =>
                 new Date(b.date).getTime() - new Date(a.date).getTime())
               .find((pos: { position: number; }) => pos.position === 1);
 
@@ -167,7 +167,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
       switch (viewMode) {
         case 'chrono':
           const currentTimeMs = new Date(currentTime).getTime();
-          
+
           // Process positions and intervals for chrono mode
           positions.forEach(pos => {
             const posTime = new Date(pos.date).getTime();
@@ -195,7 +195,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           const lapStartTime = leaderLapStartTimes.get(currentLap);
           if (lapStartTime) {
             const lapStartMs = new Date(lapStartTime).getTime();
-            
+
             positions.forEach(pos => {
               const posTime = new Date(pos.date).getTime();
               if (posTime <= lapStartMs) {
@@ -274,7 +274,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
             {viewMode === 'lap' && ` - Lap ${currentLap}`}
           </CardTitle>
           <div className="flex items-center gap-4">
-            <Button 
+            <Button
               variant="ghost"
               size="sm"
               onClick={() => setGapMode(prev => prev === 'interval' ? 'leader' : 'interval')}
@@ -287,7 +287,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
         </div>
       </CardHeader>
       <CardContent className="relative h-[calc(100%-4rem)]">
-        <div 
+        <div
           className="h-full overflow-y-auto pr-6
             scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 
             hover:scrollbar-thumb-[#2dd4bf]/80 transition-colors duration-200"
@@ -298,8 +298,8 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                 .filter(standing => standing.status === 'active')
                 .map((standing, index) => {
                   const isLeader = index === 0;
-                  const displayValue = gapMode === 'interval' 
-                    ? standing.interval 
+                  const displayValue = gapMode === 'interval'
+                    ? standing.interval
                     : standing.gap_to_leader;
                   const teamColor = standing.driver_details?.team_colour || '2b2b2b';
                   const headshotUrl = standing.driver_details?.headshot_url;
@@ -328,17 +328,16 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <div 
+                      <div
                         className={`p-3 rounded-lg relative overflow-hidden transition-all duration-300 
                           bg-black/20 backdrop-blur-sm hover:bg-black/30 
                           ${isSelected ? 'ring-2 ring-[#5382ec] ring-offset-1 ring-offset-[#282a2c]' : ''}`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`text-lg font-bold ${
-                            isLeader 
-                              ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent' 
+                          <div className={`text-lg font-bold ${isLeader
+                              ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent'
                               : 'text-gray-400'
-                          }`}>
+                            }`}>
                             {standing.position}
                           </div>
 
@@ -353,7 +352,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                                 transition={{ duration: 0.2 }}
                               />
                             ) : (
-                              <div 
+                              <div
                                 className="w-full h-full flex items-center justify-center"
                                 style={{ backgroundColor: `#${teamColor}33` }}
                               >
@@ -373,9 +372,9 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                                 {standing.driver_details?.name_acronym}
                               </span>
                             </div>
-                            
+
                             <div className="mt-1">
-                              <span 
+                              <span
                                 className="text-xs px-2 py-0.5 rounded-full"
                                 style={{
                                   backgroundColor: `#${teamColor}33`,
@@ -388,11 +387,10 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                           </div>
 
                           <div className="text-right font-mono">
-                            <div className={`text-sm font-medium ${
-                              isLeader 
-                                ? 'text-[#5382ec]' 
+                            <div className={`text-sm font-medium ${isLeader
+                                ? 'text-[#5382ec]'
                                 : 'text-gray-300'
-                            }`}>
+                              }`}>
                               {formatGap(displayValue, isLeader)}
                             </div>
                           </div>
