@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from "react";
-import RaceSelection from "../components/raceComponent/RaceSelection";
+import RaceSelectionMobile from "../components/raceComponent/RaceSelectionMobile";
+import RaceSelectionDesktop from "../components/raceComponent/RaceSelectionDesktop";
 import EventDisplay from "../components/raceComponent/EventDisplay";
 import DriverStandings from "../components/raceComponent/DriverStanding";
 import { doc, getDoc } from 'firebase/firestore';
@@ -126,6 +127,160 @@ interface CarData {
   throttle: number;
 }
 
+const useIsMobile = () => {
+  // On vérifie d'abord si l'on est côté client
+  const isClient = typeof window !== 'undefined';
+  const [isMobile, setIsMobile] = useState(isClient ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Si on est côté client, on écoute les changements de taille
+    if (isClient) {
+      window.addEventListener('resize', checkIsMobile);
+      // On met à jour directement au montage
+      checkIsMobile();
+      return () => window.removeEventListener('resize', checkIsMobile);
+    }
+  }, [isClient]);
+
+  return isMobile;
+};
+
+
+const MobileView = ({
+  meetings,
+  sessions,
+  selectedMeeting,
+  selectedSession,
+  setSelectedMeeting,
+  setSelectedSession,
+  currentTime,
+  sessionStartTime,
+  sessionEndTime,
+  setCurrentTime,
+  viewMode,
+  setViewMode,
+  currentLap,
+  totalLaps,
+  setCurrentLap,
+  setTotalLaps,
+  selectedDriver,
+  isExpertMode,
+  setIsExpertMode,
+  widgetConfig,
+  widgetComponents
+}) => {
+  const [activeTab, setActiveTab] = useState('info');
+  
+  return (
+    <div className="min-h-screen bg-[#1B1C1D]">
+      <div className="px-4 py-8">
+        {/* Header section - simplified for mobile */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center mb-2">
+            Live
+          </h1>
+          <p className="text-gray-400 text-sm text-center">
+            Live race monitoring
+          </p>
+        </div>
+
+        {/* Race Selection - Full width on mobile */}
+        <div className="mb-8">
+          <RaceSelectionMobile
+            meetings={meetings}
+            sessions={sessions}
+            selectedMeeting={selectedMeeting}
+            selectedSession={selectedSession}
+            onMeetingChange={setSelectedMeeting}
+            onSessionChange={setSelectedSession}
+            currentTime={currentTime}
+            sessionStartTime={sessionStartTime}
+            sessionEndTime={sessionEndTime}
+            onTimeChange={setCurrentTime}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            currentLap={currentLap}
+            totalLaps={totalLaps}
+            onLapChange={setCurrentLap}
+            onTotalLapsChange={setTotalLaps}
+            isDriverMode={!!selectedDriver}
+            isExpertMode={isExpertMode}
+            onExpertModeToggle={() => setIsExpertMode(!isExpertMode)}
+          />
+        </div>
+
+        {/* Mobile Navigation Tabs */}
+        <div className="flex mb-4 border-b border-gray-800">
+          <button
+            className={`flex-1 py-2 text-sm font-medium ${
+              activeTab === 'info' 
+              ? 'text-[#5382ec] border-b-2 border-[#5382ec]' 
+              : 'text-gray-400'
+            }`}
+            onClick={() => setActiveTab('info')}
+          >
+            Race Info
+          </button>
+          <button
+            className={`flex-1 py-2 text-sm font-medium ${
+              activeTab === 'telemetry' 
+              ? 'text-[#5382ec] border-b-2 border-[#5382ec]' 
+              : 'text-gray-400'
+            }`}
+            onClick={() => setActiveTab('telemetry')}
+          >
+            Telemetry
+          </button>
+          <button
+            className={`flex-1 py-2 text-sm font-medium ${
+              activeTab === 'events' 
+              ? 'text-[#5382ec] border-b-2 border-[#5382ec]' 
+              : 'text-gray-400'
+            }`}
+            onClick={() => setActiveTab('events')}
+          >
+            Events
+          </button>
+        </div>
+
+        {/* Content based on active tab */}
+        <div className="space-y-4">
+          {activeTab === 'info' && (
+            <>
+              {widgetConfig.visibility['driver-profile'] && widgetComponents['driver-profile']}
+              {widgetConfig.visibility['driver-standings'] && widgetComponents['driver-standings']}
+              {widgetConfig.visibility['vital-statistics'] && widgetComponents['vital-statistics']}
+              {widgetConfig.visibility['circuit-map'] && widgetComponents['circuit-map']}
+            </>
+          )}
+          
+          {activeTab === 'telemetry' && (
+            <>
+              {widgetConfig.visibility['telemetry'] && widgetComponents['telemetry']}
+              {widgetConfig.visibility['sector-analysis'] && widgetComponents['sector-analysis']}
+            </>
+          )}
+          
+          {activeTab === 'events' && (
+            <>
+              {widgetConfig.visibility['event-display'] && widgetComponents['event-display']}
+              {Object.entries(widgetComponents)
+                .filter(([key]) => key.startsWith('prediction-'))
+                .map(([key, component]) => 
+                  widgetConfig.visibility[key] && <div key={key}>{component}</div>
+                )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const RaceControlEvents = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -146,6 +301,7 @@ const RaceControlEvents = () => {
   const [carDataLoading, setCarDataLoading] = useState(false);
   const [isExpertMode, setIsExpertMode] = useState(false);
   const [vitalStats, setVitalStats] = useState<VitalStatistics | null>(null);
+  const isMobile = useIsMobile();
 
   const currentSession = sessions.find(s => s.session_key.toString() === selectedSession);
   const isRaceSession = currentSession?.session_type === "Race";
@@ -522,6 +678,34 @@ const RaceControlEvents = () => {
     ]))
   };
 
+  if (isMobile) {
+    return (
+      <MobileView
+        meetings={meetings}
+        sessions={sessions}
+        selectedMeeting={selectedMeeting}
+        selectedSession={selectedSession}
+        setSelectedMeeting={setSelectedMeeting}
+        setSelectedSession={setSelectedSession}
+        currentTime={currentTime}
+        sessionStartTime={sessionStartTime}
+        sessionEndTime={sessionEndTime}
+        setCurrentTime={setCurrentTime}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        currentLap={currentLap}
+        totalLaps={totalLaps}
+        setCurrentLap={setCurrentLap}
+        setTotalLaps={setTotalLaps}
+        selectedDriver={selectedDriver}
+        isExpertMode={isExpertMode}
+        setIsExpertMode={setIsExpertMode}
+        widgetConfig={widgetConfig}
+        widgetComponents={widgetComponents}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#1B1C1D]">
       <div className="container mx-auto px-4 py-16">
@@ -547,7 +731,7 @@ const RaceControlEvents = () => {
           animate={{ opacity: 1, scale: 1 }}
           className="mb-16 flex justify-center w-full"
         >
-          <RaceSelection
+          <RaceSelectionDesktop
             meetings={meetings}
             sessions={sessions}
             selectedMeeting={selectedMeeting}

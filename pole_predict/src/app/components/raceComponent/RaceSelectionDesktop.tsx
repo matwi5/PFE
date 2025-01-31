@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "../../../components/ui/select";
 import { motion } from "framer-motion";
-import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Card, CardContent } from '../../../components/ui/card';
 
 interface Meeting {
   meeting_key: number;
@@ -33,7 +33,7 @@ interface Lap {
   session_key: number;
 }
 
-interface RaceSelectionProps {
+interface RaceSelectionDesktopProps {
   meetings: Meeting[];
   sessions: Session[];
   selectedMeeting: string;
@@ -55,7 +55,7 @@ interface RaceSelectionProps {
   onExpertModeToggle: () => void; // Ajout pour le toggle du mode expert
 }
 
-const RaceSelection = ({
+const RaceSelectionDesktop = ({
   meetings,
   sessions,
   selectedMeeting,
@@ -75,7 +75,7 @@ const RaceSelection = ({
   isDriverMode,
   isExpertMode,
   onExpertModeToggle,
-}: RaceSelectionProps) => {
+}: RaceSelectionDesktopProps) => {
   const [isRunning, setIsRunning] = useState(false);
   const [laps, setLaps] = useState<Lap[]>([]);
   const [isLoadingLaps, setIsLoadingLaps] = useState(false);
@@ -133,7 +133,7 @@ const RaceSelection = ({
         setValidLaps(filtered);
 
         // Set initial lap data when switching to lap mode
-        // Dans le useEffect qui fetch les laps de RaceSelection
+        // Dans le useEffect qui fetch les laps de RaceSelectionDesktop
         if (viewMode === "lap" && filtered.length > 0) {
           const maxLap = Math.max(...filtered.map((lap) => lap.lap_number));
           onTotalLapsChange(maxLap);
@@ -503,4 +503,4 @@ const RaceSelection = ({
   );
 };
 
-export default RaceSelection;
+export default RaceSelectionDesktop;
