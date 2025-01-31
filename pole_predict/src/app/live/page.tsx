@@ -9,7 +9,7 @@ import { PredictionWidget } from './components/PredictionWidget/PredictionWidget
 import { PredictionControls } from './components/PredictionControls';
 import { predictionTypes } from './constants';
 import { motion } from 'framer-motion';
-import VitalStatisticsWidget from '../upcoming/components/VitalStatisticsWidget';
+import VitalStatisticsWidget from '../upcoming-race/components/VitalStatisticsWidget';
 
 interface Session {
   id: string;

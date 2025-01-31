@@ -21,7 +21,7 @@ import DriverProfile from "../components/raceComponent/DriverProfile";
 import CircuitMap from "../components/raceComponent/CircuitMap";
 import { motion } from "framer-motion";
 import { Gauge } from "lucide-react";
-import VitalStatisticsWidget from '../upcoming/components/VitalStatisticsWidget';
+import VitalStatisticsWidget from '../upcoming-race/components/VitalStatisticsWidget';
 import { PredictionWidget } from '../live/components/PredictionWidget/PredictionWidget';
 import { predictionTypes } from '../live/constants';
 import WidgetCustomizer, { Widget } from '../components/WidgetCustomizer';

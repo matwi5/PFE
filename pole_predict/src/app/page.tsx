@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { Info, BarChart, Medal } from "lucide-react";
 import Typewriter from "typewriter-effect";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import CustomDialog from "./components/generalDataComponent/CustomDialog";
 import GeneralDataCard from "./components/generalDataComponent/GeneralDataCard";
 import GPDetailCard from "./components/generalDataComponent/GPDetailCard";
 import DriverDetailCard from "./components/generalDataComponent/DriverDetailCard";
 import TeamDetailCard from "./components/generalDataComponent/TeamDetailCard";
+import { motion as m } from "framer-motion";
 
 interface Driver {
   flagColors: string[];
@@ -192,30 +193,42 @@ const HomePage: React.FC = () => {
     },
   ];
 
-    // Variantes d'animation modifiées
-    const containerVariants = {
-      hidden: { opacity: 0 },
-      visible: {
-        opacity: 1,
-        transition: {
-          staggerChildren: 0.3,
-          delayChildren: 0.2
-        }
+  // Variantes d'animation modifiées
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.1
       }
-    };
-  
-    const itemVariants = {
-      hidden: { y: 20, opacity: 0 },
-      visible: {
-        y: 0,
-        opacity: 1,
-        transition: { duration: 0.5 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.4 }
+    }
+  };
+
+  const mobileCardListVariants = {
+    hidden: { height: 0, opacity: 0 },
+    visible: {
+      height: "auto",
+      opacity: 1,
+      transition: {
+        height: { duration: 0.3 },
+        opacity: { duration: 0.2 }
       }
-    };
+    }
+  };
 
   return (
     <motion.div
-      className="min-h-screen bg-[#1B1C1D] text-white py-24 px-8"
+      className="min-h-screen bg-[#1B1C1D] text-white py-16 px-4 sm:py-24 sm:px-8"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -224,22 +237,25 @@ const HomePage: React.FC = () => {
         className="flex flex-col items-center justify-center h-full"
         variants={containerVariants}
       >
-        <motion.div variants={itemVariants}>
+        <motion.div
+          variants={itemVariants}
+          className="w-full max-w-[90vw] sm:max-w-[40rem] mx-auto"
+        >
           <img
             src="/images/f1car.png"
             alt="F1 Car"
-            className="w-[40rem]  mb-20 transition-transform duration-500 hover:scale-110"
+            className="w-full mb-12 sm:mb-20 transition-transform duration-500 hover:scale-110"
           />
         </motion.div>
 
         <motion.h1
-          className="text-4xl h-20 md:text-6xl font-bold mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent"
+          className="text-3xl sm:text-4xl md:text-6xl font-bold mb-8 text-center bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent"
           variants={itemVariants}
         >
           <Typewriter
             options={{
               strings: [
-                "Ready to be an expert in Formula 1?",
+                "Ready to be an expert in F1?", 
                 "Anticipate Results",
                 "Analyse performances",
               ],
@@ -251,11 +267,15 @@ const HomePage: React.FC = () => {
       </motion.main>
 
       <motion.section
-        className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 max-w-6xl mx-auto"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mt-8 sm:mt-12 max-w-6xl mx-auto"
         variants={containerVariants}
       >
         {cardData.map((card, index) => (
-          <motion.div key={index} variants={itemVariants}>
+          <motion.div
+            key={index}
+            variants={itemVariants}
+            className="flex flex-col"
+          >
             <GeneralDataCard
               icon={card.icon}
               title={card.title}
@@ -273,73 +293,71 @@ const HomePage: React.FC = () => {
               mousePos={mousePos}
             />
 
-            {card.showList && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="mt-4 grid grid-cols-2 gap-2 overflow-hidden"
-              >
-                {card.data.length > 0 ? (
-                  card.data.map((item, itemIndex) => (
-                    <CustomDialog
-                      key={itemIndex}
-                      buttonStyle={{
-                        ...buttonStyle,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: "0.5rem",
-                        minWidth: "150px",
-                      }}
-                      getHoverStyles={getHoverStyles}
-                      triggerContent={
-                        index === 0 ? (
-                          <>
+            <AnimatePresence>
+              {card.showList && (
+                <motion.div
+                  variants={mobileCardListVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-hidden w-full"
+                >
+                  {card.data.length > 0 ? (
+                    card.data.map((item, itemIndex) => (
+                      <CustomDialog
+                        key={itemIndex}
+                        buttonStyle={{
+                          ...buttonStyle,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: "0.75rem",
+                          width: "100%",
+                          height: "auto",
+                          minHeight: "3rem",
+                          margin: "0 auto",
+                        }}
+                        getHoverStyles={getHoverStyles}
+                        triggerContent={
+                          <div className="w-full flex flex-col items-center gap-2 text-sm sm:text-base px-2">
                             <img
-                              src={item.pays_flag}
-                              alt={item.grand_prix}
-                              className="w-5 h-5 mr-2"
+                              src={index === 0 ? item.pays_flag :
+                                index === 1 ? item.logo_url :
+                                  item.headshot_url}
+                              alt={index === 0 ? item.grand_prix :
+                                index === 1 ? `${item.name} logo` :
+                                  `${item.name} headshot`}
+                              className={`w-5 h-5 ${index === 2 ? 'rounded-full' : ''} mb-1`}
                             />
-                            {item.grand_prix}
-                          </>
-                        ) : index === 1 ? (
-                          <>
-                            <img
-                              src={item.logo_url}
-                              alt={`${item.name} logo`}
-                              className="w-5 h-5 mr-2"
-                            />
-                            {item.name}
-                          </>
-                        ) : (
-                          <>
-                            <img
-                              src={item.headshot_url}
-                              alt={`${item.name} headshot`}
-                              className="w-5 h-5 mr-2 rounded-full"
-                            />
-                            {item.name}
-                          </>
-                        )
-                      }
-                      customColors={
-                        index === 1
-                          ? [item.color]
-                          : index === 2
-                          ? item.flagColors
-                          : undefined
-                      }
+                            <span className="text-center break-words">
+                              {index === 0 ? item.grand_prix :
+                                index === 1 ? item.name :
+                                  item.name}
+                            </span>
+                          </div>
+                        }
+                        customColors={
+                          index === 1 ? [item.color] :
+                            index === 2 ? item.flagColors :
+                              undefined
+                        }
+                      >
+                        <card.DetailComponent
+                          {...{ [index === 0 ? "gp" : index === 1 ? "team" : "driver"]: item }}
+                        />
+                      </CustomDialog>
+                    ))
+                  ) : (
+                    <motion.p
+                      variants={itemVariants}
+                      className="col-span-full text-center py-4"
                     >
-                      <card.DetailComponent {...{ [index === 0 ? "gp" : index === 1 ? "team" : "driver"]: item }} />
-                    </CustomDialog>
-                  ))
-                ) : (
-                  <p>Loading {card.title.toLowerCase()}...</p>
-                )}
-              </motion.div>
-            )}
+                      Loading {card.title.toLowerCase()}...
+                    </motion.p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         ))}
       </motion.section>
