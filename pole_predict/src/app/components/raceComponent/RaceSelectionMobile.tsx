@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, ChevronLeft, ChevronRight } from "lucide-react";
 import * as Slider from "@radix-ui/react-slider";
 import {
   Select,
@@ -51,8 +51,8 @@ interface RaceSelectionMobileProps {
   onLapChange: (lap: number) => void;
   onTotalLapsChange: (total: number) => void;
   isDriverMode?: boolean;
-  isExpertMode: boolean; // Ajout pour le mode expert
-  onExpertModeToggle: () => void; // Ajout pour le toggle du mode expert
+  isExpertMode: boolean;
+  onExpertModeToggle: () => void;
 }
 
 const RaceSelectionMobile = ({
@@ -90,7 +90,7 @@ const RaceSelectionMobile = ({
       if (raceSession) {
         onSessionChange(raceSession.session_key.toString());
       } else {
-        onSessionChange(""); // Reset session if "Race" is not found
+        onSessionChange("");
       }
     }
   }, [selectedMeeting, sessions]);
@@ -107,7 +107,6 @@ const RaceSelectionMobile = ({
 
       setIsLoadingLaps(true);
       try {
-        // Corrected URL string interpolation
         const response = await fetch(
           `https://api.openf1.org/v1/laps?session_key=${selectedSession}`
         );
@@ -115,14 +114,11 @@ const RaceSelectionMobile = ({
 
         const data: Lap[] = await response.json();
 
-        // Filter valid laps and sort them
         const filtered = data
           .filter((lap) => !lap.is_pit_out_lap && lap.lap_duration > 0)
           .sort((a, b) => {
-            // First sort by lap number
             const lapDiff = a.lap_number - b.lap_number;
             if (lapDiff !== 0) return lapDiff;
-            // If same lap number, sort by start time
             return (
               new Date(a.date_start).getTime() -
               new Date(b.date_start).getTime()
@@ -132,14 +128,11 @@ const RaceSelectionMobile = ({
         setLaps(data);
         setValidLaps(filtered);
 
-        // Set initial lap data when switching to lap mode
-        // Dans le useEffect qui fetch les laps de RaceSelectionMobile
         if (viewMode === "lap" && filtered.length > 0) {
           const maxLap = Math.max(...filtered.map((lap) => lap.lap_number));
           onTotalLapsChange(maxLap);
           if (currentLap === 0) {
             onLapChange(1);
-            // Prendre le premier tour le plus tôt
             const firstLap = filtered
               .filter((lap) => lap.lap_number === 1)
               .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime())[0];
@@ -266,7 +259,6 @@ const RaceSelectionMobile = ({
     setTemporaryDisplayTime(null);
   };
 
-
   return (
     <motion.div
       className="bg-[#282a2c] border-none rounded-xl border border-gray-800 hover:border-[#5382ec]"
@@ -280,7 +272,13 @@ const RaceSelectionMobile = ({
             {/* Sélection GP */}
             <motion.div className="w-full">
               <Select value={selectedMeeting} onValueChange={onMeetingChange}>
-                <SelectTrigger className="w-full h-12 bg-[#282a2c] text-gray-300 border-0">
+                <SelectTrigger 
+                  className={`w-full h-12 border-0 transition-all ${
+                    selectedMeeting 
+                      ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
+                      : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
+                  }`}
+                >
                   <SelectValue placeholder="Select GP" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#282a2c] border-0">
@@ -288,7 +286,7 @@ const RaceSelectionMobile = ({
                     <SelectItem
                       key={m.meeting_key}
                       value={m.meeting_key.toString()}
-                      className="hover:bg-[#5382ec]/20"
+                      className="text-gray-300 hover:bg-[#5382ec]/20 focus:bg-[#5382ec]/30"
                     >
                       {m.meeting_name} ({m.year})
                     </SelectItem>
@@ -301,7 +299,13 @@ const RaceSelectionMobile = ({
             {selectedMeeting && (
               <motion.div className="w-full">
                 <Select value={selectedSession} onValueChange={onSessionChange}>
-                  <SelectTrigger className="w-full h-12 bg-[#282a2c] text-gray-300 border-0">
+                  <SelectTrigger 
+                    className={`w-full h-12 border-0 transition-all ${
+                      selectedSession 
+                        ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
+                        : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
+                    }`}
+                  >
                     <SelectValue placeholder="Session" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#282a2c] border-0">
@@ -309,7 +313,7 @@ const RaceSelectionMobile = ({
                       <SelectItem
                         key={s.session_key}
                         value={s.session_key.toString()}
-                        className="hover:bg-[#5382ec]/20"
+                        className="text-gray-300 hover:bg-[#5382ec]/20 focus:bg-[#5382ec]/30"
                       >
                         {s.session_name}
                       </SelectItem>
@@ -321,17 +325,18 @@ const RaceSelectionMobile = ({
 
             {/* Contrôles principaux */}
             <div className="bg-[#1d1f20] rounded-lg p-4">
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col">
                 {/* Mode de vue */}
                 <div className="grid grid-cols-3 gap-2">
                   {["chrono", "lap", "final"].map((mode) => (
                     <motion.button
                       key={mode}
                       onClick={() => handleViewModeChange(mode as any)}
-                      className={`p-2 text-sm rounded-md ${viewMode === mode
-                        ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
-                        : "bg-[#282a2c] text-gray-300"
-                        }`}
+                      className={`p-2 text-sm rounded-md ${
+                        viewMode === mode
+                          ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
+                          : "bg-[#282a2c] text-gray-300"
+                      }`}
                       whileTap={{ scale: 0.95 }}
                     >
                       {mode.toUpperCase()}
@@ -340,127 +345,172 @@ const RaceSelectionMobile = ({
                 </div>
 
                 {/* Contrôles temporels */}
-                <div className="flex flex-col gap-4">
-                  <div className="flex justify-between items-center">
-                    <motion.button
-                      onClick={() => setIsRunning(!isRunning)}
-                      className="p-2 rounded-lg hover:bg-white/5"
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      {isRunning ? (
-                        <Pause className="w-6 h-6 text-[#2dd4bf]" />
-                      ) : (
-                        <Play className="w-6 h-6 text-[#2dd4bf]" />
-                      )}
-                    </motion.button>
-
-                    <div className="text-center">
-                      <div className="text-sm text-gray-400 mb-1">
-                        {viewMode === "chrono" ? "CURRENT TIME" : "CURRENT LAP"}
+                <motion.div 
+                  className="flex flex-col gap-2"
+                  initial={{ height: viewMode === "final" ? 0 : "auto", opacity: viewMode === "final" ? 0 : 1 }}
+                  animate={{ 
+                    height: viewMode === "final" ? 0 : "auto",
+                    opacity: viewMode === "final" ? 0 : 1,
+                    marginTop: viewMode === "final" ? 0 : 16
+                  }}
+                  transition={{
+                    height: { duration: 0.3, ease: "easeInOut" },
+                    opacity: { duration: 0.2 },
+                    marginTop: { duration: 0.3 }
+                  }}
+                >
+                  {viewMode !== "final" && (
+                    <>
+                      <div className="flex justify-between items-center mt-4">
+                        <div className="text-lg text-gray-400">
+                          {viewMode === "chrono" ? "CURRENT TIME" : "CURRENT LAP"}
+                        </div>
+                        <div className="text-3xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                          {viewMode === "chrono"
+                            ? formatTime(temporaryDisplayTime || currentTime).split(":").slice(0, 2).join(":")
+                            : (temporaryLap !== null ? temporaryLap : currentLap)}
+                        </div>
                       </div>
-                      <div className="text-xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                        {viewMode === "chrono"
-                          ? formatTime(currentTime).split(":").slice(0, 2).join(":")
-                          : currentLap}
-                      </div>
-                    </div>
 
-                    <div className="text-right">
-                      <div className="text-sm text-gray-400 mb-1">TOTAL</div>
-                      <div className="text-xl font-bold text-gray-500">
-                        {viewMode === "chrono"
-                          ? formatTime(sessionEndTime).split(":").slice(0, 2).join(":")
-                          : totalLaps}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Slider amélioré */}
-                  <motion.div
-                    className="relative w-full py-4"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    <Slider.Root
-                      className="relative flex items-center select-none touch-none h-8 cursor-grab active:cursor-grabbing"
-                      value={[getCurrentValue()]}
-                      max={100}
-                      step={0.1}
-                      onValueChange={([v]) => handleSliderChange(v)}
-                      onValueCommit={([v]) => handleSliderCommit(v)}
-                    >
-                      <Slider.Track className="bg-gray-700 relative grow h-2 rounded-full">
-                        <Slider.Range className="absolute h-full rounded-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]" />
-                      </Slider.Track>
-
-                      <Slider.Thumb asChild>
-                        <motion.div
-                          className="w-8 h-8 flex items-center justify-center bg-[#1d1f20] border-2 border-[#5382ec] rounded-full shadow-lg"
-                          whileTap={{
-                            scale: 1.2,
-                            boxShadow: "0 4px 8px rgba(83, 130, 236, 0.3)"
-                          }}
-                          whileHover={{ scale: 1.1 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                      <motion.div
+                        className="relative w-full py-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        <Slider.Root
+                          className="relative flex items-center select-none touch-none h-8 cursor-grab active:cursor-grabbing"
+                          value={[getCurrentValue()]}
+                          max={100}
+                          step={0.1}
+                          onValueChange={([v]) => handleSliderChange(v)}
+                          onValueCommit={([v]) => handleSliderCommit(v)}
                         >
-                          <div className="w-2 h-2 bg-[#5382ec] rounded-full" />
-                        </motion.div>
-                      </Slider.Thumb>
-                    </Slider.Root>
+                          <Slider.Track className="bg-gray-700 relative grow h-2 rounded-full">
+                            <Slider.Range className="absolute h-full rounded-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]" />
+                          </Slider.Track>
 
-                    {/* Affichage flottant animé */}
-                    {viewMode === "chrono" && temporaryDisplayTime && (
-                      <motion.div
-                        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6 text-sm font-medium bg-[#1d1f20] px-3 py-1 rounded-lg"
-                        initial={{ y: 10, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: -10, opacity: 0 }}
-                      >
-                        {formatTime(temporaryDisplayTime)}
+                          <Slider.Thumb asChild>
+                            <motion.div
+                              className="w-8 h-8 flex items-center justify-center bg-[#1d1f20] border-2 border-[#5382ec] rounded-full shadow-lg"
+                              whileTap={{
+                                scale: 1.2,
+                                boxShadow: "0 4px 8px rgba(83, 130, 236, 0.3)"
+                              }}
+                              whileHover={{ scale: 1.1 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                            >
+                              <div className="w-2 h-2 bg-[#5382ec] rounded-full" />
+                            </motion.div>
+                          </Slider.Thumb>
+                        </Slider.Root>
                       </motion.div>
-                    )}
 
-                    {viewMode === "lap" && temporaryLap && (
-                      <motion.div
-                        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6 text-sm font-medium bg-[#1d1f20] px-3 py-1 rounded-lg"
-                        initial={{ y: 10, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: -10, opacity: 0 }}
-                      >
-                        Lap {temporaryLap}
-                      </motion.div>
-                    )}
+                      <div className="flex justify-center items-center gap-4 -mt-4">
+                        <motion.button
+                          onClick={() => {
+                            if (viewMode === "chrono") {
+                              const currentMs = new Date(currentTime).getTime();
+                              const newTime = new Date(currentMs - 60000);
+                              if (newTime >= new Date(sessionStartTime)) {
+                                onTimeChange(newTime.toISOString());
+                              }
+                            } else {
+                              if (currentLap > 1) {
+                                onLapChange(currentLap - 1);
+                                const lapData = validLaps.find(lap => lap.lap_number === currentLap - 1);
+                                if (lapData) {
+                                  onTimeChange(lapData.date_start);
+                                }
+                              }
+                            }
+                          }}
+                          className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+                          whileTap={{ scale: 0.9 }}
+                          whileHover={{ scale: 1.05 }}
+                        >
+                          <ChevronLeft className="w-7 h-7 text-[#2dd4bf]" />
+                        </motion.button>
 
-                    {/* Indicateurs de plage */}
-                    <div className="flex justify-between text-sm text-gray-400 mt-2 px-1">
-                      <span>
-                        {viewMode === "chrono"
-                          ? formatTime(sessionStartTime).split(":").slice(0, 2).join(":")
-                          : "Lap 1"}
-                      </span>
-                      <span>
-                        {viewMode === "chrono"
-                          ? formatTime(sessionEndTime).split(":").slice(0, 2).join(":")
-                          : `Lap ${totalLaps}`}
-                      </span>
-                    </div>
-                  </motion.div>
-                </div>
+                        <motion.button
+                          onClick={() => setIsRunning(!isRunning)}
+                          className="w-10 h-10 rounded-lg flex items-center justify-center"
+                          whileTap={{ scale: 0.9 }}
+                        >
+                          {isRunning ? (
+                            <Pause className="w-7 h-7 text-[#2dd4bf]" />
+                          ) : (
+                            <Play className="w-7 h-7 text-[#2dd4bf]" />
+                          )}
+                        </motion.button>
+
+                        <motion.button
+                          onClick={() => {
+                            if (viewMode === "chrono") {
+                              const currentMs = new Date(currentTime).getTime();
+                              const newTime = new Date(currentMs + 60000); // +1 minute
+                              if (newTime <= new Date(sessionEndTime)) {
+                                onTimeChange(newTime.toISOString());
+                              }
+                            } else {
+                              if (currentLap < totalLaps) {
+                                onLapChange(currentLap + 1);
+                                const lapData = validLaps.find(lap => lap.lap_number === currentLap + 1);
+                                if (lapData) {
+                                  onTimeChange(lapData.date_start);
+                                }
+                              }
+                            }
+                          }}
+                          className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+                          whileTap={{ scale: 0.9 }}
+                          whileHover={{ scale: 1.05 }}
+                        >
+                          <ChevronRight className="w-7 h-7 text-[#2dd4bf]" />
+                        </motion.button>
+                      </div>
+                    </>
+                  )}
+                </motion.div>
               </div>
             </div>
 
             {/* Mode Expert */}
             {selectedSession && (
-              <motion.button
+              <motion.div
+                className={`
+                  relative h-12 w-full rounded-lg cursor-pointer overflow-hidden
+                  bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]
+                  p-0.5
+                `}
                 onClick={onExpertModeToggle}
-                className={`w-full p-3 rounded-lg transition-colors ${isExpertMode
-                  ? "bg-[#2dd4bf]/20 text-[#2dd4bf]"
-                  : "bg-[#5382ec]/20 text-[#5382ec]"
-                  }`}
                 whileTap={{ scale: 0.95 }}
               >
-                {isExpertMode ? "EXPERT MODE" : "SIMPLE MODE"}
-              </motion.button>
+                <motion.div
+                  className={`
+                    absolute inset-0 bg-[#1d1f20] m-0.5 rounded-[6px]
+                    flex items-center justify-center
+                    overflow-hidden
+                  `}
+                  initial={false}
+                >
+                  <motion.div
+                    className="absolute inset-0 flex"
+                    animate={{ x: isExpertMode ? "-100%" : "0%" }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  >
+                    <div className="w-full h-full flex items-center justify-center flex-shrink-0">
+                      <span className={`text-sm font-medium ${!isExpertMode ? "text-[#5382ec]" : "text-gray-400"}`}>
+                        Simple
+                      </span>
+                    </div>
+                    <div className="w-full h-full flex items-center justify-center flex-shrink-0">
+                      <span className={`text-sm font-medium ${isExpertMode ? "text-[#2dd4bf]" : "text-gray-400"}`}>
+                        Expert
+                      </span>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
             )}
           </div>
         </CardContent>

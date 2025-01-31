@@ -2,20 +2,12 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import RaceSelectionMobile from "../components/raceComponent/RaceSelectionMobile";
-import RaceSelectionDesktop from "../components/raceComponent/RaceSelectionDesktop";
 import EventDisplay from "../components/raceComponent/EventDisplay";
 import DriverStandings from "../components/raceComponent/DriverStanding";
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
-
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../../components/ui/card";
-import { useRouter } from "next/navigation";
-import { Button } from "../../components/ui/button";
+import dynamic from 'next/dynamic';
+import {Card, CardHeader, CardTitle, CardContent} from "../../components/ui/card";
 import RaceCarTelemetry from "../components/raceComponent/RaceCarTelemetry";
 import SectorAnalysis from "../components/raceComponent/SectorAnalysis";
 import DriverProfile from "../components/raceComponent/DriverProfile";
@@ -26,6 +18,11 @@ import VitalStatisticsWidget from '../upcoming-race/components/VitalStatisticsWi
 import { PredictionWidget } from '../live/components/PredictionWidget/PredictionWidget';
 import { predictionTypes } from '../live/constants';
 import WidgetCustomizer, { Widget } from '../components/WidgetCustomizer';
+
+const RaceSelectionDesktop = dynamic(
+  () => import('../components/raceComponent/RaceSelectionDesktop'),
+  { ssr: false }
+);
 
 interface WidgetConfig {
   order: string[];

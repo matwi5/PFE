@@ -133,9 +133,31 @@ const MobileMenu: FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onCl
                   </motion.div>
                 ))}
 
-                {/* Other Navigation Items */}
+                {/* Additional Menu Items - Moved up */}
                 <motion.div
                   custom={3}
+                  variants={itemVariants}
+                  className="space-y-3 pt-4 border-t border-gray-700"
+                >
+                  {[
+                    { href: "/prediction", text: "Predictions" },
+                    { href: "/about", text: "About" },
+                    { href: "/contact", text: "Contact" }
+                  ].map((item, i) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="flex items-center p-3 rounded-lg bg-[#282a2c] text-gray-300"
+                      onClick={onClose}
+                    >
+                      {item.text}
+                    </Link>
+                  ))}
+                </motion.div>
+
+                {/* Other Navigation Items - Moved down */}
+                <motion.div
+                  custom={4}
                   variants={itemVariants}
                   className="pt-4 border-t border-gray-700"
                 >
@@ -171,28 +193,6 @@ const MobileMenu: FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onCl
                       Login
                     </Link>
                   )}
-                </motion.div>
-
-                {/* Additional Menu Items */}
-                <motion.div
-                  custom={4}
-                  variants={itemVariants}
-                  className="space-y-3 pt-4 border-t border-gray-700"
-                >
-                  {[
-                    { href: "/prediction", text: "Predictions" },
-                    { href: "/about", text: "About" },
-                    { href: "/contact", text: "Contact" }
-                  ].map((item, i) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="flex items-center p-3 rounded-lg bg-[#282a2c] text-gray-300"
-                      onClick={onClose}
-                    >
-                      {item.text}
-                    </Link>
-                  ))}
                 </motion.div>
               </div>
             </div>
