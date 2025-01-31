@@ -352,14 +352,14 @@ const RaceControlEvents = () => {
 
   useEffect(() => {
     if (viewMode === 'chrono' && lapsData.length > 0 && currentTime) {
-      const sortedLaps = [...lapsData].sort((a, b) => 
+      const sortedLaps = [...lapsData].sort((a, b) =>
         new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
       );
-      
+
       const currentLapEntry = sortedLaps
         .filter(lap => lap.date_start && new Date(lap.date_start) <= new Date(currentTime))
         .pop();
-  
+
       if (currentLapEntry) {
         setCurrentLap(currentLapEntry.lap_number);
       }
@@ -673,13 +673,12 @@ const RaceControlEvents = () => {
                     >
                       {selectedSession && selectedDriver && isRaceSession && (
                         <PredictionWidget
-                          key={`${widgetId}-${currentTime}-${currentLap}`}
+                          key={`${widgetId}-${viewMode === 'chrono' ? currentLap : currentTime}-${currentLap}`}
                           type={widgetId.replace('prediction-', '')}
                           isExpertMode={isExpertMode}
                           sessionId={selectedSession}
                           driverId={selectedDriverNumber}
                           lapNumber={currentLap.toString()}
-                          currentTime={currentTime}
                           viewMode={viewMode}
                         />
                       )}

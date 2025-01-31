@@ -15,27 +15,27 @@ import { AnimatedBorderCard } from './AnimatedBorderCard';
 import { cleanLaptimeData, predictFutureLaptimes } from '../../utils/laptimePredictions';
 
 interface PredictionWidgetProps {
-  type: string;
-  isExpertMode: boolean;
-  sessionId: string;
-  driverId: string;
-  lapNumber: string;
-  viewMode: "chrono" | "lap" | "final";
-  className?: string;
+    type: string;
+    isExpertMode: boolean;
+    sessionId: string;
+    driverId: string;
+    lapNumber: string;
+    viewMode: "chrono" | "lap" | "final";
+    className?: string;
 }
 
 interface LapDataCache {
-  [key: string]: PredictionData;
+    [key: string]: PredictionData;
 }
 
 export const PredictionWidget = ({ 
-  type, 
-  isExpertMode, 
-  sessionId, 
-  driverId, 
-  lapNumber,
-  viewMode,
-  className 
+    type, 
+    isExpertMode, 
+    sessionId, 
+    driverId, 
+    lapNumber,
+    viewMode,
+    className 
 }: PredictionWidgetProps) => {
     const [dataCache, setDataCache] = useState<LapDataCache>({});
     const [loading, setLoading] = useState(true);
@@ -168,7 +168,7 @@ export const PredictionWidget = ({
                 );
             }
 
-            setDataCache(newCache);
+            setDataCache(prev => ({ ...prev, ...newCache }));
         } catch (error) {
             console.error(`Error loading predictions for ${type}:`, error);
         } finally {
@@ -183,12 +183,12 @@ export const PredictionWidget = ({
     }, [sessionId, driverId, type]); 
 
     useEffect(() => {
-        // Gestion spécifique du mode chrono et lap
-        if (viewMode === 'chrono' || lapNumber !== prevLap) {
+        // Load data when lap changes in chrono mode or any lap change in other modes
+        if ((viewMode === 'chrono' ? lapNumber !== prevLap : true) && !dataCache[lapNumber]) {
             loadData();
             setPrevLap(lapNumber);
         }
-    }, [lapNumber, viewMode]); // Dépendances pour le suivi temps réel
+    }, [lapNumber, viewMode]);
     
     const getFlipContainerClass = () => {
         if (!isExpertMode) return "flip-container";
@@ -196,10 +196,21 @@ export const PredictionWidget = ({
     };
 
     const renderContent = () => {
+        const flipClass = getFlipContainerClass();
+        
         if (loading) {
             return (
-                <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                <div className={flipClass}>
+                    <div className="flip-front">
+                        <div className="flex items-center justify-center h-full">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                        </div>
+                    </div>
+                    <div className="flip-back">
+                        <div className="flex items-center justify-center h-full">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                        </div>
+                    </div>
                 </div>
             );
         }
@@ -207,15 +218,24 @@ export const PredictionWidget = ({
         const currentData = dataCache[lapNumber];
         if (!currentData) {
             return (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                    Data not available
+                <div className={flipClass}>
+                    <div className="flip-front">
+                        <div className="flex items-center justify-center h-full text-gray-500">
+                            Data not available
+                        </div>
+                    </div>
+                    <div className="flip-back">
+                        <div className="flex items-center justify-center h-full text-gray-500">
+                            Data not available
+                        </div>
+                    </div>
                 </div>
             );
         }
 
         if (type === 'laptime') {
             return (
-                <div className={getFlipContainerClass()}>
+                <div className={flipClass}>
                     <div className="flip-front">
                         <LaptimeTable data={currentData} />
                     </div>
@@ -226,7 +246,7 @@ export const PredictionWidget = ({
             );
         } else {
             return (
-                <div className={getFlipContainerClass()}>
+                <div className={flipClass}>
                     <div className="flip-front">
                         <SimplePredictionDisplay type={type} data={currentData} />
                     </div>

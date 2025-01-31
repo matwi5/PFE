@@ -67,7 +67,7 @@ export default function PredictionDisplayPage() {
   const [selectedLap, setSelectedLap] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed] = useState(1000);
+  const [playbackSpeed] = useState(3000);
   const [isExpertMode, setIsExpertMode] = useState(false);
   const [vitalStats, setVitalStats] = useState<VitalStatistics | null>(null);
 

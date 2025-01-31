@@ -80,7 +80,7 @@ const RaceSelection = ({
   const [laps, setLaps] = useState<Lap[]>([]);
   const [isLoadingLaps, setIsLoadingLaps] = useState(false);
   const [validLaps, setValidLaps] = useState<Lap[]>([]);
-  const [temporaryValue, setTemporaryValue] = useState<number>(0);
+  const [temporaryLap, setTemporaryLap] = useState<number | null>(null);
   const [temporaryDisplayTime, setTemporaryDisplayTime] = useState<string | null>(null);
 
   // Set default session to "Race" when meeting changes
@@ -195,7 +195,7 @@ const RaceSelection = ({
         } else {
           setIsRunning(false);
         }
-      }, 2000);
+      }, 5000);
     }
     return () => clearInterval(timer);
   }, [isRunning, currentLap, totalLaps, viewMode, validLaps, isLoadingLaps]);
@@ -208,7 +208,7 @@ const RaceSelection = ({
       setTemporaryDisplayTime(new Date(newTimeMs).toISOString());
     } else if (viewMode === "lap") {
       const newLap = Math.max(1, Math.round((totalLaps * value) / 100));
-      onLapChange(newLap);
+      setTemporaryLap(newLap);
     }
   };
 
@@ -219,6 +219,15 @@ const RaceSelection = ({
       const newTimeMs = startMs + (endMs - startMs) * (value / 100);
       onTimeChange(new Date(newTimeMs).toISOString());
       setTemporaryDisplayTime(null);
+    } else if (viewMode === "lap") {
+      if (temporaryLap !== null) {
+        onLapChange(temporaryLap);
+        const lapData = validLaps.find(lap => lap.lap_number === temporaryLap);
+        if (lapData) {
+          onTimeChange(lapData.date_start);
+        }
+        setTemporaryLap(null);
+      }
     }
   };
 
@@ -229,7 +238,8 @@ const RaceSelection = ({
       const currentMs = new Date(temporaryDisplayTime || currentTime).getTime();
       return ((currentMs - startMs) / (endMs - startMs)) * 100;
     } else if (viewMode === "lap" && totalLaps > 0) {
-      return (currentLap / totalLaps) * 100;
+      const displayedLap = temporaryLap !== null ? temporaryLap : currentLap;
+      return (displayedLap / totalLaps) * 100;
     }
     return 0;
   };
@@ -404,7 +414,7 @@ const RaceSelection = ({
                               <div className="text-xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                                 {viewMode === "chrono"
                                   ? formatTime(temporaryDisplayTime || currentTime).split(":").slice(0, 2).join(":")
-                                  : currentLap}
+                                  : (temporaryLap !== null ? temporaryLap : currentLap)}
                               </div>
                             </motion.div>
 
