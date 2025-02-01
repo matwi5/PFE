@@ -1,5 +1,5 @@
 // components/PredictionWidget/BarChartPrediction.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { FormattedPredictionData, PredictionData } from '../../types';
 import { PREDICTION_CLASS_ORDER } from '../../constants';
@@ -22,6 +22,15 @@ const lightenColor = (color: string, factor: number) => {
 };
 
 export const BarChartPrediction: React.FC<BarChartPredictionProps> = ({ type, data }) => {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     const formatPredictionData = (): FormattedPredictionData[] => {
         if (!data?.predictions) return [];
 
@@ -66,7 +75,66 @@ export const BarChartPrediction: React.FC<BarChartPredictionProps> = ({ type, da
         return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
     };
 
+    if (isMobile) {
+        return (
+            <div className="h-32 flex items-center justify-center px-2">
+                <ResponsiveContainer width="100%" height="160%">
+                    <BarChart
+                        data={chartData}
+                        margin={{ top: 24, right: 0, left: 0, bottom: -20 }}
+                        barCategoryGap={15}
+                    >
+                        <CartesianGrid
+                            strokeDasharray="2 2"
+                            strokeOpacity={0.5}
+                            stroke="#7e8385"
+                        />
+                        <XAxis
+                            dataKey="name"
+                            angle={-30}
+                            textAnchor="end"
+                            height={50}
+                            interval={0}
+                            tick={{ fontSize: 10, fill: "#7e8385" }}
+                            stroke="#7e8385"
+                        />
+                        <YAxis
+                            tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+                            domain={[0, 1]}
+                            tick={{ fontSize: 10, fill: "#7e8385" }}
+                            width={32}
+                            stroke="#7e8385"
+                        />
+                        <Tooltip
+                            formatter={(value: number) => `${(value * 100).toFixed(1)}%`}
+                            contentStyle={{
+                                backgroundColor: '#282a2c',
+                                borderRadius: '6px',
+                                padding: '4px',
+                                fontSize: '12px',
+                            }}
+                            labelStyle={{ fontSize: '12px' }}
+                        />
+                        <Bar
+                            dataKey="probability"
+                            animationDuration={300}
+                            barSize={30}
+                        >
+                            {chartData.map((entry, index) => (
+                                <Cell
+                                    key={`cell-${index}`}
+                                    fill={getBarColor(index)}
+                                    strokeWidth={1}
+                                />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+        );
+    }
 
+    // Version desktop originale
     return (
         <div className="h-40 flex items-center justify-center">
             <ResponsiveContainer width="90%" height="170%">
@@ -116,10 +184,14 @@ export const BarChartPrediction: React.FC<BarChartPredictionProps> = ({ type, da
                                 fill={getBarColor(index)}
                                 onMouseOver={(props) => {
                                     const currentColor = getBarColor(index);
-                                    props.target.style.fill = lightenColor(currentColor, 0.2);
+                                    if (props.target) {
+                                        props.target.style.fill = lightenColor(currentColor, 0.2);
+                                    }
                                 }}
                                 onMouseOut={(props) => {
-                                    props.target.style.fill = getBarColor(index);
+                                    if (props.target) {
+                                        props.target.style.fill = getBarColor(index);
+                                    }
                                 }}
                             />
                         ))}

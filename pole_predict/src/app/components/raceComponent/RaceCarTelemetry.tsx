@@ -191,7 +191,7 @@ const RaceCarTelemetry: React.FC<RaceCarTelemetryProps> = ({
           </g>
 
           {/* Brake Gauge */}
-          <g transform="translate(20, 175) scale(0.8)">
+          <g transform="translate(200, 175) scale(0.8)">
             {/* Background Path */}
             <path
               d={createArc(100, 50)}

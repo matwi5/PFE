@@ -238,16 +238,22 @@ const MobileView = ({
 
   return (
     <div className="min-h-screen bg-[#1B1C1D]">
-      <div className="px-4 py-8">
+      <div className="container mx-auto px-4 py-16">
         {/* Header section - simplified for mobile */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center mb-2">
-            Live
-          </h1>
-          <p className="text-gray-400 text-sm text-center">
-            Live race monitoring
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-16 space-y-4"
+        >
+          <div className="relative flex justify-center items-center gap-4">
+            <h1 className="text-4xl h-20 md:text-6xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center">
+              Live
+            </h1>
+          </div>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto text-center">
+            Live race monitoring with real-time telemetry and AI-powered predictions
           </p>
-        </div>
+        </motion.div>
 
         {/* Race Selection - Full width on mobile */}
         <div className="mb-8">

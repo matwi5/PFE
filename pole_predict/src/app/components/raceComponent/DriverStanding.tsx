@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Trophy } from 'lucide-react';
+import { Trophy, ChevronDown } from 'lucide-react';
 
 interface Driver {
   driver_number: number;
@@ -62,6 +62,23 @@ interface DriverStandingsProps {
   selectedDriverNumber: string | null;
 }
 
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  return isMobile;
+};
+
 const DriverStandings: React.FC<DriverStandingsProps> = ({
   sessionKey,
   meetingKey,
@@ -71,6 +88,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
   onDriverSelect,
   selectedDriverNumber
 }) => {
+  const isMobile = useIsMobile();
   const [selectedDriver, setSelectedDriver] = useState<number | null>(null);
   const [positions, setPositions] = useState<DriverPosition[]>([]);
   const [intervals, setIntervals] = useState<Interval[]>([]);
@@ -81,6 +99,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
   const [error, setError] = useState<string>('');
   const [leaderLapStartTimes, setLeaderLapStartTimes] = useState<Map<number, string>>(new Map());
   const [gapMode, setGapMode] = useState<'interval' | 'leader'>('interval');
+  const [expandedDriver, setExpandedDriver] = useState<number | null>(null);
 
   useEffect(() => {
     if (!sessionKey || !meetingKey) return;
@@ -89,7 +108,6 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
       try {
         setLoading(true);
   
-        // Fetch drivers
         const driversResponse = await fetch('https://api.openf1.org/v1/drivers');
         const driversData = await driversResponse.json() as Driver[];
         const uniqueDrivers = Array.from(new Map(
@@ -97,39 +115,32 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
         ).values());
         setDrivers(uniqueDrivers);
   
-        // Fetch positions
         const positionsUrl = `https://api.openf1.org/v1/position?session_key=${sessionKey}&meeting_key=${meetingKey}`;
         const positionsResponse = await fetch(positionsUrl);
         const positionsData = await positionsResponse.json();
         setPositions(positionsData);
   
-        // Fetch intervals
         const intervalsUrl = `https://api.openf1.org/v1/intervals?session_key=${sessionKey}`;
         const intervalsResponse = await fetch(intervalsUrl);
         const intervalsData = await intervalsResponse.json();
         setIntervals(intervalsData);
   
-        // Fetch lap times
         const lapTimesResponse = await fetch(`https://api.openf1.org/v1/laps?session_key=${sessionKey}`);
         const lapTimesData = await lapTimesResponse.json();
         setLapTimes(lapTimesData);
   
-        // Process leader lap start times
         const lapStartMap = new Map<number, string>();
         const sortedLapTimes = [...lapTimesData].sort((a, b) =>
           new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
         );
   
-        // Ajout du temps de début pour le lap 1
         const sortedPositions = [...positionsData].sort((a, b) => 
           new Date(a.date).getTime() - new Date(b.date).getTime()
         );
         if (sortedPositions.length > 0) {
-          // Utiliser le premier temps de position enregistré comme début du lap 1
           lapStartMap.set(1, sortedPositions[0].date);
         }
   
-        // Continuer avec la logique existante pour les autres tours
         sortedLapTimes.forEach(lap => {
           const positions = positionsData.filter((pos: { date: string | number | Date; }) =>
             new Date(pos.date).getTime() <= new Date(lap.date_start).getTime()
@@ -178,7 +189,6 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
         case 'chrono':
           const currentTimeMs = new Date(currentTime).getTime();
 
-          // Process positions and intervals for chrono mode
           positions.forEach(pos => {
             const posTime = new Date(pos.date).getTime();
             if (posTime <= currentTimeMs) {
@@ -201,7 +211,6 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           break;
 
         case 'lap':
-          // Get the start time for the current lap from the leader's crossing
           const lapStartTime = leaderLapStartTimes.get(currentLap);
           if (lapStartTime) {
             const lapStartMs = new Date(lapStartTime).getTime();
@@ -245,7 +254,6 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           break;
       }
 
-      // Create enhanced standings
       let standings = drivers.map(driver => {
         const position = relevantPositions.get(driver.driver_number);
         const interval = relevantIntervals.get(driver.driver_number);
@@ -259,7 +267,6 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
         };
       });
 
-      // Sort standings
       standings.sort((a, b) => {
         if (a.status === 'active' && b.status === 'active') {
           return a.position - b.position;
@@ -275,13 +282,173 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
     processStandings();
   }, [positions, intervals, drivers, currentTime, viewMode, currentLap, leaderLapStartTimes]);
 
+  if (isMobile) {
+    return (
+      <Card className="bg-[#282a2c] border border-gray-800 h-[calc(100vh - 4rem)]">
+        <CardHeader className="pb-2">
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                {viewMode === 'final' ? 'Final Ranking' : 'Driver Standings'}
+              </CardTitle>
+              <Trophy className="h-5 w-5 text-[#5382ec]" />
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() =>
+                setGapMode((prev) => (prev === 'interval' ? 'leader' : 'interval'))
+              }
+              className="w-full bg-black/20 text-gray-300 h-10"
+            >
+              {gapMode === 'interval' ? 'Interval' : 'Gap to leader'}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-2">
+          {/* Conteneur avec hauteur fixe pour n'afficher que 10 items à la fois */}
+          <div className="max-h-[30rem] overflow-y-auto">
+            <div className="space-y-2">
+              <AnimatePresence>
+                {enhancedStandings
+                  .filter((standing) => standing.status === 'active')
+                  .map((standing, index) => {
+                    const isLeader = index === 0;
+                    const displayValue =
+                      gapMode === 'interval'
+                        ? standing.interval
+                        : standing.gap_to_leader;
+                    const teamColor =
+                      standing.driver_details?.team_colour || '2b2b2b';
+                    const isExpanded = expandedDriver === standing.driver_number;
+                    const isSelected =
+                      selectedDriverNumber === standing.driver_number.toString();
+  
+                    return (
+                      <motion.div
+                        key={standing.driver_number}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="w-full"
+                      >
+                        <div
+                          className={`rounded-lg overflow-hidden transition-all duration-300 
+                            ${isSelected ? 'ring-2 ring-inset ring-[#5382ec]' : ''}`}
+                        >
+                          <div
+                            className="flex items-center gap-2 p-2 bg-black/20"
+                            onClick={() =>
+                              setExpandedDriver(
+                                isExpanded ? null : standing.driver_number
+                              )
+                            }
+                          >
+                            <div
+                              className={`w-6 text-center font-bold ${
+                                isLeader ? 'text-[#5382ec]' : 'text-gray-400'
+                              }`}
+                            >
+                              {standing.position}
+                            </div>
+  
+                            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                              {standing.driver_details?.headshot_url ? (
+                                <img
+                                  src={standing.driver_details.headshot_url}
+                                  alt={standing.driver_details.full_name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div
+                                  className="w-full h-full flex items-center justify-center"
+                                  style={{
+                                    backgroundColor: `#${teamColor}33`,
+                                  }}
+                                >
+                                  <span className="text-sm font-bold text-white">
+                                    {standing.driver_details?.driver_number}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+  
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-white truncate">
+                                {standing.driver_details?.name_acronym}
+                              </div>
+                            </div>
+  
+                            <div className="text-right font-mono text-xs text-gray-300">
+                              {formatGap(displayValue, isLeader)}
+                            </div>
+  
+                            <ChevronDown
+                              className={`w-4 h-4 text-gray-400 transition-transform duration-200 
+                                ${isExpanded ? 'transform rotate-180' : ''}`}
+                            />
+                          </div>
+  
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0 }}
+                              animate={{ height: 'auto' }}
+                              exit={{ height: 0 }}
+                              className="bg-black/10 px-3 py-2"
+                            >
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <div className="text-sm text-white mb-1">
+                                    {standing.driver_details?.full_name}
+                                  </div>
+                                  <div
+                                    className="text-xs px-2 py-0.5 rounded-full inline-block"
+                                    style={{
+                                      backgroundColor: `#${teamColor}33`,
+                                      color: `#${teamColor}`,
+                                    }}
+                                  >
+                                    {standing.driver_details?.team_name}
+                                  </div>
+                                </div>
+                                {!isSelected && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedDriver(standing.driver_number);
+                                      onDriverSelect(
+                                        standing.driver_number.toString()
+                                      );
+                                    }}
+                                    className="bg-[#5382ec]/10 border-[#5382ec]/20 text-[#5382ec] hover:bg-[#5382ec]/20"
+                                  >
+                                    Select Driver
+                                  </Button>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+              </AnimatePresence>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+
+  // Vue Desktop
   return (
     <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 h-[70vh]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
             {viewMode === 'final' ? 'Final Ranking' : 'Driver Standings'}
-            {viewMode === 'lap' && ` - Lap ${currentLap}`}
           </CardTitle>
           <div className="flex items-center gap-4">
             <Button
@@ -290,7 +457,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
               onClick={() => setGapMode(prev => prev === 'interval' ? 'leader' : 'interval')}
               className="text-xs bg-black/20  text-gray-300"
             >
-              {gapMode === 'interval' ? 'Gaps to leader' : 'Intervals'}
+              {gapMode === 'interval' ? 'Intervals' : 'Gaps to leader'}
             </Button>
             <Trophy className="h-5 w-5 text-[#5382ec]" />
           </div>
