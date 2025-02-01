@@ -293,156 +293,156 @@ const HomePage: React.FC = () => {
             />
 
             <AnimatePresence>
-            {card.showList && (
-  <motion.div
-    variants={mobileCardListVariants}
-    initial="hidden"
-    animate="visible"
-    exit="hidden"
-    className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-hidden w-full auto-rows-fr"
-  >
-    {card.data.length > 0 ? (
-      card.data.map((item, itemIndex) => (
-        <motion.div
-          key={itemIndex}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{
-            duration: 0.3,
-            delay: itemIndex * 0.1,
-            ease: [0.4, 0, 0.2, 1]
-          }}
-        >
-          <CustomDialog
-            buttonStyle={{
-              ...buttonStyle,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "0",
-              width: "100%",
-              height: "100%",
-              minHeight: "180px",
-              margin: "0 auto",
-              background: index === 1 && item.color 
-                ? `${item.color}40` // Ajoute une transparence de 40%
-                : index === 2 && item.flagColors && item.flagColors.length > 0
-                ? `linear-gradient(45deg, ${item.flagColors.map(color => color + '40').join(', ')})`
-                : "rgba(45, 45, 45, 0.6)",
-              backdropFilter: "blur(10px)",
-              borderRadius: "16px",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              overflow: "hidden",
-              position: "relative",
-              transition: "all 0.3s ease",
-              '&:hover': {
-                background: index === 1 && item.color 
-                  ? item.color
-                  : index === 2 && item.flagColors && item.flagColors.length > 0
-                  ? `linear-gradient(45deg, ${item.flagColors.join(', ')})`
-                  : "rgba(45, 45, 45, 0.9)",
-              }
-            }}
-            getHoverStyles={(e, isEntering) => {
-              const target = e.currentTarget;
-              const customColor = index === 1 ? item.color : null;
-              const customGradient = index === 2 && item.flagColors ? item.flagColors : null;
-              
-              if (isEntering) {
-                target.style.background = customColor
-                  ? customColor
-                  : customGradient
-                  ? `linear-gradient(45deg, ${customGradient.join(', ')})`
-                  : 'rgba(45, 45, 45, 0.9)';
-              } else {
-                target.style.background = customColor
-                  ? `${customColor}40`
-                  : customGradient
-                  ? `linear-gradient(45deg, ${customGradient.map(color => color + '40').join(', ')})`
-                  : 'rgba(45, 45, 45, 0.6)';
-              }
-            }}
-            triggerContent={
-              <motion.div
-                className="w-full h-full flex flex-col items-center justify-center gap-2 text-lg sm:text-base p-4 relative group"
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
-
+              {card.showList && (
                 <motion.div
-                  className="relative"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.2 }}
+                  variants={mobileCardListVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-hidden w-full auto-rows-fr"
                 >
-                  <img
-                    src={
-                      index === 0
-                        ? item.pays_flag
-                        : index === 1
-                          ? item.logo_url
-                          : item.headshot_url
-                    }
-                    alt={
-                      index === 0
-                        ? item.grand_prix
-                        : index === 1
-                          ? `${item.name} logo`
-                          : `${item.name} headshot`
-                    }
-                    className={`w-30 h-30 sm:w-20 sm:h-20 object-cover ${index === 2 ? "rounded-full ring-2 ring-opacity-50 ring-white" : "rounded-lg"
-                      } mb-1 shadow-lg transition-transform duration-300 group-hover:shadow-2xl`}
-                  />
+                  {card.data.length > 0 ? (
+                    card.data.map((item, itemIndex) => (
+                      <motion.div
+                        key={itemIndex}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{
+                          duration: 0.3,
+                          delay: itemIndex * 0.1,
+                          ease: [0.4, 0, 0.2, 1]
+                        }}
+                      >
+                        <CustomDialog
+                          buttonStyle={{
+                            ...buttonStyle,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: "0",
+                            width: "100%",
+                            height: "100%",
+                            minHeight: "180px",
+                            margin: "0 auto",
+                            background: index === 1 && item.color
+                              ? `${item.color}40` // Ajoute une transparence de 40%
+                              : index === 2 && item.flagColors && item.flagColors.length > 0
+                                ? `linear-gradient(45deg, ${item.flagColors.map(color => color + '40').join(', ')})`
+                                : "rgba(45, 45, 45, 0.6)",
+                            backdropFilter: "blur(10px)",
+                            borderRadius: "16px",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                            overflow: "hidden",
+                            position: "relative",
+                            transition: "all 0.3s ease",
+                            '&:hover': {
+                              background: index === 1 && item.color
+                                ? item.color
+                                : index === 2 && item.flagColors && item.flagColors.length > 0
+                                  ? `linear-gradient(45deg, ${item.flagColors.join(', ')})`
+                                  : "rgba(45, 45, 45, 0.9)",
+                            }
+                          }}
+                          getHoverStyles={(e, isEntering) => {
+                            const target = e.currentTarget;
+                            const customColor = index === 1 ? item.color : null;
+                            const customGradient = index === 2 && item.flagColors ? item.flagColors : null;
+
+                            if (isEntering) {
+                              target.style.background = customColor
+                                ? customColor
+                                : customGradient
+                                  ? `linear-gradient(45deg, ${customGradient.join(', ')})`
+                                  : 'rgba(45, 45, 45, 0.9)';
+                            } else {
+                              target.style.background = customColor
+                                ? `${customColor}40`
+                                : customGradient
+                                  ? `linear-gradient(45deg, ${customGradient.map(color => color + '40').join(', ')})`
+                                  : 'rgba(45, 45, 45, 0.6)';
+                            }
+                          }}
+                          triggerContent={
+                            <motion.div
+                              className="w-full h-full flex flex-col items-center justify-center gap-2 text-lg sm:text-base p-4 relative group"
+                              whileHover={{ scale: 1.02 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+
+                              <motion.div
+                                className="relative"
+                                whileHover={{ scale: 1.05 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <img
+                                  src={
+                                    index === 0
+                                      ? item.pays_flag
+                                      : index === 1
+                                        ? item.logo_url
+                                        : item.headshot_url
+                                  }
+                                  alt={
+                                    index === 0
+                                      ? item.grand_prix
+                                      : index === 1
+                                        ? `${item.name} logo`
+                                        : `${item.name} headshot`
+                                  }
+                                  className={`w-30 h-30 sm:w-20 sm:h-20 object-cover ${index === 2 ? "rounded-full ring-2 ring-opacity-50 ring-white" : "rounded-lg"
+                                    } mb-1 shadow-lg transition-transform duration-300 group-hover:shadow-2xl`}
+                                />
+                              </motion.div>
+
+                              <div className="relative z-10">
+                                <span className="text-center break-words font-bold sm:font-medium text-xl sm:text-base bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent transition-all duration-300 group-hover:from-blue-400 group-hover:to-teal-300">
+                                  {index === 0
+                                    ? item.grand_prix
+                                    : index === 1
+                                      ? item.name
+                                      : item.name}
+                                </span>
+                              </div>
+
+                              <motion.div
+                                className="absolute inset-0 bg-white rounded-lg opacity-0 group-hover:opacity-5 transition-opacity duration-300"
+                                initial={false}
+                                whileHover={{ scale: 1.05 }}
+                              />
+                            </motion.div>
+                          }
+                          customColors={
+                            index === 1
+                              ? [item.color]
+                              : index === 2
+                                ? item.flagColors
+                                : undefined
+                          }
+                        >
+                          <card.DetailComponent
+                            {...{
+                              [index === 0
+                                ? "gp"
+                                : index === 1
+                                  ? "team"
+                                  : "driver"]: item,
+                            }}
+                          />
+                        </CustomDialog>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <motion.p
+                      variants={itemVariants}
+                      className="col-span-full text-center py-4"
+                    >
+                      Loading {card.title.toLowerCase()}...
+                    </motion.p>
+                  )}
                 </motion.div>
-
-                <div className="relative z-10">
-                  <span className="text-center break-words font-bold sm:font-medium text-xl sm:text-base bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent transition-all duration-300 group-hover:from-blue-400 group-hover:to-teal-300">
-                    {index === 0
-                      ? item.grand_prix
-                      : index === 1
-                        ? item.name
-                        : item.name}
-                  </span>
-                </div>
-
-                <motion.div
-                  className="absolute inset-0 bg-white rounded-lg opacity-0 group-hover:opacity-5 transition-opacity duration-300"
-                  initial={false}
-                  whileHover={{ scale: 1.05 }}
-                />
-              </motion.div>
-            }
-            customColors={
-              index === 1
-                ? [item.color]
-                : index === 2
-                  ? item.flagColors
-                  : undefined
-            }
-          >
-            <card.DetailComponent
-              {...{
-                [index === 0
-                  ? "gp"
-                  : index === 1
-                    ? "team"
-                    : "driver"]: item,
-              }}
-            />
-          </CustomDialog>
-        </motion.div>
-      ))
-    ) : (
-      <motion.p
-        variants={itemVariants}
-        className="col-span-full text-center py-4"
-      >
-        Loading {card.title.toLowerCase()}...
-      </motion.p>
-    )}
-  </motion.div>
-)}
+              )}
             </AnimatePresence>
           </motion.div>
         ))}
