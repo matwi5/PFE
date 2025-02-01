@@ -325,12 +325,12 @@ const handleSubmitPrediction = async (predictionData: {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#1B1C1D] flex flex-col justify-center items-center p-8">
-        <AlertCircle className="w-24 h-24 text-red-500 mb-6" />
-        <p className="text-red-500 text-xl mb-6">{error}</p>
+      <div className="min-h-screen bg-[#1B1C1D] flex flex-col justify-center items-center p-4 md:p-8">
+        <AlertCircle className="w-16 h-16 md:w-24 md:h-24 text-red-500 mb-4 md:mb-6" />
+        <p className="text-red-500 text-base md:text-xl mb-4 md:mb-6 text-center">{error}</p>
         <Button 
           onClick={() => window.location.reload()}
-          className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
+          className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white text-sm md:text-base py-2 md:py-2.5"
         >
           Try Again
         </Button>
@@ -341,14 +341,14 @@ const handleSubmitPrediction = async (predictionData: {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#1B1C1D] flex justify-center items-center">
-        <div className="text-[#5382ec] text-2xl">Loading...</div>
+        <div className="text-[#5382ec] text-xl md:text-2xl">Loading...</div>
       </div>
     )
   }
 
   return (
     <motion.div
-      className="min-h-screen bg-[#1B1C1D] text-white py-24 px-8"
+      className="min-h-screen bg-[#1B1C1D] text-white py-12 px-4 md:py-24 md:px-8"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -358,11 +358,11 @@ const handleSubmitPrediction = async (predictionData: {
         variants={containerVariants}
       >
         <motion.div variants={itemVariants}>
-          <Trophy className="w-24 h-24 mb-8 text-[#5382ec]" />
+          <Trophy className="w-16 h-16 md:w-24 md:h-24 mb-6 md:mb-8 text-[#5382ec]" />
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <h1 className="text-4x h-20 md:text-6xl font-bold mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center">
+          <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold mb-6 md:mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center h-16 md:h-20">
             <Typewriter
               options={{
                 strings: [
@@ -378,21 +378,21 @@ const handleSubmitPrediction = async (predictionData: {
         </motion.div>
 
         <motion.div 
-          className="w-full max-w-6xl mx-auto space-y-12"
+          className="w-full max-w-6xl mx-auto space-y-8 md:space-y-12 px-4 md:px-0"
           variants={containerVariants}
         >
           <motion.div variants={itemVariants} className="text-center">
-            <h2 className="text-2xl font-bold mb-2 text-[#5382ec]">
+            <h2 className="text-xl md:text-2xl font-bold mb-2 text-[#5382ec]">
               {latestMeeting?.meeting_name || "Next Race"}
             </h2>
-            <p className="text-xl text-[#2dd4bf]">
+            <p className="text-lg md:text-xl text-[#2dd4bf]">
               Session: {latestSession?.session_name || "Unknown"}
             </p>
           </motion.div>
 
           <motion.div 
             variants={itemVariants}
-            className="bg-[#282a2c] rounded-xl p-8 border border-gray-800"
+            className="bg-[#282a2c] rounded-xl p-4 md:p-8 border border-gray-800"
           >
             <PredictionDisplay
               predictions={predictions}
@@ -402,7 +402,7 @@ const handleSubmitPrediction = async (predictionData: {
 
           <motion.div 
             variants={itemVariants}
-            className="bg-[#282a2c] rounded-xl p-8 border border-gray-800"
+            className="bg-[#282a2c] rounded-xl p-4 md:p-8 border border-gray-800"
           >
             <PredictionForm
               drivers={drivers}

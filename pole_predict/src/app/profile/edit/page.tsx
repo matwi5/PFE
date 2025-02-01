@@ -141,7 +141,7 @@ export default function EditProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#1B1C1D] flex justify-center items-center">
-        <div className="text-[#5382ec] text-2xl">Loading...</div>
+        <div className="text-[#5382ec] text-xl md:text-2xl">Loading...</div>
       </div>
     )
   }
@@ -149,14 +149,14 @@ export default function EditProfilePage() {
   if (!user || !profile) {
     return (
       <div className="min-h-screen bg-[#1B1C1D] flex justify-center items-center">
-        <div className="text-red-500">User not found</div>
+        <div className="text-red-500 text-base md:text-lg">User not found</div>
       </div>
     )
   }
 
   return (
     <motion.div
-      className="min-h-screen bg-[#1B1C1D] text-white py-24 px-8"
+      className="min-h-screen bg-[#1B1C1D] text-white py-12 px-4 md:py-24 md:px-8"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -166,11 +166,11 @@ export default function EditProfilePage() {
         variants={containerVariants}
       >
         <motion.div variants={itemVariants}>
-          <Settings className="w-24 h-24 mb-8 text-[#5382ec]" />
+          <Settings className="w-16 h-16 md:w-24 md:h-24 mb-6 md:mb-8 text-[#5382ec]" />
         </motion.div>
 
         <motion.h1
-          className="text-4xl h-20 md:text-6xl font-bold mb-12 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center"
+          className="text-3xl md:text-4xl lg:text-6xl font-bold mb-8 md:mb-12 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center h-16 md:h-20"
           variants={itemVariants}
         >
           <Typewriter
@@ -186,64 +186,78 @@ export default function EditProfilePage() {
           />
         </motion.h1>
 
-        <motion.div className="w-full max-w-2xl" variants={itemVariants}>
+        <motion.div className="w-full max-w-2xl px-4 md:px-0" variants={itemVariants}>
           <Card className="bg-[#1d1f20] border-gray-800 hover:border-[#5382ec] transition-all duration-300">
             <form onSubmit={handleSubmit}>
-              <CardHeader>
-                <div className="flex items-center space-x-4">
-                  <Avatar className="w-20 h-20 border-2 border-[#5382ec]">
+              <CardHeader className="p-4 md:p-6">
+                <div className="flex flex-col md:flex-row items-center md:space-x-4 space-y-3 md:space-y-0">
+                  <Avatar className="w-16 h-16 md:w-20 md:h-20 border-2 border-[#5382ec]">
                     <AvatarImage src={profile.avatarUrl} alt={profile.username} />
                     <AvatarFallback className="bg-[#282a2c] text-[#5382ec]">
                       {profile.username.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <CardTitle className="text-2xl bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                  <div className="text-center md:text-left">
+                    <CardTitle className="text-xl md:text-2xl bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                       Edit Profile
                     </CardTitle>
-                    <CardDescription className="text-gray-400">{profile.email}</CardDescription>
+                    <CardDescription className="text-gray-400 text-sm md:text-base">
+                      {profile.email}
+                    </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-[#5382ec]">Username</Label>
+              
+              <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
+                <div className="space-y-1.5 md:space-y-2">
+                  <Label htmlFor="username" className="text-[#5382ec] text-sm md:text-base">
+                    Username
+                  </Label>
                   <Input
                     id="username"
                     value={profile.username}
                     onChange={(e) => setProfile({ ...profile, username: e.target.value })}
                     required
-                    className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0"
+                    className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0 h-9 md:h-10 text-sm md:text-base"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-[#5382ec]">Phone</Label>
+
+                <div className="space-y-1.5 md:space-y-2">
+                  <Label htmlFor="phone" className="text-[#5382ec] text-sm md:text-base">
+                    Phone
+                  </Label>
                   <Input
                     id="phone"
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                     required
-                    className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0"
+                    className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0 h-9 md:h-10 text-sm md:text-base"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="points" className="text-[#5382ec]">VerstaCoins</Label>
+
+                <div className="space-y-1.5 md:space-y-2">
+                  <Label htmlFor="points" className="text-[#5382ec] text-sm md:text-base">
+                    VerstaCoins
+                  </Label>
                   <Input
                     id="points"
                     value={profile.points}
                     readOnly
-                    className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0"
+                    className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0 h-9 md:h-10 text-sm md:text-base"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="favoriteDriver" className="text-[#5382ec]">Favorite Driver</Label>
+
+                <div className="space-y-1.5 md:space-y-2">
+                  <Label htmlFor="favoriteDriver" className="text-[#5382ec] text-sm md:text-base">
+                    Favorite Driver
+                  </Label>
                   <Select
                     value={profile.favoriteDriver}
                     onValueChange={(value) => setProfile({ ...profile, favoriteDriver: value })}
                   >
                     <SelectTrigger 
                       id="favoriteDriver"
-                      className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0"
+                      className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0 h-9 md:h-10 text-sm md:text-base"
                     >
                       <SelectValue placeholder="Select a driver" />
                     </SelectTrigger>
@@ -252,7 +266,7 @@ export default function EditProfilePage() {
                         <SelectItem 
                           key={driver.driver_number} 
                           value={`${driver.full_name}`}
-                          className="text-white hover:bg-[#383a3c] focus:bg-[#383a3c] focus:text-white"
+                          className="text-white hover:bg-[#383a3c] focus:bg-[#383a3c] focus:text-white text-sm md:text-base"
                         >
                           {driver.full_name} ({driver.driver_number})
                         </SelectItem>
@@ -261,10 +275,11 @@ export default function EditProfilePage() {
                   </Select>
                 </div>
               </CardContent>
-              <CardFooter>
+
+              <CardFooter className="p-4 md:p-6">
                 <Button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white hover:opacity-90 transition-opacity"
+                  className="w-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white hover:opacity-90 transition-opacity text-sm md:text-base py-2 md:py-2.5"
                   disabled={saving}
                 >
                   {saving ? "Saving..." : "Save Changes"}

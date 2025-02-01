@@ -58,8 +58,8 @@ const RegisterForm = () => {
 
   const createWelcomeBadge = () => {
     return {
-      name: "Badge de Bienvenue",
-      description: "Bienvenue dans la communauté F1 !",
+      name: "Welcome Badge",
+      description: "Welcome to the F1 community!",
       obtainedAt: new Date(),
       type: "welcome"
     };
@@ -75,7 +75,7 @@ const RegisterForm = () => {
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists()) {
-        setError("Cet utilisateur existe déjà.");
+        setError("This user already exists.");
         return;
       }
 
@@ -95,12 +95,12 @@ const RegisterForm = () => {
       });
 
       await sendEmailVerification(user);
-      setMessage("Un e-mail de vérification a été envoyé. Veuillez vérifier votre boîte de réception.");
+      setMessage("A verification email has been sent. Please check your inbox.");
 
       setTimeout(() => router.push("/login"), 5000);
     } catch (error) {
-      console.error("Erreur lors de l'inscription :", error);
-      setError("Erreur lors de l'inscription, veuillez réessayer.");
+      console.error("Registration error:", error);
+      setError("Registration error, please try again.");
     }
   };
 
@@ -131,14 +131,14 @@ const RegisterForm = () => {
 
       router.push("/");
     } catch (error) {
-      console.error("Erreur lors de l'inscription avec Google :", error);
-      setError("Échec de l'inscription avec Google. Veuillez réessayer.");
+      console.error("Google sign up error:", error);
+      setError("Failed to sign up with Google. Please try again.");
     }
   };
 
   return (
     <motion.div
-      className="min-h-screen bg-[#1B1C1D] text-white py-24 px-8"
+      className="min-h-screen bg-[#1B1C1D] text-white py-12 px-4 md:py-24 md:px-8"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -149,20 +149,20 @@ const RegisterForm = () => {
       >
         <motion.div variants={itemVariants}>
           <UserPlus 
-            className="w-24 h-24 mb-8 text-[#5382ec]"
+            className="w-16 h-16 md:w-24 md:h-24 mb-6 md:mb-8 text-[#5382ec]"
           />
         </motion.div>
 
         <motion.h1
-          className="text-4xl h-20 md:text-6xl font-bold mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center"
+          className="text-3xl md:text-4xl lg:text-6xl font-bold mb-6 md:mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center h-16 md:h-20"
           variants={itemVariants}
         >
           <Typewriter
             options={{
               strings: [
-                "Rejoignez-nous",
-                "Créez votre compte",
-                "Bienvenue",
+                "Join Us",
+                "Create Account",
+                "Welcome",
               ],
               autoStart: true,
               loop: true,
@@ -171,7 +171,7 @@ const RegisterForm = () => {
         </motion.h1>
 
         <motion.div
-          className="w-full max-w-md"
+          className="w-full max-w-md px-4 md:px-0"
           variants={itemVariants}
         >
           <Card
@@ -179,75 +179,75 @@ const RegisterForm = () => {
             onMouseMove={handleMouseMove}
             onMouseLeave={() => setIsHovering(false)}
           >
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                S'inscrire
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-xl md:text-2xl font-bold text-center bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                Sign Up
               </CardTitle>
-              <CardDescription className="text-center text-gray-400">
-                Créez votre compte pour accéder à toutes les fonctionnalités
+              <CardDescription className="text-center text-gray-400 text-sm md:text-base">
+                Create your account to access all features
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 md:p-6">
               {error && (
-                <Alert variant="destructive" className="mb-4 bg-red-500/10 border-red-500 text-red-500">
+                <Alert variant="destructive" className="mb-4 bg-red-500/10 border-red-500 text-red-500 text-sm md:text-base">
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
               {message && (
-                <Alert variant="default" className="mb-4 bg-green-500/10 border-green-500 text-green-500">
+                <Alert variant="default" className="mb-4 bg-green-500/10 border-green-500 text-green-500 text-sm md:text-base">
                   <AlertDescription>{message}</AlertDescription>
                 </Alert>
               )}
-              <form onSubmit={handleRegister} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-gray-200">Nom d'utilisateur</Label>
+              <form onSubmit={handleRegister} className="space-y-4 md:space-y-6">
+                <div className="space-y-1 md:space-y-2">
+                  <Label htmlFor="username" className="text-gray-200 text-sm md:text-base">Username</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                     <Input
                       id="username"
                       type="text"
-                      placeholder="Entrez votre nom d'utilisateur"
+                      placeholder="Enter your username"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       required
-                      className="pl-10 bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white"
+                      className="pl-10 bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white text-sm md:text-base h-9 md:h-10"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-gray-200">Adresse e-mail</Label>
+                <div className="space-y-1 md:space-y-2">
+                  <Label htmlFor="email" className="text-gray-200 text-sm md:text-base">Email address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                     <Input
                       id="email"
                       type="email"
-                      placeholder="exemple@email.com"
+                      placeholder="example@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="pl-10 bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white"
+                      className="pl-10 bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white text-sm md:text-base h-9 md:h-10"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-gray-200">Numéro de téléphone</Label>
+                <div className="space-y-1 md:space-y-2">
+                  <Label htmlFor="phone" className="text-gray-200 text-sm md:text-base">Phone number</Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="Entrez votre numéro de téléphone"
+                      placeholder="Enter your phone number"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       required
-                      className="pl-10 bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white"
+                      className="pl-10 bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white text-sm md:text-base h-9 md:h-10"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-gray-200">Mot de passe</Label>
+                <div className="space-y-1 md:space-y-2">
+                  <Label htmlFor="password" className="text-gray-200 text-sm md:text-base">Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                     <Input
                       id="password"
                       type="password"
@@ -255,25 +255,25 @@ const RegisterForm = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="pl-10 bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white"
+                      className="pl-10 bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white text-sm md:text-base h-9 md:h-10"
                     />
                   </div>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   <Button
                     type="submit"
-                    className="w-full relative group"
+                    className="w-full relative group text-sm md:text-base h-9 md:h-10"
                     style={{
                       background: 'linear-gradient(to right, #5382ec, #2dd4bf)',
                     }}
                   >
-                    <UserPlus className="mr-2 h-4 w-4" /> S'inscrire
+                    <UserPlus className="mr-2 h-4 w-4" /> Sign Up
                   </Button>
 
                   <Button
                     type="button"
                     onClick={handleGoogleSignUp}
-                    className="w-full bg-[#1d1f20] border border-gray-700 hover:border-[#5382ec] hover:bg-[#282a2c] text-white"
+                    className="w-full bg-[#1d1f20] border border-gray-700 hover:border-[#5382ec] hover:bg-[#282a2c] text-white text-sm md:text-base h-9 md:h-10"
                   >
                     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                       <path
@@ -293,19 +293,19 @@ const RegisterForm = () => {
                         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                       />
                     </svg>
-                    S'inscrire avec Google
+                    Sign up with Google
                   </Button>
                 </div>
               </form>
             </CardContent>
-            <CardFooter>
-              <p className="text-center w-full text-gray-400">
-                Vous avez déjà un compte ?{' '}
+            <CardFooter className="p-4 md:p-6">
+              <p className="text-center w-full text-gray-400 text-sm md:text-base">
+                Already have an account?{' '}
                 <Link 
                   href="/login" 
                   className="text-[#5382ec] hover:text-[#2dd4bf] transition-colors"
                 >
-                  Connectez-vous
+                  Sign in
                 </Link>
               </p>
             </CardFooter>
