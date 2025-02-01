@@ -22,6 +22,8 @@ import WidgetCustomizer, { Widget } from '../components/WidgetCustomizer';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Brain } from 'lucide-react';
 
+import StintVisualizer from "../components/analysisComponent/StintVisualizer";
+
 const PredictionAlert = ({ open, onClose }) => {
   if (!open) return null;
 
