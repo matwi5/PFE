@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,6 +38,44 @@ const DriverProfile = ({
   sessions,
   onDriverDeselect
 }: DriverProfileProps) => {
+  const [chronoLap, setChronoLap] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchLapData = async () => {
+      if (viewMode !== 'chrono') return;
+
+      try {
+        let url = `https://api.openf1.org/v1/laps?session_key=${selectedSession}`;
+        
+        if (selectedDriver) {
+          url += `&driver_number=${selectedDriver.driver_number}`;
+        }
+        
+        if (currentTime) {
+          url += `&date_start<${encodeURIComponent(currentTime)}`;
+        }
+
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        // Si l'API ne renvoie pas de données, cela signifie que le tour 1 n'est pas terminé
+        if (!data || data.length === 0) {
+          setChronoLap(1);
+          return;
+        }
+        
+        const maxLap = Math.max(...data.map((lap: any) => lap.lap_number));
+        setChronoLap(maxLap);
+      } catch (error) {
+        console.error('Error fetching lap data:', error);
+        // En cas d'erreur, on affiche le tour 1 par défaut
+        setChronoLap(1);
+      }
+    };
+
+    fetchLapData();
+  }, [selectedDriver, selectedSession, currentTime, viewMode]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -76,6 +114,19 @@ const DriverProfile = ({
     }
   };
 
+  const getLapDisplay = () => {
+    if (viewMode === 'chrono') {
+      return selectedDriver
+        ? `Lap ${chronoLap}/${totalLaps}`
+        : `Leader's Lap ${chronoLap}/${totalLaps}`;
+    }
+    if (viewMode === 'lap') {
+      return `Lap ${currentLap}/${totalLaps}`;
+    }
+    // En mode final, on affiche le nombre total de tours
+    return `Number of laps: ${totalLaps}`;
+  };
+
   return (
     <Card className="group overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300">
       <CardHeader className="pb-2">
@@ -88,7 +139,6 @@ const DriverProfile = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Event Overview - Always visible */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -113,15 +163,12 @@ const DriverProfile = ({
               </p>
               <p className="text-sm text-gray-300 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#2dd4bf]" />
-                {viewMode === 'lap'
-                  ? `Lap ${currentLap}/${totalLaps}`
-                  : `Time: ${currentTime ? new Date(currentTime).toLocaleTimeString() : '-'}`}
+                {getLapDisplay()}
               </p>
             </div>
           </motion.div>
         </motion.div>
 
-        {/* Driver Profile - Animated container */}
         <AnimatePresence mode="popLayout">
           {selectedDriver && (
             <motion.div
