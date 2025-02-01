@@ -125,25 +125,22 @@ interface CarData {
 }
 
 const useIsMobile = () => {
-  // On vérifie d'abord si l'on est côté client
-  const isClient = typeof window !== 'undefined';
-  const [isMobile, setIsMobile] = useState(isClient ? window.innerWidth < 768 : false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
+    setHasMounted(true);
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
 
-    // Si on est côté client, on écoute les changements de taille
-    if (isClient) {
-      window.addEventListener('resize', checkIsMobile);
-      // On met à jour directement au montage
-      checkIsMobile();
-      return () => window.removeEventListener('resize', checkIsMobile);
-    }
-  }, [isClient]);
-
-  return isMobile;
+  // Return false during SSR, actual value after mount
+  return hasMounted ? isMobile : false;
 };
 
 
@@ -299,6 +296,11 @@ const RaceControlEvents = () => {
   const [isExpertMode, setIsExpertMode] = useState(false);
   const [vitalStats, setVitalStats] = useState<VitalStatistics | null>(null);
   const isMobile = useIsMobile();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const currentSession = sessions.find(s => s.session_key.toString() === selectedSession);
   const isRaceSession = currentSession?.session_type === "Race";
@@ -674,6 +676,10 @@ const RaceControlEvents = () => {
       )
     ]))
   };
+
+  if (!hasMounted) {
+    return null;
+  }
 
   if (isMobile) {
     return (
