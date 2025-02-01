@@ -500,7 +500,7 @@ const RaceSelectionMobile = ({
                   >
                     <div className="w-full h-full flex items-center justify-center flex-shrink-0">
                       <span className={`text-sm font-medium ${!isExpertMode ? "text-[#5382ec]" : "text-gray-400"}`}>
-                        Simple
+                        Novice
                       </span>
                     </div>
                     <div className="w-full h-full flex items-center justify-center flex-shrink-0">

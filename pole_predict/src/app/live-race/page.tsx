@@ -19,6 +19,45 @@ import { PredictionWidget } from '../live/components/PredictionWidget/Prediction
 import { predictionTypes } from '../live/constants';
 import WidgetCustomizer, { Widget } from '../components/WidgetCustomizer';
 
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Brain } from 'lucide-react';
+
+const PredictionAlert = ({ open, onClose }) => {
+  if (!open) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+      onClick={onClose}
+    >
+      <Alert 
+        className="bg-[#282a2c] border border-gray-800 max-w-md w-full cursor-default"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex justify-center mb-4">
+          <div className="p-3 rounded-full bg-blue-500/10">
+            <Brain className="h-6 w-6 text-[#5382ec]" />
+          </div>
+        </div>
+        <AlertTitle className="text-lg font-semibold text-white text-center">
+          AI Predictions Unavailable
+        </AlertTitle>
+        <AlertDescription className="text-gray-400 mt-2 text-center space-y-2">
+          <p>To enable AI predictions, please ensure:</p>
+          <ul className="text-sm list-disc list-inside text-left space-y-1">
+            <li>A race session is selected (not practice or qualifying)</li>
+            <li>A driver is selected from the standings</li>
+            <li>You are not in final mode</li>
+          </ul>
+          <p className="text-sm italic pt-2">
+            Switch to chronological mode and select a driver to see AI predictions during the race.
+          </p>
+        </AlertDescription>
+      </Alert>
+    </div>
+  );
+};
+
 const RaceSelectionDesktop = dynamic(
   () => import('../components/raceComponent/RaceSelectionDesktop'),
   { ssr: false }
@@ -143,7 +182,6 @@ const useIsMobile = () => {
   return hasMounted ? isMobile : false;
 };
 
-
 const MobileView = ({
   meetings,
   sessions,
@@ -168,7 +206,36 @@ const MobileView = ({
   widgetComponents
 }) => {
   const [activeTab, setActiveTab] = useState('info');
+  const [showPredictionAlert, setShowPredictionAlert] = useState(false);
   
+  // Get current session details
+  const currentSession = sessions.find(s => s.session_key.toString() === selectedSession);
+  const isRaceSession = currentSession?.session_type === "Race";
+  const isFinal = viewMode === "final";
+  
+  // Check if predictions can be enabled
+  const canEnablePrediction = selectedSession && selectedDriver && isRaceSession && !isFinal;
+
+  const handleTabChange = (tabName) => {
+    if (tabName === 'predictions') {
+      if (!canEnablePrediction) {
+        setShowPredictionAlert(true);
+        return;
+      }
+      
+      // Check if any prediction widgets are visible
+      const hasPredictions = Object.entries(widgetComponents)
+        .filter(([key]) => key.startsWith('prediction-'))
+        .some(([key]) => widgetConfig.visibility[key]);
+
+      if (!hasPredictions) {
+        setShowPredictionAlert(true);
+        return;
+      }
+    }
+    setActiveTab(tabName);
+  };
+
   return (
     <div className="min-h-screen bg-[#1B1C1D]">
       <div className="px-4 py-8">
@@ -215,7 +282,7 @@ const MobileView = ({
               ? 'text-[#5382ec] border-b-2 border-[#5382ec]' 
               : 'text-gray-400'
             }`}
-            onClick={() => setActiveTab('info')}
+            onClick={() => handleTabChange('info')}
           >
             Race Info
           </button>
@@ -225,7 +292,7 @@ const MobileView = ({
               ? 'text-[#5382ec] border-b-2 border-[#5382ec]' 
               : 'text-gray-400'
             }`}
-            onClick={() => setActiveTab('telemetry')}
+            onClick={() => handleTabChange('telemetry')}
           >
             Telemetry
           </button>
@@ -235,9 +302,9 @@ const MobileView = ({
               ? 'text-[#5382ec] border-b-2 border-[#5382ec]' 
               : 'text-gray-400'
             }`}
-            onClick={() => setActiveTab('predictions')}
+            onClick={() => handleTabChange('predictions')}
           >
-            Predictions
+            AI Predictions
           </button>
         </div>
 
@@ -260,9 +327,8 @@ const MobileView = ({
             </>
           )}
           
-          {activeTab === 'predictions' && (
+          {activeTab === 'predictions' && canEnablePrediction && (
             <>
-              
               {Object.entries(widgetComponents)
                 .filter(([key]) => key.startsWith('prediction-'))
                 .map(([key, component]) => 
@@ -271,6 +337,11 @@ const MobileView = ({
             </>
           )}
         </div>
+
+        <PredictionAlert 
+          open={showPredictionAlert} 
+          onClose={() => setShowPredictionAlert(false)} 
+        />
       </div>
     </div>
   );
