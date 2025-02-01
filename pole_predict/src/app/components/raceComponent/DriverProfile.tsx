@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, X } from 'lucide-react';
+import { Info, X } from 'lucide-react';
 
 interface Driver {
   driver_number: number;
@@ -83,7 +83,7 @@ const DriverProfile = ({
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
             Race Information
           </CardTitle>
-          <User className="h-5 w-5 text-[#5382ec]" />
+          <Info className="h-5 w-5 text-[#5382ec]" />
         </div>
       </CardHeader>
       

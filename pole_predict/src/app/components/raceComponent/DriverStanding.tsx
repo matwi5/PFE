@@ -84,11 +84,11 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
   useEffect(() => {
     if (!sessionKey || !meetingKey) return;
-
+  
     const fetchData = async () => {
       try {
         setLoading(true);
-
+  
         // Fetch drivers
         const driversResponse = await fetch('https://api.openf1.org/v1/drivers');
         const driversData = await driversResponse.json() as Driver[];
@@ -96,49 +96,59 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           driversData.map((driver: Driver) => [driver.driver_number, driver])
         ).values());
         setDrivers(uniqueDrivers);
-
+  
         // Fetch positions
         const positionsUrl = `https://api.openf1.org/v1/position?session_key=${sessionKey}&meeting_key=${meetingKey}`;
         const positionsResponse = await fetch(positionsUrl);
         const positionsData = await positionsResponse.json();
         setPositions(positionsData);
-
+  
         // Fetch intervals
         const intervalsUrl = `https://api.openf1.org/v1/intervals?session_key=${sessionKey}`;
         const intervalsResponse = await fetch(intervalsUrl);
         const intervalsData = await intervalsResponse.json();
         setIntervals(intervalsData);
-
+  
         // Fetch lap times
         const lapTimesResponse = await fetch(`https://api.openf1.org/v1/laps?session_key=${sessionKey}`);
-        const lapTimesData = await lapTimesResponse.json(); // Corriger la variable (anciennement 'response')
+        const lapTimesData = await lapTimesResponse.json();
         setLapTimes(lapTimesData);
-
+  
         // Process leader lap start times
         const lapStartMap = new Map<number, string>();
         const sortedLapTimes = [...lapTimesData].sort((a, b) =>
           new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
         );
-
+  
+        // Ajout du temps de début pour le lap 1
+        const sortedPositions = [...positionsData].sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+        if (sortedPositions.length > 0) {
+          // Utiliser le premier temps de position enregistré comme début du lap 1
+          lapStartMap.set(1, sortedPositions[0].date);
+        }
+  
+        // Continuer avec la logique existante pour les autres tours
         sortedLapTimes.forEach(lap => {
           const positions = positionsData.filter((pos: { date: string | number | Date; }) =>
             new Date(pos.date).getTime() <= new Date(lap.date_start).getTime()
           );
-
+  
           if (positions.length > 0) {
             const leaderPosition = positions
               .sort((a: { date: string | number | Date; }, b: { date: string | number | Date; }) =>
                 new Date(b.date).getTime() - new Date(a.date).getTime())
               .find((pos: { position: number; }) => pos.position === 1);
-
+  
             if (leaderPosition && leaderPosition.driver_number === lap.driver_number) {
               lapStartMap.set(lap.lap_number, lap.date_start);
             }
           }
         });
-
+  
         setLeaderLapStartTimes(lapStartMap);
-
+  
       } catch (err) {
         setError('Error fetching data');
         console.error(err);
@@ -146,7 +156,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
         setLoading(false);
       }
     };
-
+  
     fetchData();
   }, [sessionKey, meetingKey]);
 
@@ -278,7 +288,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => setGapMode(prev => prev === 'interval' ? 'leader' : 'interval')}
-              className="text-xs bg-black/20 hover:bg-black/30 text-gray-300"
+              className="text-xs bg-black/20  text-gray-300"
             >
               {gapMode === 'interval' ? 'Gaps to leader' : 'Intervals'}
             </Button>

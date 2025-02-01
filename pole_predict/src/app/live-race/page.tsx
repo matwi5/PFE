@@ -231,13 +231,13 @@ const MobileView = ({
           </button>
           <button
             className={`flex-1 py-2 text-sm font-medium ${
-              activeTab === 'events' 
+              activeTab === 'predictions' 
               ? 'text-[#5382ec] border-b-2 border-[#5382ec]' 
               : 'text-gray-400'
             }`}
-            onClick={() => setActiveTab('events')}
+            onClick={() => setActiveTab('predictions')}
           >
-            Events
+            Predictions
           </button>
         </div>
 
@@ -248,20 +248,21 @@ const MobileView = ({
               {widgetConfig.visibility['driver-profile'] && widgetComponents['driver-profile']}
               {widgetConfig.visibility['driver-standings'] && widgetComponents['driver-standings']}
               {widgetConfig.visibility['vital-statistics'] && widgetComponents['vital-statistics']}
-              {widgetConfig.visibility['circuit-map'] && widgetComponents['circuit-map']}
+              {widgetConfig.visibility['event-display'] && widgetComponents['event-display']}
             </>
           )}
           
           {activeTab === 'telemetry' && (
             <>
               {widgetConfig.visibility['telemetry'] && widgetComponents['telemetry']}
+              {widgetConfig.visibility['circuit-map'] && widgetComponents['circuit-map']}
               {widgetConfig.visibility['sector-analysis'] && widgetComponents['sector-analysis']}
             </>
           )}
           
-          {activeTab === 'events' && (
+          {activeTab === 'predictions' && (
             <>
-              {widgetConfig.visibility['event-display'] && widgetComponents['event-display']}
+              
               {Object.entries(widgetComponents)
                 .filter(([key]) => key.startsWith('prediction-'))
                 .map(([key, component]) => 

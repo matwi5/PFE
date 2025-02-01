@@ -176,7 +176,7 @@ const RaceCarTelemetry: React.FC<RaceCarTelemetryProps> = ({
               ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]'
               : 'bg-gray-700'
             }`}>
-            <div className="text-white text-[10px] sm:text-xs md:text-sm">{drsStatus}</div>
+            <div className="text-white text-[10px] sm:text-xs md:text-sm">DRS</div>
           </div>
 
           <div className="text-center">
