@@ -98,12 +98,36 @@ export async function GET(req: Request) {
 
     // Analyser les stratégies
     const analysis = Array.from(teamStrategies.values()).map(team => {
+      // Calcul des statistiques d'équipe
+      const allPitStops = team.drivers.flatMap(d => d.pit_stops);
+      const avgTeamPitDuration = allPitStops.length > 0 
+        ? allPitStops.reduce((sum, p) => sum + p.pit_duration, 0) / allPitStops.length 
+        : 0;
+      
       const teamAnalysis = {
         team_name: team.team_name,
         team_colour: team.team_colour,
+        team_stats: {
+          total_pit_stops: allPitStops.length,
+          avg_pit_duration: avgTeamPitDuration,
+          best_pit_stop: allPitStops.length > 0 
+            ? Math.min(...allPitStops.map(p => p.pit_duration))
+            : 0,
+          pit_stop_consistency: calculatePitConsistency(allPitStops),
+        },
         drivers: team.drivers.map(driver => {
           const stintAnalysis = analyzeStints(driver.stints);
           const pitAnalysis = analyzePitStops(driver.pit_stops);
+
+          // Détecter les undercuts/overcuts avec les autres pilotes de l'équipe
+          const otherDrivers = team.drivers.filter(d => d.number !== driver.number);
+          const strategyMoves = otherDrivers.flatMap(otherDriver => 
+            detectPitStrategyMoves(
+              driver.pit_stops, 
+              otherDriver.pit_stops,
+              otherDriver.name
+            )
+          );
 
           return {
             driver_number: driver.number,
@@ -115,7 +139,7 @@ export async function GET(req: Request) {
               tyre_strategy: stintAnalysis.tyre_sequence,
               stint_lengths: stintAnalysis.stint_lengths,
               total_stints: driver.stints.length,
-              strategy_type: determineStrategyType(driver.pit_stops.length),
+              moves: strategyMoves
             }
           };
         })
@@ -177,17 +201,69 @@ function analyzePitStops(pits: PitData[]) {
   return { pit_window };
 }
 
-function determineStrategyType(pitStops: number): string {
-  switch (pitStops) {
-    case 0:
-      return "No Stop";
-    case 1:
-      return "One Stop";
-    case 2:
-      return "Two Stop";
-    case 3:
-      return "Three Stop";
-    default:
-      return `${pitStops} Stops`;
+function calculatePitConsistency(pitStops: PitData[]): number {
+  if (pitStops.length < 2) return 100;
+  
+  const durations = pitStops.map(p => p.pit_duration);
+  const avg = durations.reduce((sum, d) => sum + d, 0) / durations.length;
+  const variance = durations.reduce((sum, d) => sum + Math.pow(d - avg, 2), 0) / durations.length;
+  
+  // Convertir la variance en score de consistance (0-100)
+  // Plus la variance est faible, plus le score est élevé
+  const maxAcceptableVariance = 4; // 2 secondes d'écart-type
+  return Math.max(0, 100 * (1 - variance / maxAcceptableVariance));
+}
+
+// Types
+type StrategyMoveType = 'undercut' | 'overcut';
+
+interface StrategyMove {
+  type: StrategyMoveType;
+  lap: number;
+  againstDriver: string;
+  gap: number;
+  successful?: boolean;
+}
+
+function detectPitStrategyMoves(
+  driver1Pits: PitData[], 
+  driver2Pits: PitData[], 
+  otherDriverName: string,
+): StrategyMove[] {
+  const moves: StrategyMove[] = [];
+  
+  for (const pit1 of driver1Pits) {
+    // Pour undercut: chercher si l'autre pilote s'arrête 1-3 tours plus tard
+    const laterPits = driver2Pits.filter(p => 
+      p.lap_number > pit1.lap_number && 
+      p.lap_number <= pit1.lap_number + 3
+    );
+    
+    if (laterPits.length > 0) {
+      moves.push({
+        type: 'undercut',
+        lap: pit1.lap_number,
+        againstDriver: otherDriverName,
+        gap: laterPits[0].lap_number - pit1.lap_number,
+      });
+    }
+
+    // Pour overcut: chercher si l'autre pilote s'est arrêté 2-4 tours avant
+    const earlierPits = driver2Pits.filter(p =>
+      pit1.lap_number > p.lap_number &&
+      pit1.lap_number <= p.lap_number + 4 &&
+      pit1.lap_number >= p.lap_number + 2
+    );
+
+    if (earlierPits.length > 0) {
+      moves.push({
+        type: 'overcut',
+        lap: pit1.lap_number,
+        againstDriver: otherDriverName,
+        gap: pit1.lap_number - earlierPits[0].lap_number,
+      });
+    }
   }
+  
+  return moves;
 }
