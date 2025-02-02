@@ -1,24 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Calendar, 
-  CloudRain, 
-  Flag, 
-  Trophy, 
-  AlertTriangle, 
-  TrendingUp,
-  MapPin,
-  Timer,
-  Award,
-  AlertCircle,
-  Star,
-  Users,
-  FileText
-} from 'lucide-react';
+import { Calendar, CloudRain, Flag, Trophy, AlertTriangle, TrendingUp, MapPin, Timer, Award, AlertCircle, Star, Users, FileText } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 interface RaceSummaryProps {
   sessionKey: string;
@@ -109,6 +97,8 @@ interface RaceSummary {
 }
 
 const RaceSummaryComponent: React.FC<RaceSummaryProps> = ({ sessionKey }) => {
+  const router = useRouter();
+  const handleWeatherAnalysis = () => {router.push(`/analyse-meteo?sessionKey=${sessionKey}`);};
   const [summary, setSummary] = useState<RaceSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -188,10 +178,19 @@ const RaceSummaryComponent: React.FC<RaceSummaryProps> = ({ sessionKey }) => {
       {/* Race Conditions */}
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle className="text-lg text-gray-100 flex items-center gap-2">
-            <CloudRain className="h-5 w-5 text-blue-400" />
-            Race Conditions
-          </CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-lg text-gray-100 flex items-center gap-2">
+              <CloudRain className="h-5 w-5 text-blue-400" />
+              Race Conditions
+            </CardTitle>
+            <Button 
+              onClick={handleWeatherAnalysis}
+              className="bg-blue-600 hover:bg-blue-700 text-gray-100 flex items-center gap-2"
+            >
+              <CloudRain className="h-4 w-4" />
+              Detailed Weather Analysis
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
