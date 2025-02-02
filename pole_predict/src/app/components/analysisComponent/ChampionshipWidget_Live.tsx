@@ -203,8 +203,6 @@ const ChampionshipWidget_Live = ({ currentStandings, meeting_key }: Championship
 
                 // Calculate points up to the target meeting
                 for (const meeting of meetingsForYear) {
-                    console.log(meeting)
-                    console.log(meeting_key)
                     if (parseInt(meeting.meeting_key) >= parseInt(meeting_key)) {
                         break;
                     }
@@ -230,7 +228,6 @@ const ChampionshipWidget_Live = ({ currentStandings, meeting_key }: Championship
                             }
                         });
                     }
-                    console.log(pointsMap)
                 }
 
                 // Add points for the current standings if provided
