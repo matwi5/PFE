@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import axios from 'axios';
-import { genAI } from '@/lib/googleAI';
+import { z } from 'zod';
 
-// Types for OpenF1 data
-interface PitStopData {
+interface PitData {
   driver_number: number;
   lap_number: number;
   pit_duration: number;
@@ -19,107 +17,122 @@ interface StintData {
   tyre_age_at_start: number;
 }
 
-interface LapData {
+interface DriverData {
   driver_number: number;
-  lap_number: number;
-  lap_duration: number;
-  date_start: string;
-  is_pit_out_lap: boolean;
+  first_name: string;
+  last_name: string;
+  team_name: string;
+  team_colour: string;
 }
+
+// Validation du paramètre de requête
+const QuerySchema = z.object({
+  sessionKey: z.string().min(1, "Session key is required")
+});
 
 export async function GET(req: Request) {
   try {
-    // Get session key from query parameters
     const { searchParams } = new URL(req.url);
     const sessionKey = searchParams.get('sessionKey');
 
-    if (!sessionKey) {
+    const validationResult = QuerySchema.safeParse({ sessionKey });
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Session key is required' },
+        { 
+          status: 'error',
+          message: 'Invalid session key',
+          errors: validationResult.error.errors
+        },
         { status: 400 }
       );
     }
 
-    // Fetch data from OpenF1 API
-    const [pitStopsRes, stintsRes, lapsRes] = await Promise.all([
-      axios.get<PitStopData[]>(`https://api.openf1.org/v1/pit?session_key=${sessionKey}`),
-      axios.get<StintData[]>(`https://api.openf1.org/v1/stints?session_key=${sessionKey}`),
-      axios.get<LapData[]>(`https://api.openf1.org/v1/laps?session_key=${sessionKey}`)
+    // Récupération des données depuis OpenF1
+    const [pitsRes, stintsRes, driversRes] = await Promise.all([
+      fetch(`https://api.openf1.org/v1/pit?session_key=${sessionKey}`),
+      fetch(`https://api.openf1.org/v1/stints?session_key=${sessionKey}`),
+      fetch(`https://api.openf1.org/v1/drivers?session_key=${sessionKey}`)
     ]);
 
-    // Analyze pit stop statistics
-    const pitStopStats = calculatePitStopStats(pitStopsRes.data);
-    
-    // Create the analysis prompt
-    const strategyPrompt = `As an F1 strategic analyst, provide a technical analysis of the strategic choices made during this race.
+    const [pitsData, stintsData, driversData] = await Promise.all([
+      pitsRes.json(),
+      stintsRes.json(),
+      driversRes.json()
+    ]) as [PitData[], StintData[], DriverData[]];
 
-EXPECTED STRUCTURE:
+    // Organiser les données par équipe
+    const teamStrategies = new Map<string, {
+      team_name: string;
+      team_colour: string;
+      drivers: Array<{
+        number: number;
+        name: string;
+        pit_stops: PitData[];
+        stints: StintData[];
+        avg_pit_duration: number;
+      }>;
+    }>();
 
-# TITLE: Short and factual about the dominant strategic element of the race.
+    driversData.forEach(driver => {
+      if (!teamStrategies.has(driver.team_name)) {
+        teamStrategies.set(driver.team_name, {
+          team_name: driver.team_name,
+          team_colour: driver.team_colour,
+          drivers: []
+        });
+      }
 
-## STRATEGIC CONTEXT (2-3 sentences)
-- Circuit configuration
-- Key parameters influencing strategy (e.g., tire compounds, track characteristics)
+      const driverPits = pitsData.filter(p => p.driver_number === driver.driver_number);
+      const driverStints = stintsData.filter(s => s.driver_number === driver.driver_number);
+      
+      teamStrategies.get(driver.team_name)?.drivers.push({
+        number: driver.driver_number,
+        name: `${driver.first_name} ${driver.last_name}`,
+        pit_stops: driverPits,
+        stints: driverStints,
+        avg_pit_duration: driverPits.length > 0 
+          ? driverPits.reduce((sum, p) => sum + p.pit_duration, 0) / driverPits.length 
+          : 0
+      });
+    });
 
-## DETAILED STRATEGIC ANALYSIS
-1. Tire Management
-    - Compounds used by each team
-    - Average stint lengths
-    - Observed degradation
-    - Wear trends
+    // Analyser les stratégies
+    const analysis = Array.from(teamStrategies.values()).map(team => {
+      const teamAnalysis = {
+        team_name: team.team_name,
+        team_colour: team.team_colour,
+        drivers: team.drivers.map(driver => {
+          const stintAnalysis = analyzeStints(driver.stints);
+          const pitAnalysis = analyzePitStops(driver.pit_stops);
 
-2. Pit Stops
-    - Distribution of stops
-    - Average stop time: ${pitStopStats.averageDuration.toFixed(2)}s
-    - Fastest stop: ${pitStopStats.fastestDuration.toFixed(2)}s
-    - Impact on track position
+          return {
+            driver_number: driver.number,
+            driver_name: driver.name,
+            strategy: {
+              total_pit_stops: driver.pit_stops.length,
+              avg_pit_duration: driver.avg_pit_duration,
+              pit_window: pitAnalysis.pit_window,
+              tyre_strategy: stintAnalysis.tyre_sequence,
+              stint_lengths: stintAnalysis.stint_lengths,
+              total_stints: driver.stints.length,
+              strategy_type: determineStrategyType(driver.pit_stops.length),
+            }
+          };
+        })
+      };
 
-3. Strategic Moves
-    - Identified undercut/overcut attempts
-    - Effectiveness of alternative strategies
-    - Key turning points in the race
-    - Notable position gains/losses
-    
-4. Adaptability and Reactivity
-    - Responses to race conditions
-    - Strategic adjustments made
-    - Handling of unforeseen events
+      return teamAnalysis;
+    });
 
-## KEY TAKEAWAYS
-- Dominant strategy
-- Crucial decisions
-- Strategic lessons learned
-
-Data to analyze:
-${JSON.stringify({
-pitStops: pitStopsRes.data,
-stints: stintsRes.data,
-laps: lapsRes.data,
-statistics: pitStopStats
-}, null, 2)}
-
-For the display of the analysis:
-- Use Markdown for formatting (e.g., #, ##, -, **, etc.)
-- Use line breaks to space out the text
-`;
-
-    // Generate analysis using Google Gemini
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-    const result = await model.generateContent(strategyPrompt);
-    const analysis = result.response.text();
-
-    // Return the analysis
-    return NextResponse.json({ 
+    return NextResponse.json({
       status: 'success',
-      analysis,
-      statistics: pitStopStats,
-      timestamp: new Date().toISOString(),
+      data: analysis,
       metadata: {
         sessionKey,
         dataPoints: {
-          pitStops: pitStopsRes.data.length,
-          stints: stintsRes.data.length,
-          laps: lapsRes.data.length
+          pit_stops: pitsData.length,
+          stints: stintsData.length,
+          drivers: driversData.length
         }
       }
     });
@@ -129,31 +142,52 @@ For the display of the analysis:
     return NextResponse.json(
       { 
         status: 'error',
-        message: error instanceof Error ? error.message : 'An unknown error occurred',
-        timestamp: new Date().toISOString()
+        message: error instanceof Error ? error.message : 'An unknown error occurred'
       },
       { status: 500 }
     );
   }
 }
 
-// Helper function to calculate pit stop statistics
-function calculatePitStopStats(pitStops: PitStopData[]) {
-  if (pitStops.length === 0) {
-    return {
-      averageDuration: 0,
-      fastestDuration: 0,
-      slowestDuration: 0,
-      totalStops: 0
-    };
+// Fonctions utilitaires
+function analyzeStints(stints: StintData[]) {
+  const sortedStints = stints.sort((a, b) => a.stint_number - b.stint_number);
+
+  const tyre_sequence = sortedStints.map(stint => stint.compound);
+  const stint_lengths = sortedStints.map(stint => stint.lap_end - stint.lap_start);
+
+  return {
+    tyre_sequence,
+    stint_lengths
+  };
+}
+
+function analyzePitStops(pits: PitData[]) {
+  const sortedPits = pits.sort((a, b) => a.lap_number - b.lap_number);
+
+  if (sortedPits.length === 0) {
+    return { pit_window: [] };
   }
 
-  const durations = pitStops.map(stop => stop.pit_duration);
-  
-  return {
-    averageDuration: durations.reduce((a, b) => a + b) / durations.length,
-    fastestDuration: Math.min(...durations),
-    slowestDuration: Math.max(...durations),
-    totalStops: pitStops.length
-  };
+  const pit_window = sortedPits.map(pit => ({
+    lap: pit.lap_number,
+    duration: pit.pit_duration
+  }));
+
+  return { pit_window };
+}
+
+function determineStrategyType(pitStops: number): string {
+  switch (pitStops) {
+    case 0:
+      return "No Stop";
+    case 1:
+      return "One Stop";
+    case 2:
+      return "Two Stop";
+    case 3:
+      return "Three Stop";
+    default:
+      return `${pitStops} Stops`;
+  }
 }

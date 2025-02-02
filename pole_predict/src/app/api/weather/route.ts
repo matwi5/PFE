@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import axios from 'axios';
-import { genAI } from '@/lib/googleAI';
+import { z } from 'zod';
 
-// Types for OpenF1 data
+// Types pour les données OpenF1
 interface WeatherData {
   air_temperature: number;
   track_temperature: number;
@@ -29,89 +28,85 @@ interface StintData {
   tyre_age_at_start: number;
 }
 
+// Validation du paramètre de requête
+const QuerySchema = z.object({
+  sessionKey: z.string().min(1, "Session key is required")
+});
+
 export async function GET(req: Request) {
   try {
-    // Get session key from query parameters
+    // Validation de la sessionKey
     const { searchParams } = new URL(req.url);
     const sessionKey = searchParams.get('sessionKey');
 
-    if (!sessionKey) {
+    const validationResult = QuerySchema.safeParse({ sessionKey });
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Session key is required' },
+        { 
+          status: 'error',
+          message: 'Invalid session key',
+          errors: validationResult.error.errors
+        },
         { status: 400 }
       );
     }
 
-    // Fetch data from OpenF1 API
+    // Récupération des données depuis OpenF1
     const [weatherRes, lapsRes, stintsRes] = await Promise.all([
-      axios.get<WeatherData[]>(`https://api.openf1.org/v1/weather?session_key=${sessionKey}`),
-      axios.get<LapData[]>(`https://api.openf1.org/v1/laps?session_key=${sessionKey}`),
-      axios.get<StintData[]>(`https://api.openf1.org/v1/stints?session_key=${sessionKey}`)
+      fetch(`https://api.openf1.org/v1/weather?session_key=${sessionKey}`),
+      fetch(`https://api.openf1.org/v1/laps?session_key=${sessionKey}`),
+      fetch(`https://api.openf1.org/v1/stints?session_key=${sessionKey}`)
     ]);
 
-    // Create the analysis prompt
-    const weatherPrompt = `As an F1 weather analyst, provide a technical analysis of the conditions and their impact on the race.
+    const [weatherData, lapsData, stintsData] = await Promise.all([
+      weatherRes.json(),
+      lapsRes.json(),
+      stintsRes.json()
+    ]) as [WeatherData[], LapData[], StintData[]];
 
-    EXPECTED STRUCTURE:
-    
-    # TITLE: Short and factual about the dominant weather aspect of the race.
-    
-    ## OVERVIEW OF CONDITIONS (2-3 sentences)
-    - Summary of general conditions
-    - Main variations during the session
-    
-    ## DETAILED ANALYSIS
-    1. Track conditions
-       - Asphalt temperature and evolution
-       - Impact on grip and tire wear
-       - Critical areas of the circuit
-    
-    2. Atmospheric conditions
-       - Air temperature
-       - Humidity and precipitation
-       - Wind direction and strength
-    
-    3. Impact on performance
-       - Correlation between lap times / conditions
-       - Most affected sectors
-       - Observed technical adaptations
-    
-    4. Strategic implications
-       - Optimal tire usage windows
-       - Required adjustments
-       - Identified risks
-    
-    ## CONCLUSION
-    Key technical points to remember
-    
-    Data to analyze:
-    ${JSON.stringify({
-      weather: weatherRes.data,
-      laps: lapsRes.data,
-      stints: stintsRes.data
-    }, null, 2)}
-    
-    For the display of the analysis, 
-     - Use Markdown for formatting (e.g., #, ##, -, **, etc.)
-     - Use line breaks to space out the text
-    `;
+    // Analyse des données
+    const analysis = {
+      weather: {
+        track_temp: {
+          min: Math.min(...weatherData.map(w => w.track_temperature)),
+          max: Math.max(...weatherData.map(w => w.track_temperature)),
+          avg: weatherData.reduce((sum, w) => sum + w.track_temperature, 0) / weatherData.length
+        },
+        air_temp: {
+          min: Math.min(...weatherData.map(w => w.air_temperature)),
+          max: Math.max(...weatherData.map(w => w.air_temperature)),
+          avg: weatherData.reduce((sum, w) => sum + w.air_temperature, 0) / weatherData.length
+        },
+        humidity: {
+          avg: weatherData.reduce((sum, w) => sum + w.humidity, 0) / weatherData.length
+        },
+        rainfall: weatherData.some(w => w.rainfall > 0),
+        wind: {
+          speed_kmh: (weatherData.reduce((sum, w) => sum + w.wind_speed, 0) / weatherData.length) * 3.6, // Conversion en km/h
+          direction: calculateDominantWindDirection(weatherData)
+        }
+      },
+      performance: {
+        lap_times: {
+          fastest: Math.min(...lapsData.filter(l => l.lap_duration > 0).map(l => l.lap_duration)),
+          slowest: Math.max(...lapsData.filter(l => l.lap_duration > 0).map(l => l.lap_duration)),
+          average: calculateAverageLapTime(lapsData),
+          consistency: calculateConsistencyScore(lapsData)
+        },
+        track_evolution: calculateTrackEvolution(weatherData, lapsData)
+      },
+      tyre_performance: analyzeStints(stintsData)
+    };
 
-    // Generate analysis using Google Gemini
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-    const result = await model.generateContent(weatherPrompt);
-    const analysis = result.response.text();
-
-    // Return the analysis
-    return NextResponse.json({ 
+    return NextResponse.json({
       status: 'success',
-      analysis,
-      timestamp: new Date().toISOString(),
+      data: analysis,
       metadata: {
         sessionKey,
         dataPoints: {
-          weather: weatherRes.data.length,
-          laps: lapsRes.data.length,
-          stints: stintsRes.data.length
+          weather: weatherData.length,
+          laps: lapsData.length,
+          stints: stintsData.length
         }
       }
     });
@@ -121,10 +116,83 @@ export async function GET(req: Request) {
     return NextResponse.json(
       { 
         status: 'error',
-        message: error instanceof Error ? error.message : 'An unknown error occurred',
-        timestamp: new Date().toISOString()
+        message: error instanceof Error ? error.message : 'An unknown error occurred'
       },
       { status: 500 }
     );
   }
+}
+
+// Fonctions utilitaires
+function calculateDominantWindDirection(weatherData: WeatherData[]): string {
+  const direction = weatherData.reduce((sum, w) => sum + w.wind_direction, 0) / weatherData.length;
+  const cardinalDirections = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  const index = Math.round(((direction % 360) / 45)) % 8;
+  return cardinalDirections[index];
+}
+
+function calculateAverageLapTime(lapsData: LapData[]): number {
+  const validLaps = lapsData.filter(lap => lap.lap_duration > 0);
+  return validLaps.reduce((sum, lap) => sum + lap.lap_duration, 0) / validLaps.length;
+}
+
+function calculateConsistencyScore(lapsData: LapData[]): number {
+  const validLaps = lapsData.filter(lap => lap.lap_duration > 0);
+  const avgLapTime = calculateAverageLapTime(validLaps);
+  const variations = validLaps.map(lap => Math.abs(lap.lap_duration - avgLapTime));
+  const avgVariation = variations.reduce((sum, var_) => sum + var_, 0) / variations.length;
+  
+  // Convertir en score de 0 à 100 (plus c'est bas, plus c'est consistant)
+  return Math.max(0, 100 - (avgVariation * 20));
+}
+
+function calculateTrackEvolution(weatherData: WeatherData[], lapsData: LapData[]): string {
+  const early_laps = lapsData.slice(0, Math.floor(lapsData.length * 0.2));
+  const late_laps = lapsData.slice(Math.floor(lapsData.length * 0.8));
+  
+  const early_avg = calculateAverageLapTime(early_laps);
+  const late_avg = calculateAverageLapTime(late_laps);
+  
+  const improvement = ((early_avg - late_avg) / early_avg) * 100;
+  
+  if (improvement > 2) return "Significant improvement";
+  if (improvement > 0.5) return "Slight improvement";
+  if (improvement < -0.5) return "Deteriorating";
+  return "Stable";
+}
+
+function analyzeStints(stintsData: StintData[]): Record<string, {
+  averageLaps: number;
+  totalStints: number;
+  performance: string;
+}> {
+  const compounds = new Map<string, StintData[]>();
+  
+  stintsData.forEach(stint => {
+    if (!compounds.has(stint.compound)) {
+      compounds.set(stint.compound, []);
+    }
+    compounds.get(stint.compound)?.push(stint);
+  });
+
+  const result: Record<string, any> = {};
+  
+  compounds.forEach((stints, compound) => {
+    const avgLaps = stints.reduce((sum, s) => sum + (s.lap_end - s.lap_start), 0) / stints.length;
+    const totalStints = stints.length;
+    
+    let performance = "Unknown";
+    if (avgLaps > 20) performance = "Long-lasting";
+    else if (avgLaps > 15) performance = "Good durability";
+    else if (avgLaps > 10) performance = "Average durability";
+    else performance = "Short-lived";
+    
+    result[compound] = {
+      averageLaps: Math.round(avgLaps),
+      totalStints,
+      performance
+    };
+  });
+
+  return result;
 }
