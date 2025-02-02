@@ -31,7 +31,7 @@ interface MeetingData {
 
 interface ChampionshipWidgetProps {
     currentStandings?: {position: number, acronym: string}[];
-    meeting_key: number;
+    meeting_key: string;
 }
 
 interface LoadingState {
@@ -187,7 +187,7 @@ const ChampionshipWidget_Live = ({ currentStandings, meeting_key }: Championship
 
                 // Find the target meeting to get its year
                 const targetMeeting = meetingsData.find(meeting =>
-                    parseInt(meeting?.meeting_key as string) === meeting_key
+                    parseInt(meeting?.meeting_key as string) === parseInt(meeting_key)
                 );
 
                 if (!targetMeeting) {
@@ -204,7 +204,8 @@ const ChampionshipWidget_Live = ({ currentStandings, meeting_key }: Championship
                 // Calculate points up to the target meeting
                 for (const meeting of meetingsForYear) {
                     console.log(meeting)
-                    if (parseInt(meeting.meeting_key) >= meeting_key) {
+                    console.log(meeting_key)
+                    if (parseInt(meeting.meeting_key) >= parseInt(meeting_key)) {
                         break;
                     }
 
@@ -351,10 +352,12 @@ const ChampionshipWidget_Live = ({ currentStandings, meeting_key }: Championship
                                             <div className="flex-1 min-w-0">
                                                 <span
                                                     className="font-medium"
-                                                    style={{ color: `#${driverInfo.team_colour || 'FFFFFF'}` }}
+                                                    style={{ color: driverInfo.team_colour?.startsWith('#')
+                                                            ? driverInfo.team_colour
+                                                            : `#${driverInfo.team_colour}` || '#FFFFFF' }}
                                                 >
-                                                    {driver.broadcastName}
-                                                </span>
+                                                {driver.broadcastName}
+                                            </span>
                                             </div>
 
                                             <div className="flex items-center gap-2">

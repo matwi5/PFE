@@ -909,7 +909,7 @@ const RaceControlEvents = () => {
     ),
     'championship': (
       <ChampionshipWidget_Live
-        meeting_key={1142}
+        meeting_key={selectedMeeting}
         currentStandings={currentStandings}
       />
     ),
