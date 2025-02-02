@@ -1,50 +1,64 @@
 "use client";
 
-import { useState } from 'react';
-import WeatherWidget from './components/WeatherWidget';
+import React, { useState } from 'react';
+import WeatherAnalysisComponent from './components/WeatherAnalysisComponent';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Cloud } from 'lucide-react';
 
 export default function WeatherAnalysisPage() {
   const [sessionKey, setSessionKey] = useState<string>('');
-  const [isWidgetVisible, setIsWidgetVisible] = useState<boolean>(false);
-  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [activeSessionKey, setActiveSessionKey] = useState<string>('');
 
-  const generateAnalysis = async () => {
-    try {
-      const response = await fetch(`/api/weather?sessionKey=${sessionKey}`);
-      const data = await response.json();
-      setAnalysis(data.analysis);
-      setIsWidgetVisible(true);
-    } catch (error) {
-      console.error('Failed to generate weather analysis:', error);
+  const handleAnalyze = () => {
+    if (sessionKey) {
+      setActiveSessionKey(sessionKey);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && sessionKey) {
+      handleAnalyze();
     }
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6 text-white">Weather Analysis</h1>
+    <div className="container mx-auto p-4 space-y-6">
+      <Card className="bg-gray-800 border-gray-700">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-2xl font-bold flex items-center gap-2 text-gray-100">
+            <Cloud className="h-6 w-6" />
+            Weather Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Input
+              type="text"
+              value={sessionKey}
+              onChange={(e) => setSessionKey(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Enter session key to analyze weather data"
+              className="flex-grow bg-gray-900 border-gray-700 text-gray-100 placeholder:text-gray-400"
+            />
+            <Button
+              onClick={handleAnalyze}
+              className="bg-blue-600 hover:bg-blue-700 text-gray-100"
+              disabled={!sessionKey}
+            >
+              Analyze
+            </Button>
+          </div>
+          {!activeSessionKey && (
+            <p className="mt-4 text-sm text-gray-300">
+              Enter a session key to view detailed weather analysis and track conditions.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Formulaire pour saisir la sessionKey */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4">
-          <input
-            type="text"
-            value={sessionKey}
-            onChange={(e) => setSessionKey(e.target.value)}
-            placeholder="Enter sessionKey"
-            className="p-2 border border-gray-700 rounded-lg bg-[#282a2c] text-white focus:outline-none focus:border-[#3b82f6]"
-            required
-          />
-          <button
-            onClick={generateAnalysis}
-            className="bg-[#3b82f6] hover:bg-[#60a5fa] text-white px-4 py-2 rounded-lg"
-          >
-            Generate Analysis
-          </button>
-        </div>
-      </div>
-
-      {/* Afficher le widget uniquement après l'analyse */}
-      {isWidgetVisible && <WeatherWidget analysis={analysis} />}
+      {activeSessionKey && <WeatherAnalysisComponent sessionKey={activeSessionKey} />}
     </div>
   );
 }

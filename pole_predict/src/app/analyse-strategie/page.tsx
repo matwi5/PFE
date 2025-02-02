@@ -1,50 +1,64 @@
 "use client";
 
-import { useState } from 'react';
-import StrategyWidget from './components/StrategyWidget';
+import React, { useState } from 'react';
+import StrategyAnalysisComponent from './components/StrategyAnalysisComponent';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Route } from 'lucide-react';
 
-export default function WeatherAnalysisPage() {
+export default function StrategyAnalysisPage() {
   const [sessionKey, setSessionKey] = useState<string>('');
-  const [isWidgetVisible, setIsWidgetVisible] = useState<boolean>(false);
-  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [activeSessionKey, setActiveSessionKey] = useState<string>('');
 
-  const generateAnalysis = async () => {
-    try {
-      const response = await fetch(`/api/strategy?sessionKey=${sessionKey}`);
-      const data = await response.json();
-      setAnalysis(data.analysis);
-      setIsWidgetVisible(true);
-    } catch (error) {
-      console.error('Failed to generate weather analysis:', error);
+  const handleAnalyze = () => {
+    if (sessionKey) {
+      setActiveSessionKey(sessionKey);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && sessionKey) {
+      handleAnalyze();
     }
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6 text-white">Strategy Analysis</h1>
+    <div className="container mx-auto p-4 space-y-6">
+      <Card className="bg-gray-800 border-gray-700">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-2xl font-bold flex items-center gap-2 text-gray-100">
+            <Route className="h-6 w-6" />
+            Strategy Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Input
+              type="text"
+              value={sessionKey}
+              onChange={(e) => setSessionKey(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Enter session key to analyze race strategies"
+              className="flex-grow bg-gray-900 border-gray-700 text-gray-100 placeholder:text-gray-400"
+            />
+            <Button
+              onClick={handleAnalyze}
+              className="bg-blue-600 hover:bg-blue-700 text-gray-100"
+              disabled={!sessionKey}
+            >
+              Analyze
+            </Button>
+          </div>
+          {!activeSessionKey && (
+            <p className="mt-4 text-sm text-gray-300">
+              Enter a session key to view detailed strategy analysis for all teams and drivers.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Formulaire pour saisir la sessionKey */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4">
-          <input
-            type="text"
-            value={sessionKey}
-            onChange={(e) => setSessionKey(e.target.value)}
-            placeholder="Enter sessionKey"
-            className="p-2 border border-gray-700 rounded-lg bg-[#282a2c] text-white focus:outline-none focus:border-[#ec4899]"
-            required
-          />
-          <button
-            onClick={generateAnalysis}
-            className="bg-[#ec4899] hover:bg-[#60a5fa] text-white px-4 py-2 rounded-lg"
-          >
-            Generate Analysis
-          </button>
-        </div>
-      </div>
-
-      {/* Afficher le widget uniquement après l'analyse */}
-      {isWidgetVisible && <StrategyWidget analysis={analysis} />}
+      {activeSessionKey && <StrategyAnalysisComponent sessionKey={activeSessionKey} />}
     </div>
   );
 }
