@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Info, X } from 'lucide-react';
+import { Info, X, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface Driver {
   driver_number: number;
@@ -26,7 +26,23 @@ interface DriverProfileProps {
   onDriverDeselect: () => void;
 }
 
-const DriverProfile = ({
+// Fonction utilitaire pour retry les appels API
+const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
+    let retries = 0;
+    while (retries < maxRetries) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            retries++;
+            if (retries === maxRetries) throw error;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    }
+};
+
+const DriverProfile: React.FC<DriverProfileProps> = ({
   selectedDriver,
   selectedMeeting,
   selectedSession,
@@ -34,20 +50,30 @@ const DriverProfile = ({
   currentLap,
   totalLaps,
   currentTime,
-  meetings,
-  sessions,
+  meetings = [],
+  sessions = [],
   onDriverDeselect
-}: DriverProfileProps) => {
+}) => {
   const [chronoLap, setChronoLap] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchLapData = async () => {
       if (viewMode !== 'chrono') return;
+      if (!selectedSession) {
+        setError('No session selected');
+        return;
+      }
 
+      setLoading(true);
+      setError(null);
+      
       try {
         let url = `https://api.openf1.org/v1/laps?session_key=${selectedSession}`;
         
-        if (selectedDriver) {
+        if (selectedDriver?.driver_number) {
           url += `&driver_number=${selectedDriver.driver_number}`;
         }
         
@@ -55,26 +81,45 @@ const DriverProfile = ({
           url += `&date_start<${encodeURIComponent(currentTime)}`;
         }
 
-        const response = await fetch(url);
-        const data = await response.json();
+        setIsRetrying(true);
+        const data = await fetchWithRetry(url);
+        setIsRetrying(false);
         
-        // Si l'API ne renvoie pas de données, cela signifie que le tour 1 n'est pas terminé
+        if (!Array.isArray(data)) {
+          throw new Error('Invalid data format received from API');
+        }
+
         if (!data || data.length === 0) {
           setChronoLap(1);
           return;
         }
         
-        const maxLap = Math.max(...data.map((lap: any) => lap.lap_number));
+        const validLaps = data.filter(lap => 
+          lap?.lap_number && 
+          !isNaN(lap.lap_number) && 
+          lap.lap_number > 0
+        );
+
+        if (validLaps.length === 0) {
+          setChronoLap(1);
+          return;
+        }
+
+        const maxLap = Math.max(...validLaps.map(lap => lap.lap_number));
         setChronoLap(maxLap);
+        setError(null);
       } catch (error) {
         console.error('Error fetching lap data:', error);
-        // En cas d'erreur, on affiche le tour 1 par défaut
+        setError('Failed to fetch lap data. Please try again.');
         setChronoLap(1);
+      } finally {
+        setLoading(false);
+        setIsRetrying(false);
       }
     };
 
     fetchLapData();
-  }, [selectedDriver, selectedSession, currentTime, viewMode]);
+  }, [selectedDriver, selectedSession, currentTime, viewMode, totalLaps]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -117,15 +162,27 @@ const DriverProfile = ({
   const getLapDisplay = () => {
     if (viewMode === 'chrono') {
       return selectedDriver
-        ? `Lap ${chronoLap}/${totalLaps}`
-        : `Leader's Lap ${chronoLap}/${totalLaps}`;
+        ? `Lap ${chronoLap}/${totalLaps || '?'}`
+        : `Leader's Lap ${chronoLap}/${totalLaps || '?'}`;
     }
     if (viewMode === 'lap') {
-      return `Lap ${currentLap}/${totalLaps}`;
+      return `Lap ${currentLap}/${totalLaps || '?'}`;
     }
-    // En mode final, on affiche le nombre total de tours
-    return `Number of laps: ${totalLaps}`;
+    return `Number of laps: ${totalLaps || '?'}`;
   };
+
+  const selectedMeetingData = meetings.find(m => m?.meeting_key?.toString() === selectedMeeting);
+  const selectedSessionData = sessions.find(s => s?.session_key?.toString() === selectedSession);
+
+  if (!selectedSession || !selectedMeeting) {
+    return (
+      <Card className="group overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300">
+        <CardContent className="flex items-center justify-center h-48">
+          <p className="text-gray-400">Please select a session and meeting</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="group overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300">
@@ -139,6 +196,22 @@ const DriverProfile = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {loading && (
+          <div className="flex items-center justify-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin text-[#5382ec]" />
+            <span className="text-gray-400">
+              Loading...
+            </span>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 p-2 rounded-md bg-red-500/10 text-red-400">
+            <AlertTriangle size={16} />
+            <span className="text-sm">{error}</span>
+          </div>
+        )}
+
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -150,16 +223,16 @@ const DriverProfile = ({
             className="p-3 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:bg-black/30"
           >
             <h2 className="text-lg font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent mb-2">
-              {meetings.find(m => m.meeting_key.toString() === selectedMeeting)?.meeting_name || 'Select Event'}
+              {selectedMeetingData?.meeting_name || 'Unknown Event'}
             </h2>
             <div className="space-y-2">
               <p className="text-sm text-gray-300 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#5382ec]" />
-                Session: {sessions.find(s => s.session_key.toString() === selectedSession)?.session_name}
+                Session: {selectedSessionData?.session_name || 'Unknown Session'}
               </p>
               <p className="text-sm text-gray-300 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#2dd4bf]" />
-                Circuit: {sessions.find(s => s.session_key.toString() === selectedSession)?.circuit_short_name}
+                Circuit: {selectedSessionData?.circuit_short_name || 'Unknown Circuit'}
               </p>
               <p className="text-sm text-gray-300 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#2dd4bf]" />
@@ -183,7 +256,7 @@ const DriverProfile = ({
                   <div className="flex items-center gap-2">
                     <div 
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: `#${selectedDriver.team_colour}` }}
+                      style={{ backgroundColor: `#${selectedDriver.team_colour || 'FFFFFF'}` }}
                     />
                     <span className="text-sm font-medium bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                       Driver {selectedDriver.driver_number}
@@ -209,6 +282,9 @@ const DriverProfile = ({
                         src={selectedDriver.headshot_url}
                         alt={selectedDriver.full_name}
                         className="h-16 w-16 rounded-full object-cover border border-[#5382ec]/30"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
                     </motion.div>
                   )}
@@ -216,7 +292,9 @@ const DriverProfile = ({
                     <h2 className="text-base font-bold text-gray-200">
                       {selectedDriver.full_name}
                     </h2>
-                    <p className="text-sm text-[#2dd4bf]">{selectedDriver.team_name}</p>
+                    <p className="text-sm text-[#2dd4bf]">
+                      {selectedDriver.team_name || 'Unknown Team'}
+                    </p>
                   </div>
                 </div>
               </div>

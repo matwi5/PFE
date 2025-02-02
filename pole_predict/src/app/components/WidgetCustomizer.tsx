@@ -31,6 +31,11 @@ const defaultWidgets: Widget[] = [
   { id: 'sector-analysis', name: 'Sector Analysis', enabled: true },
   { id: 'vital-statistics', name: 'Vital Statistics', enabled: true },
   { id: 'event-display', name: 'Event Display', enabled: true },
+  { id: 'stint-visualizer', name: 'Stint Analysis', enabled: true },
+  { id: 'speed-visualizer', name: 'Speed Analysis', enabled: true },
+  { id: 'lap-analysis', name: 'Lap Analysis', enabled: true },
+  { id: 'gap-analysis', name: 'Gap Analysis', enabled: true },
+  { id: 'championship', name: 'Live championship', enabled: true },
   ...predictionTypes.map(type => ({
     id: `prediction-${type}`,
     name: `${type.charAt(0).toUpperCase() + type.slice(1)} Prediction`,

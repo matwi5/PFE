@@ -7,7 +7,7 @@ import DriverStandings from "../components/raceComponent/DriverStanding";
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import dynamic from 'next/dynamic';
-import {Card, CardHeader, CardTitle, CardContent} from "../../components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import RaceCarTelemetry from "../components/raceComponent/RaceCarTelemetry";
 import SectorAnalysis from "../components/raceComponent/SectorAnalysis";
 import DriverProfile from "../components/raceComponent/DriverProfile";
@@ -23,16 +23,22 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Brain } from 'lucide-react';
 
 import StintVisualizer from "../components/analysisComponent/StintVisualizer";
+import SpeedVisualizer from "../components/analysisComponent/SpeedVisualizer";
+import F1LapAnalysis from "../components/analysisComponent/F1LapAnalysis";
+import F1GapAnalysis from "../components/analysisComponent/F1GapAnalysis";
+import ChampionshipWidget_Live from "../components/analysisComponent/ChampionshipWidget_Live";
+
+import { Loader2 } from "lucide-react";
 
 const PredictionAlert = ({ open, onClose }) => {
   if (!open) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
       onClick={onClose}
     >
-      <Alert 
+      <Alert
         className="bg-[#282a2c] border border-gray-800 max-w-md w-full cursor-default"
         onClick={e => e.stopPropagation()}
       >
@@ -174,7 +180,7 @@ const useIsMobile = () => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkIsMobile();
     window.addEventListener('resize', checkIsMobile);
     return () => window.removeEventListener('resize', checkIsMobile);
@@ -183,6 +189,45 @@ const useIsMobile = () => {
   // Return false during SSR, actual value after mount
   return hasMounted ? isMobile : false;
 };
+
+const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      attempt++;
+      if (attempt === maxRetries) throw error;
+      console.log(`Retrying fetch attempt ${attempt} of ${maxRetries}`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  throw new Error(`Failed after ${maxRetries} retries`);
+};
+
+// État global pour la gestion des erreurs et du chargement
+interface GlobalLoadingState {
+  meetings: boolean;
+  sessions: boolean;
+  events: boolean;
+  lapsData: boolean;
+  carData: boolean;
+  vitalStats: boolean;
+}
+
+interface GlobalErrorState {
+  meetings: string | null;
+  sessions: string | null;
+  events: string | null;
+  lapsData: string | null;
+  carData: string | null;
+  vitalStats: string | null;
+}
+
 
 const MobileView = ({
   meetings,
@@ -209,12 +254,12 @@ const MobileView = ({
 }) => {
   const [activeTab, setActiveTab] = useState('info');
   const [showPredictionAlert, setShowPredictionAlert] = useState(false);
-  
+
   // Get current session details
   const currentSession = sessions.find(s => s.session_key.toString() === selectedSession);
   const isRaceSession = currentSession?.session_type === "Race";
   const isFinal = viewMode === "final";
-  
+
   // Check if predictions can be enabled
   const canEnablePrediction = selectedSession && selectedDriver && isRaceSession && !isFinal;
 
@@ -224,7 +269,7 @@ const MobileView = ({
         setShowPredictionAlert(true);
         return;
       }
-      
+
       // Check if any prediction widgets are visible
       const hasPredictions = Object.entries(widgetComponents)
         .filter(([key]) => key.startsWith('prediction-'))
@@ -285,31 +330,28 @@ const MobileView = ({
         {/* Mobile Navigation Tabs */}
         <div className="flex mb-4 border-b border-gray-800">
           <button
-            className={`flex-1 py-2 text-sm font-medium ${
-              activeTab === 'info' 
-              ? 'text-[#5382ec] border-b-2 border-[#5382ec]' 
+            className={`flex-1 py-2 text-sm font-medium ${activeTab === 'info'
+              ? 'text-[#5382ec] border-b-2 border-[#5382ec]'
               : 'text-gray-400'
-            }`}
+              }`}
             onClick={() => handleTabChange('info')}
           >
             Race Info
           </button>
           <button
-            className={`flex-1 py-2 text-sm font-medium ${
-              activeTab === 'telemetry' 
-              ? 'text-[#5382ec] border-b-2 border-[#5382ec]' 
+            className={`flex-1 py-2 text-sm font-medium ${activeTab === 'telemetry'
+              ? 'text-[#5382ec] border-b-2 border-[#5382ec]'
               : 'text-gray-400'
-            }`}
+              }`}
             onClick={() => handleTabChange('telemetry')}
           >
             Telemetry
           </button>
           <button
-            className={`flex-1 py-2 text-sm font-medium ${
-              activeTab === 'predictions' 
-              ? 'text-[#5382ec] border-b-2 border-[#5382ec]' 
+            className={`flex-1 py-2 text-sm font-medium ${activeTab === 'predictions'
+              ? 'text-[#5382ec] border-b-2 border-[#5382ec]'
               : 'text-gray-400'
-            }`}
+              }`}
             onClick={() => handleTabChange('predictions')}
           >
             AI Predictions
@@ -324,31 +366,36 @@ const MobileView = ({
               {widgetConfig.visibility['driver-standings'] && widgetComponents['driver-standings']}
               {widgetConfig.visibility['vital-statistics'] && widgetComponents['vital-statistics']}
               {widgetConfig.visibility['event-display'] && widgetComponents['event-display']}
+              {widgetConfig.visibility['championship'] && widgetComponents['championship']}
             </>
           )}
-          
+
           {activeTab === 'telemetry' && (
             <>
               {widgetConfig.visibility['telemetry'] && widgetComponents['telemetry']}
               {widgetConfig.visibility['circuit-map'] && widgetComponents['circuit-map']}
               {widgetConfig.visibility['sector-analysis'] && widgetComponents['sector-analysis']}
+              {widgetConfig.visibility['stint-visualizer'] && widgetComponents['stint-visualizer']}
+              {widgetConfig.visibility['speed-visualizer'] && widgetComponents['speed-visualizer']}
+              {widgetConfig.visibility['lap-analysis'] && widgetComponents['lap-analysis']}
+              {widgetConfig.visibility['gap-analysis'] && widgetComponents['gap-analysis']}
             </>
           )}
-          
+
           {activeTab === 'predictions' && canEnablePrediction && (
             <>
               {Object.entries(widgetComponents)
                 .filter(([key]) => key.startsWith('prediction-'))
-                .map(([key, component]) => 
+                .map(([key, component]) =>
                   widgetConfig.visibility[key] && <div key={key}>{component}</div>
                 )}
             </>
           )}
         </div>
 
-        <PredictionAlert 
-          open={showPredictionAlert} 
-          onClose={() => setShowPredictionAlert(false)} 
+        <PredictionAlert
+          open={showPredictionAlert}
+          onClose={() => setShowPredictionAlert(false)}
         />
       </div>
     </div>
@@ -377,6 +424,34 @@ const RaceControlEvents = () => {
   const [vitalStats, setVitalStats] = useState<VitalStatistics | null>(null);
   const isMobile = useIsMobile();
   const [hasMounted, setHasMounted] = useState(false);
+  const [currentStandings, setCurrentStandings] = useState<{ position: number, acronym: string }[]>([]);
+
+  const [globalLoading, setGlobalLoading] = useState<GlobalLoadingState>({
+    meetings: false,
+    sessions: false,
+    events: false,
+    lapsData: false,
+    carData: false,
+    vitalStats: false
+  });
+
+  const [globalError, setGlobalError] = useState<GlobalErrorState>({
+    meetings: null,
+    sessions: null,
+    events: null,
+    lapsData: null,
+    carData: null,
+    vitalStats: null
+  });
+
+  const setLoadingState = (key: keyof GlobalLoadingState, value: boolean) => {
+    setGlobalLoading(prev => ({ ...prev, [key]: value }));
+  };
+
+  // Helper pour mettre à jour l'état d'erreur
+  const setErrorState = (key: keyof GlobalErrorState, value: string | null) => {
+    setGlobalError(prev => ({ ...prev, [key]: value }));
+  };
 
   useEffect(() => {
     setHasMounted(true);
@@ -393,6 +468,11 @@ const RaceControlEvents = () => {
       'circuit-map',
       'sector-analysis',
       'event-display',
+      'stint-visualizer',
+      'speed-visualizer',
+      'lap-analysis',
+      'gap-analysis',
+      'championship',
       'vital-statistics',
       ...predictionTypes.map(type => `prediction-${type}`)
     ],
@@ -403,6 +483,11 @@ const RaceControlEvents = () => {
       'telemetry': true,
       'circuit-map': true,
       'sector-analysis': true,
+      'stint-visualizer': true,
+      'speed-visualizer': true,
+      'lap-analysis': true,
+      'gap-analysis': true,
+      'championship': true,
       'event-display': true,
       ...Object.fromEntries(predictionTypes.map(type => [`prediction-${type}`, true]))
     }
@@ -410,10 +495,9 @@ const RaceControlEvents = () => {
 
   useEffect(() => {
     const fetchMeetings = async () => {
+      setLoadingState('meetings', true);
       try {
-        const response = await fetch("https://api.openf1.org/v1/meetings");
-        if (!response.ok) throw new Error("Failed to fetch meetings");
-        const data = await response.json();
+        const data = await fetchWithRetry("https://api.openf1.org/v1/meetings");
 
         const monzaDate = new Date("2024-08-30T11:30:00+00:00");
         const filteredMeetings = data.filter((meeting: Meeting) => {
@@ -426,19 +510,21 @@ const RaceControlEvents = () => {
         );
 
         setMeetings(sortedMeetings);
+        setErrorState('meetings', null);
 
         if (sortedMeetings.length > 0) {
           const latestMeeting = sortedMeetings[0];
           setSelectedMeeting(latestMeeting.meeting_key.toString());
-          const responseSessions = await fetch(
+
+          // Fetch initial sessions
+          const sessionsData = await fetchWithRetry(
             `https://api.openf1.org/v1/sessions?meeting_key=${latestMeeting.meeting_key}`
           );
-          if (!responseSessions.ok) throw new Error("Failed to fetch sessions");
-          const sessionsData = await responseSessions.json();
+
           setSessions(sessionsData);
 
           if (sessionsData.length > 0) {
-            const latestSession = sessionsData[0];
+            const latestSession = sessionsData[sessionsData.length - 1];
             setSelectedSession(latestSession.session_key.toString());
             setSessionStartTime(latestSession.date_start);
             setSessionEndTime(latestSession.date_end);
@@ -448,29 +534,38 @@ const RaceControlEvents = () => {
           }
         }
       } catch (err) {
-        console.error(err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch meetings';
+        setErrorState('meetings', errorMessage);
+        console.error('Error fetching meetings:', err);
+      } finally {
+        setLoadingState('meetings', false);
       }
     };
     fetchMeetings();
   }, []);
 
+
   useEffect(() => {
-    if (!selectedMeeting) return;
     const fetchSessions = async () => {
+      if (!selectedMeeting) return;
+
+      setLoadingState('sessions', true);
       try {
-        const response = await fetch(
+        const data = await fetchWithRetry(
           `https://api.openf1.org/v1/sessions?meeting_key=${selectedMeeting}`
         );
-        if (!response.ok) throw new Error("Failed to fetch sessions");
-        const data = await response.json();
         setSessions(data);
+        setErrorState('sessions', null);
       } catch (err) {
-        console.error(err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch sessions';
+        setErrorState('sessions', errorMessage);
+        console.error('Error fetching sessions:', err);
+      } finally {
+        setLoadingState('sessions', false);
       }
     };
-    fetchSessions();
 
-    // Réinitialiser le pilote sélectionné lorsqu'on change de meeting
+    fetchSessions();
     setSelectedDriverNumber(null);
     setSelectedDriver(null);
   }, [selectedMeeting]);
@@ -480,63 +575,70 @@ const RaceControlEvents = () => {
     loadVitalStatistics(selectedMeeting);
   }, [selectedMeeting]);
 
+  // Dans le useEffect qui gère selectedSession
   useEffect(() => {
-    if (!selectedSession) return;
-    const fetchEvents = async () => {
+    const fetchEventsAndLaps = async () => {
+      if (!selectedSession) return;
+
+      setLoadingState('events', true);
+      setLoadingState('lapsData', true);
       try {
-        setLoading(true);
-        const response = await fetch(
-          `/api/race-selection?session_key=${selectedSession}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch events");
-        const data = await response.json();
+        // Fetch des événements et des tours en parallèle
+        const [eventsData, lapsData] = await Promise.all([
+          fetchWithRetry(`/api/race-selection?session_key=${selectedSession}`),
+          fetchWithRetry(`https://api.openf1.org/v1/laps?session_key=${selectedSession}`)
+        ]);
+
+        // Traitement des événements
         setEvents(
-          data.sort(
+          eventsData.sort(
             (a: RaceControlEvent, b: RaceControlEvent) =>
               new Date(a.date).getTime() - new Date(b.date).getTime()
           )
         );
 
+        // Traitement des tours
+        setLapsData(lapsData);
+
         const sessionDetails = sessions.find(
           (s) => s.session_key.toString() === selectedSession
         );
+
+        // Calculer le nombre total de tours en prenant le maximum entre
+        // les tours de la session et les tours dans lapsData
+        let maxLapsFromData = 0;
+        if (lapsData && Array.isArray(lapsData) && lapsData.length > 0) {
+          maxLapsFromData = Math.max(...lapsData.map((lap: LapData) => lap?.lap_number || 0));
+        }
+
+        const sessionTotalLaps = sessionDetails?.total_laps || 0;
+        const finalTotalLaps = Math.max(maxLapsFromData, sessionTotalLaps);
+
         if (sessionDetails) {
           setSessionStartTime(sessionDetails.date_start);
           setSessionEndTime(sessionDetails.date_end);
           setCurrentTime(sessionDetails.date_end);
-          setTotalLaps(sessionDetails.total_laps || 0);
-          setCurrentLap(sessionDetails.total_laps || 0);
+          setTotalLaps(finalTotalLaps);
+          setCurrentLap(finalTotalLaps);
         }
+
+        setErrorState('events', null);
+        setErrorState('lapsData', null);
       } catch (err) {
-        console.error(err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
+        setErrorState('events', errorMessage);
+        setErrorState('lapsData', errorMessage);
+        console.error('Error fetching events and laps:', err);
       } finally {
-        setLoading(false);
+        setLoadingState('events', false);
+        setLoadingState('lapsData', false);
       }
     };
-    fetchEvents();
 
-    // Réinitialiser le pilote sélectionné lorsqu'on change de session
+    fetchEventsAndLaps();
     setSelectedDriverNumber(null);
     setSelectedDriver(null);
   }, [selectedSession, sessions]);
-
-  useEffect(() => {
-    if (!selectedSession) return;
-    const fetchLapsData = async () => {
-      try {
-        const response = await fetch(
-          `https://api.openf1.org/v1/laps?session_key=${selectedSession}`
-        );
-        const data = await response.json();
-        setLapsData(data);
-        const maxLap = Math.max(...data.map((lap: LapData) => lap.lap_number));
-        setTotalLaps(maxLap);
-      } catch (err) {
-        console.error("Error fetching laps data:", err);
-      }
-    };
-    fetchLapsData();
-  }, [selectedSession]);
 
   useEffect(() => {
     const fetchCarData = async () => {
@@ -633,6 +735,44 @@ const RaceControlEvents = () => {
     }
   };
 
+  const GlobalLoadingOverlay = () => {
+    const isLoading = Object.values(globalLoading).some(Boolean);
+
+    if (!isLoading) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-[#282a2c] p-6 rounded-lg shadow-xl">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
+            <p className="text-white">Loading race data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Composant d'affichage des erreurs
+  const GlobalErrorDisplay = () => {
+    const errors = Object.entries(globalError)
+      .filter(([, error]) => error !== null)
+      .map(([key, error]) => ({ key, error }));
+
+    if (errors.length === 0) return null;
+
+    return (
+      <div className="fixed bottom-4 right-4 z-50">
+        {errors.map(({ key, error }) => (
+          <Alert key={key} className="mb-2 bg-red-900/90 text-white border-red-700">
+            <AlertTitle className="text-white">Error in {key}</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ))}
+      </div>
+    );
+  };
+
+
   const realTimeDataContent = selectedDriver && viewMode === "chrono" ? (
     <RaceCarTelemetry
       throttle={throttle}
@@ -709,8 +849,10 @@ const RaceControlEvents = () => {
         currentLap={currentLap}
         onDriverSelect={handleDriverSelection}
         selectedDriverNumber={selectedDriverNumber}
+        onStandingsUpdate={setCurrentStandings}
       />
     ),
+
     'vital-statistics': vitalStats && (
       <VitalStatisticsWidget
         stats={vitalStats}
@@ -739,6 +881,36 @@ const RaceControlEvents = () => {
         viewMode={viewMode}
         currentLap={currentLap}
         currentTime={currentTime}
+      />
+    ),
+    'stint-visualizer': (
+      <StintVisualizer
+        sessionKey={parseInt(selectedSession)}
+        lap={viewMode === "final" || currentLap === totalLaps ? null : currentLap}
+      />
+    ),
+    'speed-visualizer': (
+      <SpeedVisualizer
+        sessionKey={parseInt(selectedSession)}
+        lap={viewMode === "final" || currentLap === totalLaps ? null : currentLap}
+      />
+    ),
+    'lap-analysis': (
+      <F1LapAnalysis
+        sessionKey={parseInt(selectedSession)}
+        lap={viewMode === "final" || currentLap === totalLaps ? null : currentLap}
+      />
+    ),
+    'gap-analysis': (
+      <F1GapAnalysis
+        sessionKey={parseInt(selectedSession)}
+        lap={viewMode === "final" || currentLap === totalLaps ? null : currentLap}
+      />
+    ),
+    'championship': (
+      <ChampionshipWidget_Live
+        meeting_key={1142}
+        currentStandings={currentStandings}
       />
     ),
     ...Object.fromEntries(predictionTypes.map(type => [
@@ -791,6 +963,8 @@ const RaceControlEvents = () => {
 
   return (
     <div className="min-h-screen bg-[#1B1C1D]">
+      <GlobalLoadingOverlay />
+      <GlobalErrorDisplay />
       <div className="container mx-auto px-4 py-16">
         {/* En-tête */}
         <motion.div
@@ -927,6 +1101,61 @@ const RaceControlEvents = () => {
                       transition={{ delay: index * 0.05 }}
                     >
                       {widgetComponents['event-display']}
+                    </motion.div>
+                  )}
+
+                  {widgetId === 'stint-visualizer' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="break-inside-avoid"
+                    >
+                      {widgetComponents['stint-visualizer']}
+                    </motion.div>
+                  )}
+
+                  {widgetId === 'speed-visualizer' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="break-inside-avoid"
+                    >
+                      {widgetComponents['speed-visualizer']}
+                    </motion.div>
+                  )}
+
+                  {widgetId === 'lap-analysis' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="break-inside-avoid"
+                    >
+                      {widgetComponents['lap-analysis']}
+                    </motion.div>
+                  )}
+
+                  {widgetId === 'gap-analysis' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="break-inside-avoid"
+                    >
+                      {widgetComponents['gap-analysis']}
+                    </motion.div>
+                  )}
+
+                  {widgetId === 'championship' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="break-inside-avoid"
+                    >
+                      {widgetComponents['championship']}
                     </motion.div>
                   )}
 

@@ -248,7 +248,7 @@ const HomePage: React.FC = () => {
         </motion.div>
 
         <motion.h1
-          className="text-3xl sm:text-4xl md:text-6xl font-bold mb-8 text-center bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent"
+          className="pb-1 text-3xl sm:text-4xl md:text-6xl font-bold mb-8 text-center bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent"
           variants={itemVariants}
         >
           <Typewriter
