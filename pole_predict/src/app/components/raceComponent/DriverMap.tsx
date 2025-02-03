@@ -1,9 +1,7 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapIcon, Loader2Icon, InfoIcon } from 'lucide-react';
+import { MapIcon, Loader2Icon } from 'lucide-react';
 
 interface Position {
   x: number;
@@ -13,21 +11,9 @@ interface Position {
 }
 
 interface DriverInfo {
-  NumberOfPodiums: number;
-  NumberOfVictories: number;
-  WorldChampionships: number;
-  broadcast_name: string;
-  country_code: string;
   driver_number: number;
-  first_name: string;
-  flagColors: string[];
-  flag_url: string;
-  headshot_url: string;
-  last_name: string;
-  name: string;
   team_colour: string;
   team_name: string;
-  year: number[];
 }
 
 interface Meeting {
@@ -48,7 +34,7 @@ interface DriverMapProps {
 }
 
 const LoadingCard: React.FC = () => (
-  <Card className="bg-[#282a2c] border border-gray-800 h-[70vh]">
+  <Card className="bg-[#282a2c] border border-gray-800 h-[80vh]">
     <CardContent className="flex flex-col items-center justify-center h-full gap-4">
       <Loader2Icon className="h-8 w-8 animate-spin text-[#5382ec]" />
       <div className="text-white flex flex-col items-center gap-2">
@@ -59,9 +45,27 @@ const LoadingCard: React.FC = () => (
 );
 
 const ErrorCard: React.FC<{ error: string }> = ({ error }) => (
-  <Card className="bg-[#282a2c] border border-gray-800 h-[70vh]">
+  <Card className="bg-[#282a2c] border border-gray-800 h-[80vh]">
     <CardContent className="flex items-center justify-center h-full">
-      <div className="text-red-500">Error: {error}</div>
+      <div className="text-red-500">{error}</div>
+    </CardContent>
+  </Card>
+);
+
+const UnavailableCard: React.FC = () => (
+  <Card className="bg-[#282a2c] border border-gray-800 h-[20vh]">
+    <CardHeader className="pb-2">
+      <div className="flex items-center justify-between">
+        <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+          Driver Map
+        </CardTitle>
+        <MapIcon className="h-5 w-5 text-[#5382ec]" />
+      </div>
+    </CardHeader>
+    <CardContent className="h-[calc(100%-4rem)] flex items-center justify-center">
+      <div className="text-gray-400 text-center">
+        Driver Map is only available in chronological mode
+      </div>
     </CardContent>
   </Card>
 );
@@ -78,18 +82,11 @@ function DriverMap({
   const [dbDrivers, setDbDrivers] = useState<DriverInfo[]>([]);
   const [meetingData, setMeetingData] = useState<Meeting | null>(null);
   const [circuitImage, setCircuitImage] = useState<string>("/images/circuit-singapour.png");
-  const circleSize = 9;
+  const [hasLoadedData, setHasLoadedData] = useState(false);
+  const circleSize = 12;
 
-  // Convertir et vérifier les clés uniquement si elles sont définies et non vides
-  const safeSessionKey = sessionKey !== null && sessionKey !== undefined && sessionKey !== ''
-    ? sessionKey.toString()
-    : '';
-  const safeMeetingKey = meetingKey !== null && meetingKey !== undefined && meetingKey !== ''
-    ? meetingKey.toString()
-    : '';
-
-  console.log('Props received:', { sessionKey, meetingKey, currentTime, viewMode });
-  console.log('Converted keys:', { safeSessionKey, safeMeetingKey });
+  const safeSessionKey = sessionKey?.toString() || '';
+  const safeMeetingKey = meetingKey?.toString() || '';
 
   const transformPosition = (pos: Position) => {
     if (!meetingData) return pos;
@@ -109,13 +106,8 @@ function DriverMap({
     };
   };
 
-  // Effet pour récupérer les données du meeting et des drivers
   useEffect(() => {
-    // On ne lance le fetch que si la clé meeting est disponible
-    if (!safeMeetingKey) {
-      // On peut éventuellement réinitialiser certains états ou attendre le prochain rendu
-      return;
-    }
+    if (!safeMeetingKey) return;
 
     const fetchMeetingData = async () => {
       try {
@@ -134,14 +126,12 @@ function DriverMap({
           driversResponse.json()
         ]);
 
-        // Ajout d'une vérification pour s'assurer que meeting_key est défini avant d'appeler toString()
         const currentMeeting = meetings.find((m: Meeting) =>
-          m.meeting_key !== undefined && m.meeting_key.toString() === safeMeetingKey
+          m.meeting_key?.toString() === safeMeetingKey
         );
 
         if (currentMeeting) {
           setMeetingData(currentMeeting);
-          // Récupération de l'image du circuit depuis l'API gp
           const gpResponse = await fetch('/api/gp');
           if (gpResponse.ok) {
             const { data: gpData } = await gpResponse.json();
@@ -150,13 +140,11 @@ function DriverMap({
               setCircuitImage(gpInfo.image_circuit);
             }
           }
-        } else {
-          // Vous pouvez adapter ce comportement si aucun meeting n'est trouvé
-          setError('Meeting not found');
         }
 
         setDbDrivers(drivers);
         setLoading(false);
+        setHasLoadedData(true);
       } catch (error) {
         setError(error instanceof Error ? error.message : 'Failed to load meeting data');
         setLoading(false);
@@ -166,12 +154,8 @@ function DriverMap({
     fetchMeetingData();
   }, [safeMeetingKey]);
 
-  // Effet pour récupérer les positions
   useEffect(() => {
-    // On ne lance le fetch que si la sessionKey et le currentTime sont disponibles
-    if (!safeSessionKey || !currentTime) {
-      return;
-    }
+    if (!safeSessionKey || !currentTime) return;
 
     const fetchPositions = async () => {
       try {
@@ -211,19 +195,30 @@ function DriverMap({
           });
 
         setPositions(Array.from(latestPositions.values()));
+        if (!hasLoadedData) {
+          setHasLoadedData(true);
+        }
+        setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load position data');
+        if (!hasLoadedData) {
+          setPositions([]);
+        }
       }
     };
 
     fetchPositions();
-  }, [safeSessionKey, currentTime]);
+  }, [safeSessionKey, currentTime, hasLoadedData]);
 
-  if (loading) return <LoadingCard />;
-  if (error) return <ErrorCard error={error} />;
+  if (viewMode !== 'chrono') {
+    return <UnavailableCard />;
+  }
+
+  if (loading && !hasLoadedData) return <LoadingCard />;
+  if (error && !hasLoadedData) return <ErrorCard error={error} />;
 
   return (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 h-[70vh]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 h-[57vh]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -233,32 +228,14 @@ function DriverMap({
         </div>
       </CardHeader>
       <CardContent className="relative h-[calc(100%-4rem)]">
-        <motion.div 
-          className="mb-4 p-3 bg-black/20 rounded-lg"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="flex items-center gap-2">
-            <InfoIcon className="h-4 w-4 text-[#5382ec]" />
-            <span className="text-sm text-gray-400">Parameters:</span>
-          </div>
-          <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-            <div className="text-gray-500">Session Key:</div>
-            <div className="text-[#2dd4bf]">{safeSessionKey || 'N/A'}</div>
-            <div className="text-gray-500">Meeting Key:</div>
-            <div className="text-[#2dd4bf]">{safeMeetingKey || 'N/A'}</div>
-            <div className="text-gray-500">Time:</div>
-            <div className="text-[#2dd4bf]">{new Date(currentTime).toLocaleTimeString()}</div>
-            <div className="text-gray-500">View Mode:</div>
-            <div className="text-[#2dd4bf]">{viewMode}</div>
-          </div>
-        </motion.div>
-        <motion.div 
-          className="relative w-full h-[calc(100%-6rem)]"
+        <motion.div
+          className="relative w-full h-full"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{
+            duration: 1,
+            ease: "easeInOut"
+          }}
         >
           <img
             src={circuitImage}
@@ -272,29 +249,37 @@ function DriverMap({
             <AnimatePresence>
               {positions.map(pos => {
                 const transformedPos = transformPosition(pos);
-                const driverInfo = dbDrivers.find(d => 
+                const driverInfo = dbDrivers.find(d =>
                   d.driver_number === parseInt(pos.driverNumber)
                 );
 
                 if (!driverInfo?.team_colour) return null;
 
+                const circleX = (transformedPos.x + 140) * 4;
+                const circleY = (60 - transformedPos.y) * 4;
+
                 return (
                   <motion.g
                     key={pos.driverNumber}
                     initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
+                    animate={{ 
+                      scale: 1,
+                      x: circleX,
+                      y: circleY
+                    }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 25,
+                      mass: 1
+                    }}
                   >
-                    <circle
-                      cx={(transformedPos.x + 140) * 4}
-                      cy={(60 - transformedPos.y) * 4}
+                    <motion.circle
                       r={circleSize}
-                      fill={`#${driverInfo.team_colour}`}
+                      fill={driverInfo.team_colour}
                       className="drop-shadow-lg"
                     />
-                    <text
-                      x={(transformedPos.x + 140) * 4}
-                      y={(60 - transformedPos.y) * 4}
+                    <motion.text
                       fontSize={12}
                       fill="#FFFFFF"
                       textAnchor="middle"
@@ -302,7 +287,7 @@ function DriverMap({
                       className="font-bold"
                     >
                       {pos.driverNumber}
-                    </text>
+                    </motion.text>
                   </motion.g>
                 );
               })}

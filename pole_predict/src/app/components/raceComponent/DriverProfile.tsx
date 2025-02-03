@@ -26,7 +26,6 @@ interface DriverProfileProps {
   onDriverDeselect: () => void;
 }
 
-// Fonction utilitaire pour retry les appels API
 const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
     let retries = 0;
     while (retries < maxRetries) {
@@ -55,6 +54,7 @@ const DriverProfile: React.FC<DriverProfileProps> = ({
   onDriverDeselect
 }) => {
   const [chronoLap, setChronoLap] = useState<number>(0);
+  const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState<boolean>(false);
@@ -67,7 +67,10 @@ const DriverProfile: React.FC<DriverProfileProps> = ({
         return;
       }
 
-      setLoading(true);
+      // Only show loading on initial load
+      if (!initialLoadComplete) {
+        setLoading(true);
+      }
       setError(null);
       
       try {
@@ -115,6 +118,7 @@ const DriverProfile: React.FC<DriverProfileProps> = ({
       } finally {
         setLoading(false);
         setIsRetrying(false);
+        setInitialLoadComplete(true);
       }
     };
 
@@ -196,7 +200,7 @@ const DriverProfile: React.FC<DriverProfileProps> = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {loading && (
+        {loading && !initialLoadComplete && (
           <div className="flex items-center justify-center gap-2">
             <Loader2 className="h-5 w-5 animate-spin text-[#5382ec]" />
             <span className="text-gray-400">

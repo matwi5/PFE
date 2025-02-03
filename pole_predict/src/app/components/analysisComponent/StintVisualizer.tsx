@@ -100,6 +100,36 @@ const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
     }
 };
 
+const TyreCompoundsLegend = () => {
+    const compounds = [
+      { name: 'Soft', color: 'bg-gradient-to-r from-red-500 to-red-600' },
+      { name: 'Medium', color: 'bg-gradient-to-r from-yellow-400 to-yellow-500' },
+      { name: 'Hard', color: 'bg-gradient-to-r from-gray-200 to-gray-300' },
+      { name: 'Inter', color: 'bg-gradient-to-r from-green-500 to-green-600' },
+      { name: 'Wet', color: 'bg-gradient-to-r from-blue-500 to-blue-600' }
+    ];
+  
+    return (
+      <div className="flex flex-col w-full space-y-2 md:space-y-0 md:flex-row md:items-center md:justify-center">
+        <div className="grid grid-cols-3 gap-2 md:flex md:flex-row md:gap-2">
+          {compounds.map(({ name, color }) => (
+            <div
+              key={name}
+              className="flex items-center justify-center p-2 rounded-lg bg-black/20 hover:bg-black/40 transition-all duration-200"
+            >
+              <div className="flex items-center gap-2">
+                <div className={`w-2.5 h-2.5 rounded-full ${color} shadow-lg`} />
+                <span className="text-xs font-medium text-gray-200">
+                  {name}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
 const LoadingCard = ({ loadingStatus }: { loadingStatus: LoadingStatus }) => (
     <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
         <CardContent className="flex flex-col items-center justify-center h-full gap-4">
@@ -284,21 +314,7 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                     </CardTitle>
                     <Timer className="h-5 w-5 text-[#5382ec]" />
                 </div>
-                <div className="mt-4 flex items-center justify-center">
-                    <div className="flex gap-2 px-3 py-1.5 rounded-lg bg-black/30 backdrop-blur-sm border border-gray-800/30">
-                        {Object.entries(compoundColors).map(([compound, colorClass]) => (
-                            <div
-                                key={compound}
-                                className="flex items-center gap-5 px-2 py-1 rounded-md bg-black/20 hover:bg-black/40 transition-all duration-200"
-                            >
-                                <div className={`w-2.5 h-2.5 rounded-full ${colorClass} shadow-lg`} />
-                                <span className="text-xs font-medium text-gray-200 capitalize">
-                                    {compound.toLowerCase()}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <TyreCompoundsLegend />
             </CardHeader>
             <CardContent className="relative h-[calc(100%-7rem)]">
                 <div className="h-full overflow-y-auto pr-6 scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out">
@@ -337,10 +353,11 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                                     }}
                                 >
                                     <div className="flex items-center gap-4 mb-2">
-                                        <div className={`text-lg font-bold ${finalPosition === 1
+                                        <div className={`text-lg font-bold ${
+                                            finalPosition === 1
                                                 ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent'
                                                 : 'text-gray-400'
-                                            }`}>
+                                        }`}>
                                             {finalPosition}
                                         </div>
                                         <div className="font-medium" style={{ color: `#${teamColor}` }}>
@@ -350,13 +367,13 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                                             {totalLaps} laps
                                         </div>
                                     </div>
-
+    
                                     <div className="flex items-center gap-1 min-h-[2rem] relative w-full">
                                         {stints.map((stint, index) => {
                                             if (!stint?.compound || !stint?.lap_start || !stint?.lap_end) return null;
                                             const width = calculateWidth(stint.lap_start, stint.lap_end);
                                             const lapCount = stint.lap_end - stint.lap_start + 1;
-
+    
                                             return (
                                                 <motion.div
                                                     key={index}
