@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell } from 'lucide-react';
+import { Bell, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface RaceControlEvent {
   category: string;
@@ -19,59 +19,103 @@ interface EventDisplayProps {
   events: RaceControlEvent[];
   sessionName?: string;
   loading?: boolean;
+  error?: string | null;
   viewMode: 'chrono' | 'lap' | 'final';
   currentLap: number;
   currentTime: string;
 }
 
 const EventDisplay = ({
-  events,
+  events = [],
   sessionName,
-  loading,
-  viewMode,
-  currentLap,
+  loading = false,
+  error = null,
+  viewMode = 'final',
+  currentLap = 1,
   currentTime
 }: EventDisplayProps) => {
-  const filteredAndSortedEvents = useMemo(() => {
-    const now = new Date(currentTime);
-
-    const filtered = events.filter(event => {
-      const eventDate = new Date(event.date);
-
-      switch (viewMode) {
-        case 'chrono':
-          return eventDate <= now;
-        case 'lap':
-          return event.lap_number === currentLap;
-        case 'final':
-          return true;
-        default:
-          return false;
+  // Validation des entrées
+  const validatedEvents = useMemo(() => {
+    return events.filter(event => {
+      // Vérifier que les champs requis sont présents
+      if (!event?.date || !event?.message || !event?.category) {
+        console.warn('Invalid event detected:', event);
+        return false;
       }
-    });
+      
+      // Vérifier que la date est valide
+      try {
+        new Date(event.date).toISOString();
+      } catch (e) {
+        console.warn('Invalid date in event:', event);
+        return false;
+      }
 
-    return [...filtered].sort((a, b) =>
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  }, [events, currentTime, viewMode, currentLap]);
+      return true;
+    });
+  }, [events]);
+
+  const filteredAndSortedEvents = useMemo(() => {
+    try {
+      if (!currentTime) return [];
+      const now = new Date(currentTime);
+      if (isNaN(now.getTime())) return [];
+
+      const filtered = validatedEvents.filter(event => {
+        const eventDate = new Date(event.date);
+        if (isNaN(eventDate.getTime())) return false;
+
+        switch (viewMode) {
+          case 'chrono':
+            return eventDate <= now;
+          case 'lap':
+            return event.lap_number === currentLap;
+          case 'final':
+            return true;
+          default:
+            return false;
+        }
+      });
+
+      return [...filtered].sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        if (isNaN(dateA) || isNaN(dateB)) return 0;
+        return dateB - dateA;
+      });
+    } catch (err) {
+      console.error('Error in filteredAndSortedEvents:', err);
+      return [];
+    }
+  }, [validatedEvents, currentTime, viewMode, currentLap]);
 
   const getFlagColor = useMemo(() => (flag: string | undefined) => {
-    switch (flag?.toUpperCase()) {
-      case 'YELLOW': return 'bg-gradient-to-r from-yellow-400 to-yellow-500';
-      case 'RED': return 'bg-gradient-to-r from-red-500 to-red-600';
-      case 'BLUE': return 'bg-gradient-to-r from-[#5382ec] to-[#436cbf]';
-      case 'GREEN': return 'bg-gradient-to-r from-[#2dd4bf] to-[#0d9488]';
-      case 'CHEQUERED': return 'bg-gradient-to-r from-gray-800 to-gray-900';
-      default: return 'bg-gradient-to-r from-gray-400 to-gray-500';
+    try {
+      switch (flag?.toUpperCase()) {
+        case 'YELLOW': return 'bg-gradient-to-r from-yellow-400 to-yellow-500';
+        case 'RED': return 'bg-gradient-to-r from-red-500 to-red-600';
+        case 'BLUE': return 'bg-gradient-to-r from-[#5382ec] to-[#436cbf]';
+        case 'GREEN': return 'bg-gradient-to-r from-[#2dd4bf] to-[#0d9488]';
+        case 'CHEQUERED': return 'bg-gradient-to-r from-gray-800 to-gray-900';
+        default: return 'bg-gradient-to-r from-gray-400 to-gray-500';
+      }
+    } catch (err) {
+      return 'bg-gradient-to-r from-gray-400 to-gray-500';
     }
   }, []);
 
-  const formatEventTime = (date: string) =>
-    new Date(date).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
+  const formatEventTime = (date: string) => {
+    try {
+      return new Date(date).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (err) {
+      console.error('Error formatting time:', err);
+      return '--:--:--';
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -123,14 +167,45 @@ const EventDisplay = ({
           </div>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[calc(100%-4rem)]">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="text-gray-400"
-          >
-            Loading events...
-          </motion.div>
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="text-gray-400"
+            >
+              Loading events...
+            </motion.div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+              Race Control
+            </CardTitle>
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+          </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[calc(100%-4rem)]">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <AlertTriangle className="h-8 w-8 text-red-500" />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="text-red-400"
+            >
+              {error}
+            </motion.div>
+          </div>
         </CardContent>
       </Card>
     );
@@ -141,7 +216,7 @@ const EventDisplay = ({
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-            Race Control
+            Race Control {sessionName && `- ${sessionName}`}
           </CardTitle>
           <Bell className="h-5 w-5 text-[#5382ec]" />
         </div>
@@ -166,7 +241,7 @@ const EventDisplay = ({
                   exit={{ opacity: 0 }}
                   className="text-center py-8 text-gray-400"
                 >
-                  No event to display
+                  No events to display
                 </motion.div>
               ) : (
                 filteredAndSortedEvents.map((event, index) => (

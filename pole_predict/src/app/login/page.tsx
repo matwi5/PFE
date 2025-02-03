@@ -81,7 +81,7 @@ const LoginForm = () => {
 
   return (
     <motion.div
-      className="min-h-screen bg-[#1B1C1D] text-white py-24 px-8"
+      className="min-h-screen bg-[#1B1C1D] text-white py-12 px-4 md:py-24 md:px-8"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -92,12 +92,12 @@ const LoginForm = () => {
       >
         <motion.div variants={itemVariants}>
           <Lock 
-            className="w-24 h-24 mb-8 text-[#5382ec]"
+            className="w-16 h-16 md:w-24 md:h-24 mb-6 md:mb-8 text-[#5382ec]"
           />
         </motion.div>
 
         <motion.h1
-          className="text-4xl h-20 md:text-6xl font-bold mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center"
+          className="text-3xl md:text-4xl lg:text-6xl font-bold mb-6 md:mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center h-16 md:h-20"
           variants={itemVariants}
         >
           <Typewriter
@@ -114,7 +114,7 @@ const LoginForm = () => {
         </motion.h1>
 
         <motion.div
-          className="w-full max-w-md"
+          className="w-full max-w-md px-4 md:px-0"
           variants={itemVariants}
         >
           <Card
@@ -122,25 +122,25 @@ const LoginForm = () => {
             onMouseMove={handleMouseMove}
             onMouseLeave={() => setIsHovering(false)}
           >
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-xl md:text-2xl font-bold text-center bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                 Sign In
               </CardTitle>
-              <CardDescription className="text-center text-gray-400">
+              <CardDescription className="text-center text-gray-400 text-sm md:text-base">
                 Enter your credentials to access your account
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 md:p-6">
               {error && (
-                <Alert variant="destructive" className="mb-4 bg-red-500/10 border-red-500 text-red-500">
+                <Alert variant="destructive" className="mb-4 bg-red-500/10 border-red-500 text-red-500 text-sm md:text-base">
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              <form onSubmit={handleLogin} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-gray-200">Email address</Label>
+              <form onSubmit={handleLogin} className="space-y-4 md:space-y-6">
+                <div className="space-y-1 md:space-y-2">
+                  <Label htmlFor="email" className="text-gray-200 text-sm md:text-base">Email address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                     <Input
                       id="email"
                       type="email"
@@ -148,14 +148,14 @@ const LoginForm = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="pl-10 bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white"
+                      className="pl-10 bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white text-sm md:text-base h-9 md:h-10"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-gray-200">Password</Label>
+                <div className="space-y-1 md:space-y-2">
+                  <Label htmlFor="password" className="text-gray-200 text-sm md:text-base">Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                     <Input
                       id="password"
                       type="password"
@@ -163,14 +163,14 @@ const LoginForm = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="pl-10 bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white"
+                      className="pl-10 bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white text-sm md:text-base h-9 md:h-10"
                     />
                   </div>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   <Button
                     type="submit"
-                    className="w-full relative group"
+                    className="w-full relative group text-sm md:text-base h-9 md:h-10"
                     style={{
                       background: 'linear-gradient(to right, #5382ec, #2dd4bf)',
                     }}
@@ -181,7 +181,7 @@ const LoginForm = () => {
                   <Button
                     type="button"
                     onClick={handleGoogleLogin}
-                    className="w-full bg-[#1d1f20] border border-gray-700 hover:border-[#5382ec] hover:bg-[#282a2c] text-white"
+                    className="w-full bg-[#1d1f20] border border-gray-700 hover:border-[#5382ec] hover:bg-[#282a2c] text-white text-sm md:text-base h-9 md:h-10"
                   >
                     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                       <path
@@ -206,8 +206,8 @@ const LoginForm = () => {
                 </div>
               </form>
             </CardContent>
-            <CardFooter>
-              <p className="text-center w-full text-gray-400">
+            <CardFooter className="p-4 md:p-6">
+              <p className="text-center w-full text-gray-400 text-sm md:text-base">
                 Don't have an account?{' '}
                 <Link 
                   href="/register" 

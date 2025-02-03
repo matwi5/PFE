@@ -51,15 +51,15 @@ const itemVariants = {
 const BadgeCard = ({ badge }: { badge: UserBadge }) => {
   return (
     <Card className="bg-[#1d1f20] border-gray-800 hover:border-[#5382ec] transition-all duration-300">
-      <CardHeader className="p-4">
+      <CardHeader className="p-3 md:p-4">
         <div className="flex items-center space-x-2">
-          <LucideBadge className="h-6 w-6 text-[#5382ec]" />
-          <CardTitle className="text-lg text-white">{badge.name}</CardTitle>
+          <LucideBadge className="h-5 w-5 md:h-6 md:w-6 text-[#5382ec]" />
+          <CardTitle className="text-base md:text-lg text-white">{badge.name}</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <p className="text-gray-300">{badge.description}</p>
-        <p className="text-[#2dd4bf] mt-2 text-sm">
+      <CardContent className="p-3 md:p-4 pt-0">
+        <p className="text-gray-300 text-sm md:text-base">{badge.description}</p>
+        <p className="text-[#2dd4bf] mt-2 text-xs md:text-sm">
           Obtained on: {new Date(badge.obtainedAt).toLocaleDateString()}
         </p>
       </CardContent>
@@ -104,7 +104,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#1B1C1D] flex justify-center items-center">
-        <div className="text-[#5382ec] text-2xl">Loading...</div>
+        <div className="text-[#5382ec] text-xl md:text-2xl">Loading...</div>
       </div>
     )
   }
@@ -112,14 +112,14 @@ export default function ProfilePage() {
   if (!user || !profile) {
     return (
       <div className="min-h-screen bg-[#1B1C1D] flex justify-center items-center">
-        <div className="text-red-500">User not found</div>
+        <div className="text-red-500 text-base md:text-lg">User not found</div>
       </div>
     )
   }
 
   return (
     <motion.div
-      className="min-h-screen bg-[#1B1C1D] text-white py-24 px-8"
+      className="min-h-screen bg-[#1B1C1D] text-white py-12 px-4 md:py-24 md:px-8"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -129,11 +129,11 @@ export default function ProfilePage() {
         variants={containerVariants}
       >
         <motion.div variants={itemVariants}>
-          <UserIcon className="w-24 h-24 mb-8 text-[#5382ec]" />
+          <UserIcon className="w-16 h-16 md:w-24 md:h-24 mb-6 md:mb-8 text-[#5382ec]" />
         </motion.div>
 
         <motion.h1
-          className="text-4xl h-20 md:text-6xl font-bold mb-12 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center"
+          className="text-3xl md:text-4xl lg:text-6xl font-bold mb-6 md:mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center h-16 md:h-20"
           variants={itemVariants}
         >
           <Typewriter
@@ -149,72 +149,71 @@ export default function ProfilePage() {
           />
         </motion.h1>
 
-        <motion.div className="max-w-2xl w-full" variants={itemVariants}>
+        <motion.div className="w-full max-w-2xl px-4 md:px-0" variants={itemVariants}>
           <Card className="bg-[#1d1f20] border-gray-800 hover:border-[#5382ec] transition-all duration-300">
-            <CardHeader>
-              <div className="flex items-center space-x-4">
-                <Avatar className="w-20 h-20 border-2 border-[#5382ec]">
+            <CardHeader className="p-4 md:p-6">
+              <div className="flex flex-col md:flex-row items-center md:space-x-4 space-y-3 md:space-y-0">
+                <Avatar className="w-16 h-16 md:w-20 md:h-20 border-2 border-[#5382ec]">
                   <AvatarImage src={profile.avatarUrl} alt={profile.username} />
                   <AvatarFallback className="bg-[#282a2c] text-[#5382ec]">
                     {profile.username.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <CardTitle className="text-2xl bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                <div className="text-center md:text-left">
+                  <CardTitle className="text-xl md:text-2xl bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                     {profile.username}
                   </CardTitle>
-                  <CardDescription className="text-gray-400">{profile.email}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
               <div>
-                <Label htmlFor="phone" className="text-[#5382ec]">Phone</Label>
+                <Label htmlFor="phone" className="text-[#5382ec] text-sm md:text-base">Phone</Label>
                 <Input 
                   id="phone" 
                   value={profile.phone} 
                   readOnly 
-                  className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0"
+                  className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0 h-9 md:h-10 text-sm md:text-base"
                 />
               </div>
               <div>
-                <Label htmlFor="points" className="text-[#5382ec]">VerstaCoins</Label>
+                <Label htmlFor="points" className="text-[#5382ec] text-sm md:text-base">VerstaCoins</Label>
                 <Input 
                   id="points" 
                   value={profile.points} 
                   readOnly 
-                  className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0"
+                  className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0 h-9 md:h-10 text-sm md:text-base"
                 />
               </div>
               <div>
-                <Label htmlFor="favoriteDriver" className="text-[#5382ec]">Favorite Driver</Label>
+                <Label htmlFor="favoriteDriver" className="text-[#5382ec] text-sm md:text-base">Favorite Driver</Label>
                 <Input 
                   id="favoriteDriver" 
                   value={profile.favoriteDriver} 
                   readOnly 
-                  className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0"
+                  className="bg-[#282a2c] border-gray-700 text-white focus:border-[#5382ec] focus:ring-0 h-9 md:h-10 text-sm md:text-base"
                 />
               </div>
               
               <div className="pt-4">
-                <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                   My Badges
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   {profile.badges?.map((badge, index) => (
                     <BadgeCard key={index} badge={badge} />
                   ))}
                 </div>
                 {(!profile.badges || profile.badges.length === 0) && (
-                  <p className="text-center text-gray-500">No badges yet</p>
+                  <p className="text-center text-gray-500 text-sm md:text-base">No badges yet</p>
                 )}
               </div>
             </CardContent>
 
-            <CardFooter>
+            <CardFooter className="p-4 md:p-6">
               <Button 
-                className="w-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white hover:opacity-90 transition-opacity"
+                className="w-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white hover:opacity-90 transition-opacity text-sm md:text-base py-2 md:py-2.5"
                 onClick={() => router.push('profile/edit')}
               >
                 Edit Profile

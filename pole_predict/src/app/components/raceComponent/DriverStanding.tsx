@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Trophy } from 'lucide-react';
+import { Trophy, ChevronDown, Loader2 } from 'lucide-react';
 
 interface Driver {
   driver_number: number;
@@ -60,7 +60,78 @@ interface DriverStandingsProps {
   currentLap: number;
   onDriverSelect: (driverNumber: string | null) => void;
   selectedDriverNumber: string | null;
+ onStandingsUpdate?: (standings: {position: number, acronym: string}[]) => void;
 }
+
+interface LoadingStatus {
+  drivers: boolean;
+  positions: boolean;
+  intervals: boolean;
+  lapTimes: boolean;
+}
+
+// Fonction utilitaire pour retry les appels API
+const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
+    let retries = 0;
+    while (retries < maxRetries) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            if (!data) throw new Error('No data received');
+            return data;
+        } catch (error) {
+            retries++;
+            if (retries === maxRetries) throw error;
+            console.log(`Retry attempt ${retries} for ${url}`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    }
+};
+
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  return isMobile;
+};
+
+const LoadingCard: React.FC<{ loadingStatus: LoadingStatus }> = ({ loadingStatus }) => (
+  <Card className="bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+    <CardContent className="flex flex-col items-center justify-center h-full gap-4">
+      <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
+      <div className="text-white flex flex-col items-center gap-2">
+        <div>Loading standings data...</div>
+        <div className="text-sm text-gray-400">
+          {!loadingStatus.drivers && "Fetching drivers..."}
+          {loadingStatus.drivers && !loadingStatus.positions && "Fetching positions..."}
+          {loadingStatus.positions && !loadingStatus.intervals && "Fetching intervals..."}
+          {loadingStatus.intervals && !loadingStatus.lapTimes && "Fetching lap times..."}
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const ErrorCard: React.FC<{ error: string }> = ({ error }) => (
+  <Card className="bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+    <CardContent className="flex items-center justify-center h-full">
+      <div className="text-red-500">Error: {error}</div>
+    </CardContent>
+  </Card>
+);
 
 const DriverStandings: React.FC<DriverStandingsProps> = ({
   sessionKey,
@@ -69,67 +140,106 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
   viewMode,
   currentLap,
   onDriverSelect,
-  selectedDriverNumber
+  selectedDriverNumber,
+  onStandingsUpdate
 }) => {
+  const isMobile = useIsMobile();
   const [selectedDriver, setSelectedDriver] = useState<number | null>(null);
   const [positions, setPositions] = useState<DriverPosition[]>([]);
   const [intervals, setIntervals] = useState<Interval[]>([]);
   const [lapTimes, setLapTimes] = useState<LapTime[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [enhancedStandings, setEnhancedStandings] = useState<EnhancedPosition[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [leaderLapStartTimes, setLeaderLapStartTimes] = useState<Map<number, string>>(new Map());
   const [gapMode, setGapMode] = useState<'interval' | 'leader'>('interval');
+  const [expandedDriver, setExpandedDriver] = useState<number | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>({
+    drivers: false,
+    positions: false,
+    intervals: false,
+    lapTimes: false
+  });
 
   useEffect(() => {
-    if (!sessionKey || !meetingKey) return;
+    if (!sessionKey || !meetingKey) {
+      setError('Session or meeting key not provided');
+      setLoading(false);
+      return;
+    }
 
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError('');
+        setLoadingStatus({
+          drivers: false,
+          positions: false,
+          intervals: false,
+          lapTimes: false
+        });
 
         // Fetch drivers
-        const driversResponse = await fetch('https://api.openf1.org/v1/drivers');
-        const driversData = await driversResponse.json() as Driver[];
+        const driversData = await fetchWithRetry('https://api.openf1.org/v1/drivers');
         const uniqueDrivers = Array.from(new Map(
-          driversData.map((driver: Driver) => [driver.driver_number, driver])
+          driversData.filter((driver: Driver) => 
+            driver?.driver_number && driver?.name_acronym
+          ).map((driver: Driver) => [driver.driver_number, driver])
         ).values());
         setDrivers(uniqueDrivers);
+        setLoadingStatus(prev => ({ ...prev, drivers: true }));
 
         // Fetch positions
         const positionsUrl = `https://api.openf1.org/v1/position?session_key=${sessionKey}&meeting_key=${meetingKey}`;
-        const positionsResponse = await fetch(positionsUrl);
-        const positionsData = await positionsResponse.json();
-        setPositions(positionsData);
+        const positionsData = await fetchWithRetry(positionsUrl);
+        const validPositions = positionsData.filter((pos: DriverPosition) => 
+          pos?.driver_number && pos?.position && pos?.date
+        );
+        setPositions(validPositions);
+        setLoadingStatus(prev => ({ ...prev, positions: true }));
 
         // Fetch intervals
         const intervalsUrl = `https://api.openf1.org/v1/intervals?session_key=${sessionKey}`;
-        const intervalsResponse = await fetch(intervalsUrl);
-        const intervalsData = await intervalsResponse.json();
-        setIntervals(intervalsData);
+        const intervalsData = await fetchWithRetry(intervalsUrl);
+        const validIntervals = intervalsData.filter((int: Interval) => 
+          int?.driver_number && (int?.interval !== undefined || int?.gap_to_leader !== undefined)
+        );
+        setIntervals(validIntervals);
+        setLoadingStatus(prev => ({ ...prev, intervals: true }));
 
         // Fetch lap times
-        const lapTimesResponse = await fetch(`https://api.openf1.org/v1/laps?session_key=${sessionKey}`);
-        const lapTimesData = await lapTimesResponse.json(); // Corriger la variable (anciennement 'response')
-        setLapTimes(lapTimesData);
+        const lapTimesUrl = `https://api.openf1.org/v1/laps?session_key=${sessionKey}`;
+        const lapTimesData = await fetchWithRetry(lapTimesUrl);
+        const validLapTimes = lapTimesData.filter((lap: LapTime) => 
+          lap?.driver_number && lap?.lap_number && lap?.date_start
+        );
+        setLapTimes(validLapTimes);
+        setLoadingStatus(prev => ({ ...prev, lapTimes: true }));
 
-        // Process leader lap start times
+        // Process lap start times
         const lapStartMap = new Map<number, string>();
-        const sortedLapTimes = [...lapTimesData].sort((a, b) =>
+        const sortedLapTimes = [...validLapTimes].sort((a, b) =>
           new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
         );
 
+        const sortedPositions = [...validPositions].sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+        
+        if (sortedPositions.length > 0) {
+          lapStartMap.set(1, sortedPositions[0].date);
+        }
+
         sortedLapTimes.forEach(lap => {
-          const positions = positionsData.filter((pos: { date: string | number | Date; }) =>
+          const positions = validPositions.filter((pos: DriverPosition) =>
             new Date(pos.date).getTime() <= new Date(lap.date_start).getTime()
           );
 
           if (positions.length > 0) {
             const leaderPosition = positions
-              .sort((a: { date: string | number | Date; }, b: { date: string | number | Date; }) =>
-                new Date(b.date).getTime() - new Date(a.date).getTime())
-              .find((pos: { position: number; }) => pos.position === 1);
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .find(pos => pos.position === 1);
 
             if (leaderPosition && leaderPosition.driver_number === lap.driver_number) {
               lapStartMap.set(lap.lap_number, lap.date_start);
@@ -138,11 +248,10 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
         });
 
         setLeaderLapStartTimes(lapStartMap);
+        setLoading(false);
 
       } catch (err) {
-        setError('Error fetching data');
-        console.error(err);
-      } finally {
+        setError(err instanceof Error ? err.message : 'Error fetching data');
         setLoading(false);
       }
     };
@@ -152,7 +261,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
   const formatGap = (gap: number | string | null, isLeader: boolean): string => {
     if (isLeader) return '';
-    if (gap === null) return '-';
+    if (!gap || gap === null) return '-';
     if (typeof gap === 'string') return gap;
     return `+${gap.toFixed(3)}s`;
   };
@@ -164,41 +273,15 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
       const relevantPositions = new Map<number, DriverPosition>();
       const relevantIntervals = new Map<number, Interval>();
 
-      switch (viewMode) {
-        case 'chrono':
-          const currentTimeMs = new Date(currentTime).getTime();
-
-          // Process positions and intervals for chrono mode
-          positions.forEach(pos => {
-            const posTime = new Date(pos.date).getTime();
-            if (posTime <= currentTimeMs) {
-              const existing = relevantPositions.get(pos.driver_number);
-              if (!existing || new Date(pos.date) > new Date(existing.date)) {
-                relevantPositions.set(pos.driver_number, pos);
-              }
-            }
-          });
-
-          intervals.forEach(int => {
-            const intTime = new Date(int.date).getTime();
-            if (intTime <= currentTimeMs) {
-              const existing = relevantIntervals.get(int.driver_number);
-              if (!existing || new Date(int.date) > new Date(existing.date)) {
-                relevantIntervals.set(int.driver_number, int);
-              }
-            }
-          });
-          break;
-
-        case 'lap':
-          // Get the start time for the current lap from the leader's crossing
-          const lapStartTime = leaderLapStartTimes.get(currentLap);
-          if (lapStartTime) {
-            const lapStartMs = new Date(lapStartTime).getTime();
+      try {
+        switch (viewMode) {
+          case 'chrono':
+            const currentTimeMs = new Date(currentTime).getTime();
 
             positions.forEach(pos => {
+              if (!pos?.date || !pos?.driver_number) return;
               const posTime = new Date(pos.date).getTime();
-              if (posTime <= lapStartMs) {
+              if (posTime <= currentTimeMs) {
                 const existing = relevantPositions.get(pos.driver_number);
                 if (!existing || new Date(pos.date) > new Date(existing.date)) {
                   relevantPositions.set(pos.driver_number, pos);
@@ -207,63 +290,273 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
             });
 
             intervals.forEach(int => {
+              if (!int?.date || !int?.driver_number) return;
               const intTime = new Date(int.date).getTime();
-              if (intTime <= lapStartMs) {
+              if (intTime <= currentTimeMs) {
                 const existing = relevantIntervals.get(int.driver_number);
                 if (!existing || new Date(int.date) > new Date(existing.date)) {
                   relevantIntervals.set(int.driver_number, int);
                 }
               }
             });
-          }
-          break;
+            break;
 
-        case 'final':
-          positions.forEach(pos => {
-            const existing = relevantPositions.get(pos.driver_number);
-            if (!existing || new Date(pos.date) > new Date(existing.date)) {
-              relevantPositions.set(pos.driver_number, pos);
+          case 'lap':
+            const lapStartTime = leaderLapStartTimes.get(currentLap);
+            if (lapStartTime) {
+              const lapStartMs = new Date(lapStartTime).getTime();
+
+              positions.forEach(pos => {
+                if (!pos?.date || !pos?.driver_number) return;
+                const posTime = new Date(pos.date).getTime();
+                if (posTime <= lapStartMs) {
+                  const existing = relevantPositions.get(pos.driver_number);
+                  if (!existing || new Date(pos.date) > new Date(existing.date)) {
+                    relevantPositions.set(pos.driver_number, pos);
+                  }
+                }
+              });
+
+              intervals.forEach(int => {
+                if (!int?.date || !int?.driver_number) return;
+                const intTime = new Date(int.date).getTime();
+                if (intTime <= lapStartMs) {
+                  const existing = relevantIntervals.get(int.driver_number);
+                  if (!existing || new Date(int.date) > new Date(existing.date)) {
+                    relevantIntervals.set(int.driver_number, int);
+                  }
+                }
+              });
             }
-          });
+            break;
 
-          intervals.forEach(int => {
-            const existing = relevantIntervals.get(int.driver_number);
-            if (!existing || new Date(int.date) > new Date(existing.date)) {
-              relevantIntervals.set(int.driver_number, int);
-            }
-          });
-          break;
-      }
+          case 'final':
+            positions.forEach(pos => {
+              if (!pos?.date || !pos?.driver_number) return;
+              const existing = relevantPositions.get(pos.driver_number);
+              if (!existing || new Date(pos.date) > new Date(existing.date)) {
+                relevantPositions.set(pos.driver_number, pos);
+              }
+            });
 
-      // Create enhanced standings
-      let standings = drivers.map(driver => {
-        const position = relevantPositions.get(driver.driver_number);
-        const interval = relevantIntervals.get(driver.driver_number);
-        return {
-          position: position?.position || 999,
-          driver_number: driver.driver_number,
-          driver_details: driver,
-          status: position ? 'active' as const : 'inactive' as const,
-          gap_to_leader: interval?.gap_to_leader || null,
-          interval: interval?.interval || null
-        };
-      });
-
-      // Sort standings
-      standings.sort((a, b) => {
-        if (a.status === 'active' && b.status === 'active') {
-          return a.position - b.position;
+            intervals.forEach(int => {
+              if (!int?.date || !int?.driver_number) return;
+              const existing = relevantIntervals.get(int.driver_number);
+              if (!existing || new Date(int.date) > new Date(existing.date)) {
+                relevantIntervals.set(int.driver_number, int);
+              }
+            });
+            break;
         }
-        if (a.status === 'active') return -1;
-        if (b.status === 'active') return 1;
-        return 0;
-      });
 
-      setEnhancedStandings(standings);
+        let standings = drivers
+          .filter(driver => driver?.driver_number)
+          .map(driver => {
+            const position = relevantPositions.get(driver.driver_number);
+            const interval = relevantIntervals.get(driver.driver_number);
+            return {
+              position: position?.position || 999,
+              driver_number: driver.driver_number,
+              driver_details: driver,
+              status: position ? 'active' as const : 'inactive' as const,
+              gap_to_leader: interval?.gap_to_leader || null,
+              interval: interval?.interval || null
+            };
+          });
+
+        standings.sort((a, b) => {
+          if (a.status === 'active' && b.status === 'active') {
+            return a.position - b.position;
+          }
+          if (a.status === 'active') return -1;
+          if (b.status === 'active') return 1;
+          return 0;
+        });
+
+        setEnhancedStandings(standings);
+
+        if (standings.length > 0) {
+          const standingsData = standings
+              .filter(standing => standing.status === 'active')
+              .map(standing => ({
+                position: standing.position,
+                acronym: standing.driver_details?.name_acronym || ''
+              }));
+  
+          if (onStandingsUpdate) {
+            onStandingsUpdate(standingsData);
+          }
+        }
+
+      } catch (err) {
+        console.error('Error processing standings:', err);
+        setError('Error processing standings data');
+      }
     };
 
     processStandings();
-  }, [positions, intervals, drivers, currentTime, viewMode, currentLap, leaderLapStartTimes]);
+  }, [intervals, drivers, currentTime, viewMode, currentLap, leaderLapStartTimes, onStandingsUpdate]);
+
+  if (!sessionKey || !meetingKey) {
+    return (
+      <Card className="bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+        <CardContent className="flex items-center justify-center h-full">
+          <div className="text-white">Session or meeting key not provided</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (loading) {
+    return <LoadingCard loadingStatus={loadingStatus} />;
+  }
+
+  if (error) {
+    return <ErrorCard error={error} />;
+  }
+
+  if (isMobile) {
+    return (
+      <Card className="bg-[#282a2c] border border-gray-800 h-[calc(100vh-8rem)]">
+        <CardHeader className="pb-2">
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                {viewMode === 'final' ? 'Final Ranking' : 'Driver Standings'}
+              </CardTitle>
+              <Trophy className="h-5 w-5 text-[#5382ec]" />
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() => setGapMode((prev) => (prev === 'interval' ? 'leader' : 'interval'))}
+              className="w-full bg-black/20 text-gray-300 h-10"
+            >
+              {gapMode === 'interval' ? 'Interval' : 'Gap to leader'}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-2">
+          <div className="max-h-[30rem] overflow-y-auto">
+            <div className="space-y-2">
+              <AnimatePresence>
+                {enhancedStandings
+                  .filter((standing) => standing.status === 'active')
+                  .map((standing, index) => {
+                    if (!standing?.driver_number) return null;
+                    
+                    const isLeader = index === 0;
+                    const displayValue = gapMode === 'interval' ? standing.interval : standing.gap_to_leader;
+                    const teamColor = standing.driver_details?.team_colour || '2b2b2b';
+                    const isExpanded = expandedDriver === standing.driver_number;
+                    const isSelected = selectedDriverNumber === standing.driver_number.toString();
+  
+                    return (
+                      <motion.div
+                        key={standing.driver_number}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="w-full"
+                      >
+                        <div
+                          className={`rounded-lg overflow-hidden transition-all duration-300 
+                            ${isSelected ? 'ring-2 ring-inset ring-[#5382ec]' : ''}`}
+                        >
+                          <div
+                            className="flex items-center gap-2 p-2 bg-black/20"
+                            onClick={() => setExpandedDriver(isExpanded ? null : standing.driver_number)}
+                          >
+                            <div className={`w-6 text-center font-bold ${
+                              isLeader ? 'text-[#5382ec]' : 'text-gray-400'
+                            }`}>
+                              {standing.position}
+                            </div>
+  
+                            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                              {standing.driver_details?.headshot_url ? (
+                                <img
+                                  src={standing.driver_details.headshot_url}
+                                  alt={standing.driver_details.full_name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div
+                                  className="w-full h-full flex items-center justify-center"
+                                  style={{ backgroundColor: `#${teamColor}33` }}
+                                >
+                                  <span className="text-sm font-bold text-white">
+                                    {standing.driver_details?.driver_number}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+  
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-white truncate">
+                                {standing.driver_details?.name_acronym}
+                              </div>
+                            </div>
+  
+                            <div className="text-right font-mono text-xs text-gray-300">
+                              {formatGap(displayValue, isLeader)}
+                            </div>
+  
+                            <ChevronDown
+                              className={`w-4 h-4 text-gray-400 transition-transform duration-200 
+                                ${isExpanded ? 'transform rotate-180' : ''}`}
+                            />
+                          </div>
+  
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0 }}
+                              animate={{ height: 'auto' }}
+                              exit={{ height: 0 }}
+                              className="bg-black/10 px-3 py-2"
+                            >
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <div className="text-sm text-white mb-1">
+                                    {standing.driver_details?.full_name}
+                                  </div>
+                                  <div
+                                    className="text-xs px-2 py-0.5 rounded-full inline-block"
+                                    style={{
+                                      backgroundColor: `#${teamColor}33`,
+                                      color: `#${teamColor}`,
+                                    }}
+                                  >
+                                    {standing.driver_details?.team_name}
+                                  </div>
+                                </div>
+                                {!isSelected && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedDriver(standing.driver_number);
+                                      onDriverSelect(standing.driver_number.toString());
+                                    }}
+                                    className="bg-[#5382ec]/10 border-[#5382ec]/20 text-[#5382ec] hover:bg-[#5382ec]/20"
+                                  >
+                                    Select Driver
+                                  </Button>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+              </AnimatePresence>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 h-[70vh]">
@@ -271,16 +564,15 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
             {viewMode === 'final' ? 'Final Ranking' : 'Driver Standings'}
-            {viewMode === 'lap' && ` - Lap ${currentLap}`}
           </CardTitle>
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setGapMode(prev => prev === 'interval' ? 'leader' : 'interval')}
-              className="text-xs bg-black/20 hover:bg-black/30 text-gray-300"
+              className="text-xs bg-black/20 text-gray-300"
             >
-              {gapMode === 'interval' ? 'Gaps to leader' : 'Intervals'}
+              {gapMode === 'interval' ? 'Intervals' : 'Gaps to leader'}
             </Button>
             <Trophy className="h-5 w-5 text-[#5382ec]" />
           </div>
@@ -297,10 +589,10 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
               {enhancedStandings
                 .filter(standing => standing.status === 'active')
                 .map((standing, index) => {
+                  if (!standing?.driver_number) return null;
+                  
                   const isLeader = index === 0;
-                  const displayValue = gapMode === 'interval'
-                    ? standing.interval
-                    : standing.gap_to_leader;
+                  const displayValue = gapMode === 'interval' ? standing.interval : standing.gap_to_leader;
                   const teamColor = standing.driver_details?.team_colour || '2b2b2b';
                   const headshotUrl = standing.driver_details?.headshot_url;
                   const isSelected = selectedDriverNumber === standing.driver_number.toString();
@@ -328,16 +620,14 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <div
-                        className={`p-3 rounded-lg relative overflow-hidden transition-all duration-300 
+                      <div className={`p-3 rounded-lg relative overflow-hidden transition-all duration-300 
                         bg-black/20 backdrop-blur-sm hover:bg-black/30 
                         ${isSelected ? 'ring-2 ring-inset ring-[#5382ec]' : ''}`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`text-lg font-bold ${isLeader
-                            ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent'
-                            : 'text-gray-400'
-                            }`}>
+                          <div className={`text-lg font-bold ${
+                            isLeader ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent' : 'text-gray-400'
+                          }`}>
                             {standing.position}
                           </div>
 
@@ -387,10 +677,9 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                           </div>
 
                           <div className="text-right font-mono">
-                            <div className={`text-sm font-medium ${isLeader
-                              ? 'text-[#5382ec]'
-                              : 'text-gray-300'
-                              }`}>
+                            <div className={`text-sm font-medium ${
+                              isLeader ? 'text-[#5382ec]' : 'text-gray-300'
+                            }`}>
                               {formatGap(displayValue, isLeader)}
                             </div>
                           </div>

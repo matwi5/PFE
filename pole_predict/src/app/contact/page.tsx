@@ -82,7 +82,7 @@ export default function Contact() {
 
   return (
     <motion.div
-      className="min-h-screen bg-[#1B1C1D] text-white py-24 px-8"
+      className="min-h-screen bg-[#1B1C1D] text-white py-12 px-4 md:py-24 md:px-8"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -93,12 +93,12 @@ export default function Contact() {
       >
         <motion.div variants={itemVariants}>
           <Mail 
-            className="w-24 h-24 mb-8 text-[#5382ec]"
+            className="w-16 h-16 md:w-24 md:h-24 mb-6 md:mb-8 text-[#5382ec]"
           />
         </motion.div>
 
         <motion.h1
-          className="text-4xl h-20 md:text-6xl font-bold mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center"
+          className="text-3xl md:text-4xl lg:text-6xl font-bold mb-6 md:mb-8 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center h-16 md:h-20"
           variants={itemVariants}
         >
           <Typewriter
@@ -116,7 +116,7 @@ export default function Contact() {
       </motion.main>
 
       <motion.div
-        className="max-w-2xl mx-auto mt-12"
+        className="w-full max-w-2xl mx-auto mt-8 md:mt-12 px-4 md:px-0"
         variants={itemVariants}
       >
         <Card
@@ -124,65 +124,65 @@ export default function Contact() {
           onMouseMove={handleMouseMove}
           onMouseLeave={() => setIsHovering(false)}
         >
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="text-xl md:text-2xl font-bold text-center bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
               Contact Form
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
+          <CardContent className="p-4 md:p-6">
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+              <div className="space-y-1 md:space-y-2">
                 <label className="text-sm font-medium text-gray-200">Name</label>
                 <Input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white"
+                  className="bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white text-sm md:text-base h-9 md:h-10"
                   placeholder="Your name"
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1 md:space-y-2">
                 <label className="text-sm font-medium text-gray-200">Email</label>
                 <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white"
+                  className="bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white text-sm md:text-base h-9 md:h-10"
                   placeholder="your.email@example.com"
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1 md:space-y-2">
                 <label className="text-sm font-medium text-gray-200">Subject</label>
                 <Input
                   type="text"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   required
-                  className="bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white"
+                  className="bg-[#1d1f20] border-gray-700 focus:border-[#5382ec] text-white text-sm md:text-base h-9 md:h-10"
                   placeholder="Message subject"
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1 md:space-y-2">
                 <label className="text-sm font-medium text-gray-200">Message</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   required
-                  className="w-full min-h-[150px] rounded-md border border-gray-700 bg-[#1d1f20] px-3 py-2 text-white focus:outline-none focus:border-[#5382ec] transition-colors"
+                  className="w-full min-h-[120px] md:min-h-[150px] rounded-md border border-gray-700 bg-[#1d1f20] px-3 py-2 text-white focus:outline-none focus:border-[#5382ec] transition-colors text-sm md:text-base"
                   placeholder="Your message..."
                 />
               </div>
 
-              <div className="flex justify-center">
+              <div className="flex justify-center pt-2">
                 <Button
                   type="submit"
                   disabled={status === 'sending'}
-                  className="relative group"
+                  className="relative group text-sm md:text-base py-2 px-4"
                   style={{
                     background: status === 'success' ? '#10B981' : status === 'error' ? '#EF4444' : 'linear-gradient(to right, #5382ec, #2dd4bf)',
                     transition: 'all 0.3s ease',
@@ -191,11 +191,11 @@ export default function Contact() {
                   {status === 'sending' ? (
                     <>Sending...</>
                   ) : status === 'success' ? (
-                    <><CheckCircle className="mr-2 h-4 w-4" /> Sent Successfully</>
+                    <><CheckCircle className="mr-1.5 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" /> Sent Successfully</>
                   ) : status === 'error' ? (
-                    <><XCircle className="mr-2 h-4 w-4" /> Error Sending</>
+                    <><XCircle className="mr-1.5 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" /> Error Sending</>
                   ) : (
-                    <>Send Message <Send className="ml-2 h-4 w-4" /></>
+                    <>Send Message <Send className="ml-1.5 md:ml-2 h-3.5 w-3.5 md:h-4 md:w-4" /></>
                   )}
                 </Button>
               </div>
