@@ -29,6 +29,7 @@ import F1GapAnalysis from "../components/analysisComponent/F1GapAnalysis";
 import ChampionshipWidget_Live from "../components/analysisComponent/ChampionshipWidget_Live";
 
 import { Loader2 } from "lucide-react";
+import WeatherMap from "@/app/components/weatherComponent/WeatherMap";
 
 const PredictionAlert = ({ open, onClose }) => {
   if (!open) return null;
@@ -367,6 +368,7 @@ const MobileView = ({
               {widgetConfig.visibility['vital-statistics'] && widgetComponents['vital-statistics']}
               {widgetConfig.visibility['event-display'] && widgetComponents['event-display']}
               {widgetConfig.visibility['championship'] && widgetComponents['championship']}
+              {widgetConfig.visibility['weather-map'] && widgetComponents['weather-map']}
             </>
           )}
 
@@ -473,6 +475,7 @@ const RaceControlEvents = () => {
       'lap-analysis',
       'gap-analysis',
       'championship',
+      'weather-map',
       'vital-statistics',
       ...predictionTypes.map(type => `prediction-${type}`)
     ],
@@ -488,6 +491,7 @@ const RaceControlEvents = () => {
       'lap-analysis': true,
       'gap-analysis': true,
       'championship': true,
+      'weather-map': true,
       'event-display': true,
       ...Object.fromEntries(predictionTypes.map(type => [`prediction-${type}`, true]))
     }
@@ -913,6 +917,12 @@ const RaceControlEvents = () => {
         currentStandings={currentStandings}
       />
     ),
+    'weather-map': (
+      <WeatherMap
+        meeting_name={selectedMeeting}
+        date={currentTime}
+      />
+    ),
     ...Object.fromEntries(predictionTypes.map(type => [
       `prediction-${type}`,
       selectedSession && selectedDriver && isRaceSession && (
@@ -1156,6 +1166,17 @@ const RaceControlEvents = () => {
                       className="break-inside-avoid"
                     >
                       {widgetComponents['championship']}
+                    </motion.div>
+                  )}
+
+                  {widgetId === 'weather-map' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="break-inside-avoid"
+                    >
+                      {widgetComponents['weather-map']}
                     </motion.div>
                   )}
 

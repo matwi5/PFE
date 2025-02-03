@@ -36,6 +36,7 @@ const defaultWidgets: Widget[] = [
   { id: 'lap-analysis', name: 'Lap Analysis', enabled: true },
   { id: 'gap-analysis', name: 'Gap Analysis', enabled: true },
   { id: 'championship', name: 'Live championship', enabled: true },
+  { id: 'weather-map', name: 'Weather Map', enabled: true },
   ...predictionTypes.map(type => ({
     id: `prediction-${type}`,
     name: `${type.charAt(0).toUpperCase() + type.slice(1)} Prediction`,

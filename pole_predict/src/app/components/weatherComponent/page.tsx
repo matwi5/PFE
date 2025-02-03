@@ -22,7 +22,7 @@ const App: React.FC = () => {
 
     return (
         <div>
-            <WeatherMap circuitName={'Yas Marina Circuit'} date={'2025-01-12'} time={'16'}/>
+            <WeatherMap circuitID={1141} date={'2025-01-12'} time={'16'}/>
             <WeatherPrevision circuitName={"São Paulo Grand Prix"} dates={dates} />
         </div>
 

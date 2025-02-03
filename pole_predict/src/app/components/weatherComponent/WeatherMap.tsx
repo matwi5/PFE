@@ -30,6 +30,11 @@ interface Feature {
     };
 }
 
+interface Meeting {
+    meeting_key?: string;
+    circuit_short_name?: string;
+}
+
 interface WeatherData {
     temp: number;
     precip: number;
@@ -41,12 +46,12 @@ interface WeatherData {
 }
 
 // eslint-disable-next-line @next/next/no-async-client-component
-const WeatherMap: React.FC<{ circuitName: string; date: string; time: string }> = ({
-                                                                                       circuitName,
+const WeatherMap: React.FC<{ meeting_name: string; date: string}> = ({
+                                                                                        meeting_name,
                                                                                        date,
-                                                                                       time,
                                                                                    }) => {
     const [files, setFiles] = useState<Feature[]>([]);
+    const [meetings, setMeetings] = useState<Meeting[]>([]);
     const [geoJsonData, setGeoJsonData] = useState<FeatureCollection | null>(null);
     const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
     const [selectedCircuitCoords, setSelectedCircuitCoords] = useState<[number, number]>();
@@ -58,11 +63,14 @@ const WeatherMap: React.FC<{ circuitName: string; date: string; time: string }> 
         setSelectedCircuitCoords(undefined);
         setWeatherData(null);
 
-        if (!circuitName || files.length === 0) {
+        if (!meeting_name || files.length === 0) {
             return;
         }
 
-        const selectedCircuit = files.find((file) => file.properties.Name === circuitName);
+        //transformer circuitID en circuitName
+        const selectedMeeting = meetings.find((file) => file.meeting_key == meeting_name);
+
+        const selectedCircuit = files.find((file) => file.properties.Name === selectedMeeting?.circuit_short_name);
 
         if (selectedCircuit) {
             let validCoordinates: number[][] = [];
@@ -112,11 +120,11 @@ const WeatherMap: React.FC<{ circuitName: string; date: string; time: string }> 
                 setSelectedCircuitCoords([bounds.getCenter().lat, bounds.getCenter().lng]);
             } else {
                 console.warn(
-                    `No valid coordinates found for circuit: ${circuitName}, geometry type: ${selectedCircuit.geometry.type}`,
+                    `No valid coordinates found for circuit: ${meeting_name}, geometry type: ${selectedCircuit.geometry.type}`,
                 );
             }
         }
-    }, [circuitName, files]);
+    }, [meeting_name, files, meetings]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const fetchWeatherData = async (
@@ -127,7 +135,7 @@ const WeatherMap: React.FC<{ circuitName: string; date: string; time: string }> 
         if (!coordinates || !date || !time) return;
 
         const [lat, lon] = coordinates;
-        const baseDateTime = new Date(`${date}T${time}:00`).toISOString();
+        const baseDateTime = new Date(`${date}T${time}`).toISOString();
 
         try {
             const responses = await Promise.all([
@@ -164,6 +172,8 @@ const WeatherMap: React.FC<{ circuitName: string; date: string; time: string }> 
         const fetchData = async () => {
             try {
                 const querySnapshot = await getDocs(collection(firestore, 'geojson_files'));
+                const queryMeetings = await getDocs(collection(firestore, 'meetings'));
+                setMeetings(queryMeetings.docs.map((doc) => doc.data() as Meeting))
                 return querySnapshot.docs.map((doc) => doc.data() as Feature);
             } catch (error) {
                 console.error('Error fetching data from Firestore:', error);
@@ -174,11 +184,13 @@ const WeatherMap: React.FC<{ circuitName: string; date: string; time: string }> 
 
     useEffect(() => {
         loadGeoJson();
-    }, [circuitName, files, loadGeoJson]); // Depend on circuitName and files
+    }, [meeting_name, files, loadGeoJson]); // Depend on circuitName and files
 
     useEffect(() => {
-        if (!weatherData) fetchWeatherData(selectedCircuitCoords, date, time).then(setWeatherData);
-    }, [selectedCircuitCoords, date, time, fetchWeatherData, weatherData]);
+        const date_ = date.split("T")[0]; // Extracts '2024-09-01'
+        const time = date.split("T")[1]; // Extracts '15'
+        if (!weatherData) fetchWeatherData(selectedCircuitCoords, date_, time).then(setWeatherData);
+    }, [selectedCircuitCoords, date, fetchWeatherData, weatherData]);
 
     useEffect(() => {
         setIsMapContainerReady(true);
