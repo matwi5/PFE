@@ -31,6 +31,8 @@ import ChampionshipWidget_Live from "../components/analysisComponent/Championshi
 import { Loader2 } from "lucide-react";
 import WeatherMap from "@/app/components/weatherComponent/WeatherMap";
 
+import DriverMap from "../components/raceComponent/DriverMap";
+
 const PredictionAlert = ({ open, onClose }) => {
   if (!open) return null;
 
@@ -376,6 +378,7 @@ const MobileView = ({
             <>
               {widgetConfig.visibility['telemetry'] && widgetComponents['telemetry']}
               {widgetConfig.visibility['circuit-map'] && widgetComponents['circuit-map']}
+              {widgetConfig.visibility['driver-map'] && widgetComponents['driver-map']}
               {widgetConfig.visibility['sector-analysis'] && widgetComponents['sector-analysis']}
               {widgetConfig.visibility['stint-visualizer'] && widgetComponents['stint-visualizer']}
               {widgetConfig.visibility['speed-visualizer'] && widgetComponents['speed-visualizer']}
@@ -467,6 +470,7 @@ const RaceControlEvents = () => {
       'driver-profile',
       'driver-standings',
       'telemetry',
+      'driver-map',
       'circuit-map',
       'sector-analysis',
       'event-display',
@@ -484,6 +488,7 @@ const RaceControlEvents = () => {
       'driver-standings': true,
       'vital-statistics': true,
       'telemetry': true,
+      'driver-map': true,
       'circuit-map': true,
       'sector-analysis': true,
       'stint-visualizer': true,
@@ -887,6 +892,14 @@ const RaceControlEvents = () => {
         currentTime={currentTime}
       />
     ),
+    'driver-map': (
+      <DriverMap
+        sessionKey={selectedSession}
+        meetingKey={selectedMeeting}
+        currentTime={currentTime}
+        viewMode={viewMode}
+      />
+    ),
     'stint-visualizer': (
       <StintVisualizer
         sessionKey={parseInt(selectedSession)}
@@ -1081,6 +1094,17 @@ const RaceControlEvents = () => {
                       transition={{ delay: index * 0.05 }}
                     >
                       {widgetComponents['telemetry']}
+                    </motion.div>
+                  )}
+
+                  {widgetId === 'driver-map' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="break-inside-avoid"
+                    >
+                      {widgetComponents['driver-map']}
                     </motion.div>
                   )}
 
