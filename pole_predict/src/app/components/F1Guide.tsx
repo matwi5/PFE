@@ -109,7 +109,7 @@ const F1Guide = () => {
         "Points are awarded to the top 10 finishers: 25 for 1st, 18 for 2nd, 15 for 3rd, down to 1 point for 10th.",
         "Both Drivers' and Constructors' Championships are awarded at the season's end."
       ],
-      image: "/images/f1-basics.jpg"
+      image: "/images/f1tech.png"
     },
     {
       title: "Race Strategy",
@@ -122,7 +122,7 @@ const F1Guide = () => {
         "Teams use real-time data and predictive models to optimize their strategy.",
         "The timing of pit stops can make the difference between winning and losing."
       ],
-      image: "/images/race-strategy.jpg"
+      image: "/images/f1strat.png"
     },
     {
       title: "Tire Management",
@@ -135,7 +135,7 @@ const F1Guide = () => {
         "Drivers must manage tire wear throughout their stint.",
         "Different tracks and conditions favor different tire strategies."
       ],
-      image: "/images/tires.jpg"
+      image: "/images/tiremanagment.png"
     },
     {
       title: "Car Technology",
@@ -148,7 +148,7 @@ const F1Guide = () => {
         "DRS (Drag Reduction System) aids overtaking in designated zones.",
         "Cars can accelerate from 0-100 km/h in about 2.6 seconds."
       ],
-      image: "/images/f1-car.jpg"
+      image: "/images/f1tech.png"
     },
     {
       title: "Pit Stops",
@@ -161,7 +161,7 @@ const F1Guide = () => {
         "Perfect coordination is essential for quick and safe stops.",
         "The pit stop timing can greatly influence race outcomes."
       ],
-      image: "/images/pitstop.jpg"
+      image: "/images/pitstop.png"
     },
     {
       title: "Track Dynamics",
@@ -174,7 +174,7 @@ const F1Guide = () => {
         "Different sections of tracks offer various overtaking opportunities.",
         "Track evolution throughout a race weekend affects grip levels."
       ],
-      image: "/images/track.jpg"
+      image: "/images/track.png"
     },
     {
       title: "Race Performance",
@@ -187,7 +187,7 @@ const F1Guide = () => {
         "Communication between driver and team is constant during races.",
         "Performance data is continuously analyzed for optimization."
       ],
-      image: "/images/performance.jpg"
+      image: "/images/performances.png"
     }
   ];
 

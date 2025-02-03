@@ -139,7 +139,7 @@ const FeaturesWidget = () => {
         description: "Predict final race positions and potential overtaking opportunities."
       }
     ],
-    image: "/api/placeholder/600/400",
+    image: "/images/.png",
     gradient: true,
     reverse: false
   };
