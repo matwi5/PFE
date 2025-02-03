@@ -2,9 +2,24 @@
 "use client";
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Map } from "lucide-react";
+import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Team } from "@/app/page"; // Assuming Team interface is in page.tsx
+import { motion } from 'framer-motion';
+
+interface Team {
+    name: string;
+    color: string;
+    logo_url: string;
+    base: string;
+    team_principal: string;
+    championships: number;
+    power_unit: string;
+    country: string;
+    country_flag: string;
+    pilote1_url: string;
+    pilote2_url: string;
+    car_image: string;
+}
 
 interface ComparerEcuriesCardProps {
     hoveredCard: number | null;
@@ -13,32 +28,33 @@ interface ComparerEcuriesCardProps {
     toggleTeamTab: () => void;
 }
 
-
 const ComparerEcuriesCard: React.FC<ComparerEcuriesCardProps> = ({ hoveredCard, selectedTeam, setHoveredCard, toggleTeamTab }) => {
     return (
         <Card
-            className={`card transition-all duration-300 bg-gray-900 border border-gray-800 h-fit ${hoveredCard === 6 ? 'scale-105' : ''} ${hoveredCard === 6 && selectedTeam ? 'team-card-hover' : 'hover:border-orange-500'}`}
-            onMouseEnter={() => setHoveredCard(6)}
-            onMouseLeave={() => setHoveredCard(null)}
+            className={`group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 transition-shadow duration-300 ${hoveredCard === 6 ? 'scale-105' : ''} ${hoveredCard === 6 && selectedTeam ? '' : 'hover:border-[#5382ec]'}`}
             style={{
-                borderColor: hoveredCard === 6 && selectedTeam ? selectedTeam.color : undefined,
+                border: (hoveredCard === 6 && selectedTeam) ? `2px solid #${selectedTeam.color}` : undefined
             }}
         >
-            <CardHeader>
-                <CardTitle className="flex items-center text-white card-header-title">
-                    <Map className="mr-2 icon-widget" /> COMPARER ECURIES
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="text-gray-300">
-                <div className="space-y-4">
-                    <Button
-                        variant="outline"
-                        className="border border-white bg-gray-800 text-orange-500 hover:bg-orange-500 hover:text-black transition-all duration-300 compare-button icon-widget"
-                        onClick={toggleTeamTab}
-                    >
-                        Comparer les écuries
-                    </Button>
+            <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                        Compare Teams
+                    </CardTitle>
+                    <Users className="h-5 w-5 text-[#5382ec]" />
                 </div>
+            </CardHeader>
+            <CardContent className="text-gray-300 space-y-4">
+                <Button
+                    asChild
+                    variant="outline"
+                    className="border border-gray-800 bg-black/20 text-gray-300 hover:bg-black/30 hover:text-[#2dd4bf] transition-all duration-300 w-full"
+                    onClick={toggleTeamTab}
+                >
+                    <motion.div whileTap={{ scale: 0.95 }}>
+                        Compare Teams
+                    </motion.div>
+                </Button>
             </CardContent>
         </Card>
     );

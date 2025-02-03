@@ -4,6 +4,7 @@ import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Medal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion } from 'framer-motion';
 
 interface ResultatsCardProps {
     mainGP: GP | null;
@@ -57,7 +58,6 @@ interface Driver {
     WorldChampionships: number;
 }
 
-
 const ResultatsCard: React.FC<ResultatsCardProps> = ({
     mainGP,
     drivers,
@@ -72,111 +72,121 @@ const ResultatsCard: React.FC<ResultatsCardProps> = ({
 }) => {
     return (
         <Card
-            className={`card transition-all duration-300 bg-gray-900 border border-gray-800 hover:border-orange-500 h-fit ${hoveredCard === 3 ? 'scale-105' : ''}`}
-            onMouseEnter={() => setHoveredCard(3)}
-            onMouseLeave={() => setHoveredCard(null)}
-        >
-            <CardHeader>
-                <CardTitle className="flex items-center text-white card-header-title">
-                    <Medal className="mr-2 icon-widget" /> RESULTATS
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="text-gray-300">
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-bold text-orange-500 mb-4">Podium</h3>
-                        <Button
-                            variant="outline"
-                            className="border border-white bg-gray-800 text-orange-500 hover:bg-orange-500 hover:text-black transition-all duration-300 icon-widget"
-                            onClick={() => setShowAllPodium(!showAllPodium)}
-                        >
-                            {showAllPodium ? "Masquer le résultat" : "Afficher le résultat"}
-                        </Button>
-                    </div>
-                    {mainGP?.podium ? (
-                        <div className="space-y-2">
-                            {(showAllPodium ? mainGP.podium : mainGP.podium.slice(0, 3)).map((driverName, index) => {
-                                const driver = drivers.find(d => d.last_name === driverName);
-                                return (
-                                    <button
-                                        key={index}
-                                        className="w-full bg-gray-800 p-3 rounded-lg transition-all duration-300 hover:bg-gray-700 podium-item"
-                                        onClick={() => handleDriverClick(driverName)}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <img
-                                                src={driver?.headshot_url}
-                                                alt={`${driverName} headshot`}
-                                                className="w-10 h-10 rounded-full mr-2 icon-widget"
-                                            />
-                                            <span>
-                                                {index + 1}{index === 0 ? 'er' : 'ème'} : {driverName}
-                                            </span>
-                                            <span
-                                                className="text-sm italic text-orange-500 cursor-pointer team-link"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleTeamClick(driver?.team_name || '');
-                                                }}
-                                            >
-                                                {driver?.team_name}
-                                            </span>
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <p className="text-gray-500">Podium non disponible</p>
-                    )}
+            className={`group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 ${hoveredCard === 3 ? 'scale-105' : ''}`}
 
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-bold text-orange-500 mb-4">Qualification</h3>
-                        <Button
-                            variant="outline"
-                            className="border border-white bg-gray-800 text-orange-500 hover:bg-orange-500 hover:text-black transition-all duration-300 icon-widget"
-                            onClick={() => setShowAllQualif(!showAllQualif)}
-                        >
-                            {showAllQualif ? "Masquer les qualifications" : "Afficher les qualifications"}
-                        </Button>
-                    </div>
-                    {mainGP?.qualif ? (
-                        <div className="space-y-2">
-                            {(showAllQualif ? mainGP.qualif : mainGP.qualif.slice(0, 3)).map((driverName, index) => {
-                                const driver = drivers.find(d => d.last_name === driverName);
-                                return (
-                                    <button
-                                        key={index}
-                                        className="w-full bg-gray-800 p-3 rounded-lg transition-all duration-300 hover:bg-gray-700 qualif-item"
-                                        onClick={() => handleDriverClick(driverName)}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <img
-                                                src={driver?.headshot_url}
-                                                alt={`${driverName} headshot`}
-                                                className="w-10 h-10 rounded-full mr-2 icon-widget"
-                                            />
-                                            <span>
-                                                {index + 1}{index === 0 ? 'er' : 'ème'} : {driverName}
-                                            </span>
-                                            <span
-                                                className="text-sm italic text-orange-500 cursor-pointer team-link"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleTeamClick(driver?.team_name || '');
-                                                }}
-                                            >
-                                                {driver?.team_name}
-                                            </span>
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <p className="text-gray-500">Qualifications non disponibles</p>
-                    )}
+        >
+            <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                        Results
+                    </CardTitle>
+                    <Medal className="h-5 w-5 text-[#5382ec]" />
                 </div>
+            </CardHeader>
+            <CardContent className="text-gray-300 space-y-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-bold text-[#2dd4bf] mb-4">Podium</h3>
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="border border-gray-800 bg-black/20 text-gray-300 hover:bg-black/30 hover:text-[#2dd4bf] transition-all duration-300"
+                        onClick={() => setShowAllPodium(!showAllPodium)}
+                    >
+                        <motion.div whileTap={{ scale: 0.95 }}>
+                            {showAllPodium ? "Hide Results" : "Show Results"}
+                        </motion.div>
+                    </Button>
+                </div>
+                {mainGP?.podium ? (
+                    <div className="space-y-2">
+                        {(showAllPodium ? mainGP.podium : mainGP.podium.slice(0, 3)).map((driverName, index) => {
+                            const driver = drivers.find(d => d.last_name === driverName);
+                            return (
+                                <motion.button
+                                    key={index}
+                                    className="w-full p-3 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:bg-black/30 flex items-center justify-between"
+                                    onClick={() => handleDriverClick(driverName)}
+                                    whileTap={{ scale: 0.98 }}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <img
+                                            src={driver?.headshot_url}
+                                            alt={`${driverName} headshot`}
+                                            className="h-10 w-10 rounded-full"
+                                        />
+                                        <span className="text-gray-300">
+                                            {index + 1}{index === 0 ? 'st' : index === 1 ? 'nd' : index === 2 ? 'rd' : 'th'} : {driverName}
+                                        </span>
+                                    </div>
+                                    <motion.span
+                                        className="text-sm italic text-[#2dd4bf] cursor-pointer"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleTeamClick(driver?.team_name || '');
+                                        }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        {driver?.team_name}
+                                    </motion.span>
+                                </motion.button>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <p className="text-gray-500">Podium not available</p>
+                )}
+
+                <div className="flex items-center justify-between mt-4">
+                    <h3 className="text-xl font-bold text-[#2dd4bf] mb-4">Qualification</h3>
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="border border-gray-800 bg-black/20 text-gray-300 hover:bg-black/30 hover:text-[#2dd4bf] transition-all duration-300"
+                        onClick={() => setShowAllQualif(!showAllQualif)}
+                    >
+                        <motion.div whileTap={{ scale: 0.95 }}>
+                            {showAllQualif ? "Hide Qualifications" : "Show Qualifications"}
+                        </motion.div>
+                    </Button>
+                </div>
+                {mainGP?.qualif ? (
+                    <div className="space-y-2">
+                        {(showAllQualif ? mainGP.qualif : mainGP.qualif.slice(0, 3)).map((driverName, index) => {
+                            const driver = drivers.find(d => d.last_name === driverName);
+                            return (
+                                <motion.button
+                                    key={index}
+                                    className="w-full p-3 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:bg-black/30 flex items-center justify-between"
+                                    onClick={() => handleDriverClick(driverName)}
+                                    whileTap={{ scale: 0.98 }}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <img
+                                            src={driver?.headshot_url}
+                                            alt={`${driverName} headshot`}
+                                            className="h-10 w-10 rounded-full"
+                                        />
+                                        <span className="text-gray-300">
+                                            {index + 1}{index === 0 ? 'st' : index === 1 ? 'nd' : index === 2 ? 'rd' : 'th'} : {driverName}
+                                        </span>
+                                    </div>
+                                    <motion.span
+                                        className="text-sm italic text-[#2dd4bf] cursor-pointer"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleTeamClick(driver?.team_name || '');
+                                        }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        {driver?.team_name}
+                                    </motion.span>
+                                </motion.button>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <p className="text-gray-500">Qualifications not available</p>
+                )}
             </CardContent>
         </Card>
     );

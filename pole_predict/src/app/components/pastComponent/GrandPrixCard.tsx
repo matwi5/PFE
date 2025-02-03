@@ -2,9 +2,17 @@
 "use client";
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Map, ArrowRight } from "lucide-react";
+import { Map, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
+import { motion } from 'framer-motion';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface GrandPrixCardProps {
     mainGP: GP | null;
@@ -52,55 +60,75 @@ const GrandPrixCard: React.FC<GrandPrixCardProps> = ({
 }) => {
     return (
         <Card
-            className={`card transition-all duration-300 bg-gray-900 border border-gray-800 hover:border-orange-500 ${hoveredCard === 0 ? 'scale-105' : ''}`}
-            onMouseEnter={() => setHoveredCard(0)}
-            onMouseLeave={() => setHoveredCard(null)}
+            className={`group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 ${hoveredCard === 0 ? 'scale-105' : ''}`}
         >
-            <CardHeader>
-                <CardTitle className="flex items-center text-white card-header-title">
-                    <Map className="mr-2 icon-widget" /> GRAND PRIX
-                </CardTitle>
+            <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                        Grand Prix
+                    </CardTitle>
+                    <Map className="h-5 w-5 text-[#5382ec]" />
+                </div>
             </CardHeader>
             <CardContent className="text-gray-300">
-                <div className="space-y-2">
-                    <p className="text-xl font-bold">{mainGP?.meeting_name} ({mainGP?.year})</p>
-                    <p className="flex items-center">
-                        <MapPin className="mr-2 h-4 w-4 icon-widget" />
+                <motion.div
+                    className="p-4 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:bg-black/30"
+                >
+                    <p className="text-xl font-bold text-gray-200">{mainGP?.meeting_name} ({mainGP?.year})</p>
+                    <p className="flex items-center text-gray-300">
+                        <MapPin className="mr-2 h-4 w-4" />
                         {mainGP?.location}, {mainGP?.country_name}
                     </p>
-                    <p className="text-sm text-orange-500">{mainGP?.meeting_code}</p>
-                </div>
-                <div className="relative">
-                    <select
-                        className="mt-4 border border-white bg-gray-800 text-orange-500 hover:bg-orange-500 hover:text-black transition-all duration-300 p-2 rounded icon-widget mr-2"
-                        value={selectedYear}
-                        onChange={(e) => handleYearChange(e.target.value)}
+                    <p className="text-sm text-[#5382ec]">{mainGP?.meeting_code}</p>
+                </motion.div>
+                <div className="mt-4 flex flex-col md:flex-row md:items-center gap-4">
+                    <Select onValueChange={handleYearChange} value={selectedYear.toString()}>
+                        <SelectTrigger
+                            className={`w-full md:w-auto border-0 transition-all ${selectedYear
+                                ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
+                                : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
+                                }`}
+                        >
+                            <SelectValue placeholder="Select Year" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#282a2c] border-0">
+                            {[2023, 2024].map((year) => (
+                                <SelectItem
+                                    key={year}
+                                    value={year.toString()}
+                                    className="text-gray-300 hover:bg-[#5382ec]/20 focus:bg-[#5382ec]/30"
+                                >
+                                    {year}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select onValueChange={(value) => {
+                        const selectedGP = allGPs.find(gp => gp.meeting_key === parseInt(value));
+                        if (selectedGP) {
+                            handleGPSelect(selectedGP);
+                        }
+                    }}
                     >
-                        <option value={2023}>2023</option>
-                        <option value={2024}>2024</option>
-                    </select>
-                    <Button
-                        variant="outline"
-                        className="mt-4 border border-white bg-gray-800 text-orange-500 hover:bg-orange-500 hover:text-black transition-all duration-300 icon-widget"
-                        onClick={() => setShowDropdown(!showDropdown)}
-                    >
-                        Autre <ArrowRight className="ml-2 h-4 w-4 icon-widget" />
-                    </Button>
-                    {showDropdown && (
-                        <div className="absolute z-50 mt-2 w-full bg-gray-900 border border-gray-800 rounded shadow-lg">
+                        <SelectTrigger
+                            className={`w-full md:w-auto border-0 transition-all border border-gray-800 bg-black/20 text-gray-300 hover:bg-black/30 hover:text-[#2dd4bf] transition-all duration-300`}
+                        >
+                            <SelectValue placeholder="Other" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#282a2c] border-0">
                             {allGPs
                                 .filter(gp => gp.year === selectedYear)
-                                .map((gp, index) => (
-                                    <button
-                                        key={index}
-                                        className="w-full px-4 py-2 text-left text-white hover:bg-gray-800 transition-colors dropdown-item"
-                                        onClick={() => handleGPSelect(gp)}
+                                .map((gp) => (
+                                    <SelectItem
+                                        key={gp.meeting_key}
+                                        value={gp.meeting_key.toString()}
+                                        className="text-gray-300 hover:bg-[#5382ec]/20 focus:bg-[#5382ec]/30" 
                                     >
                                         {gp.meeting_name} ({gp.year})
-                                    </button>
+                                    </SelectItem>
                                 ))}
-                        </div>
-                    )}
+                        </SelectContent>
+                    </Select>
                 </div>
             </CardContent>
         </Card>
