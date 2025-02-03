@@ -9,6 +9,8 @@ import GeneralDataCard from "./components/generalDataComponent/GeneralDataCard";
 import GPDetailCard from "./components/generalDataComponent/GPDetailCard";
 import DriverDetailCard from "./components/generalDataComponent/DriverDetailCard";
 import TeamDetailCard from "./components/generalDataComponent/TeamDetailCard";
+import FeaturesWidget from "./components/FeaturesWidget";
+import F1Guide from "./components/F1Guide";
 
 interface Driver {
   flagColors: string[];
@@ -266,7 +268,7 @@ const HomePage: React.FC = () => {
       </motion.main>
 
       <motion.section
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 sm:mt-12 max-w-6xl mx-auto"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 sm:mt-12 mb-8 sm:mb-12 max-w-6xl mx-auto"
         variants={containerVariants}
       >
         {cardData.map((card, index) => (
@@ -446,6 +448,20 @@ const HomePage: React.FC = () => {
             </AnimatePresence>
           </motion.div>
         ))}
+      </motion.section>
+      <motion.section
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <FeaturesWidget />
+      </motion.section>
+      <motion.section
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+      >
+        <F1Guide />
       </motion.section>
     </motion.div>
   );

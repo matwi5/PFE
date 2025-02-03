@@ -1,9 +1,12 @@
+'use client';
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import CustomDropdown_single from "./component/CustomDropdown_single";
 import { collection, getDocs } from 'firebase/firestore';
 import {db} from "@/firebaseConfig";
+import { Trophy, Loader2, AlertTriangle } from "lucide-react";
 
 const firestore = db;
 
@@ -33,8 +36,71 @@ interface ChampionshipWidgetProps {
     meeting_name?: string;
 }
 
+interface LoadingState {
+    drivers: boolean;
+    meetings: boolean;
+}
+
 const racePointsScale = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 const sprintPointsScale = [8, 7, 6, 5, 4, 3, 2, 1];
+
+const LoadingCard = ({ loadingState }: { loadingState: LoadingState }) => (
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+        <CardContent className="flex flex-col items-center justify-center h-full gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
+            <div className="text-white flex flex-col items-center gap-2">
+                <div>Loading championship data...</div>
+                <div className="text-sm text-gray-400">
+                    {loadingState.drivers && "Fetching drivers information..."}
+                    {loadingState.meetings && "Fetching race results..."}
+                </div>
+            </div>
+        </CardContent>
+    </Card>
+);
+
+const ErrorCard = ({ error }: { error: string }) => (
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+        <CardContent className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-4 text-center">
+                <AlertTriangle className="h-8 w-8 text-red-500" />
+                <div className="text-red-400">{error}</div>
+            </div>
+        </CardContent>
+    </Card>
+);
+
+// Fonction utilitaire pour la gestion des erreurs Firestore
+const handleFirestoreError = (error): string => {
+    if (error?.code === 'permission-denied') {
+        return 'Access to database denied. Please check your permissions.';
+    }
+    if (error?.code === 'unavailable') {
+        return 'Database is currently unavailable. Please try again later.';
+    }
+    return error?.message || 'An unknown error occurred';
+};
+
+// Fonction pour récupérer les données avec retry
+const fetchWithRetry = async <T,>(
+    fetchFn: () => Promise<T>,
+    maxRetries = 3,
+    delayMs = 1000
+): Promise<T> => {
+    let lastError;
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            return await fetchFn();
+        } catch (error) {
+            lastError = error;
+            if (i < maxRetries - 1) {
+                await new Promise(resolve => setTimeout(resolve, delayMs * (i + 1)));
+            }
+        }
+    }
+    throw lastError;
+};
+
 
 const ChampionshipWidget = ({ podium, year: propYear, meeting_name: propMeeting }: ChampionshipWidgetProps) => {
     const [selectedYear, setSelectedYear] = useState<string | null>(propYear || null);
@@ -42,7 +108,10 @@ const ChampionshipWidget = ({ podium, year: propYear, meeting_name: propMeeting 
     const [meetingsData, setMeetingsData] = useState<MeetingData[]>([]);
     const [championshipData, setChampionshipData] = useState<ChampionshipData[]>([]);
     const [driversMap, setDriversMap] = useState<Record<string, string>>({});
-    const [loading, setLoading] = useState(true);
+    const [loadingState, setLoadingState] = useState<LoadingState>({
+        drivers: true,
+        meetings: true
+    });
     const [error, setError] = useState<string | null>(null);
     const [maxPoints, setMaxPoints] = useState(0);
     const [minPoints, setMinPoints] = useState(0);
@@ -51,29 +120,55 @@ const ChampionshipWidget = ({ podium, year: propYear, meeting_name: propMeeting 
     // Fetch drivers and meetings data on mount
     useEffect(() => {
         const fetchData = async () => {
+            setError(null);
+
             try {
-                const [driversSnapshot, meetingsSnapshot] = await Promise.all([
-                    getDocs(collection(firestore, 'drivers')),
-                    getDocs(collection(firestore, 'meetings')),
-                ]);
+                // Fetch drivers data with retry
+                setLoadingState(prev => ({ ...prev, drivers: true }));
+                const driversSnapshot = await fetchWithRetry(
+                    () => getDocs(collection(firestore, 'drivers'))
+                );
 
                 const driversMapping: Record<string, string> = {};
                 const newDriversData: DriverData[] = [];
+
                 driversSnapshot.forEach(doc => {
                     const data = doc.data() as DriverData;
-                    driversMapping[data.last_name] = data.broadcast_name;
-                    newDriversData.push(data);
+                    if (data?.last_name && data?.broadcast_name) {
+                        driversMapping[data.last_name] = data.broadcast_name;
+                        newDriversData.push(data);
+                    }
                 });
+
                 setDriversMap(driversMapping);
                 setDriversData(newDriversData);
+                setLoadingState(prev => ({ ...prev, drivers: false }));
 
-                const meetings = meetingsSnapshot.docs.map(doc => doc.data() as MeetingData);
-                //setMeetingsData(meetings);
-                setLoading(false);
+                // Fetch meetings data with retry
+                setLoadingState(prev => ({ ...prev, meetings: true }));
+                const meetingsSnapshot = await fetchWithRetry(
+                    () => getDocs(collection(firestore, 'meetings'))
+                );
+
+                const meetings = meetingsSnapshot.docs
+                    .map(doc => {
+                        const data = doc.data() as MeetingData;
+                        return data?.meeting_key ? data : null;
+                    })
+                    .filter((meeting): meeting is MeetingData => meeting !== null);
+
+
+                setLoadingState(prev => ({ ...prev, meetings: false }));
                 return meetings;
+
+
             } catch (err) {
                 console.error('Error fetching data:', err);
-                setError('Failed to fetch data');
+                setError(handleFirestoreError(err));
+                setLoadingState({
+                    drivers: false,
+                    meetings: false
+                });
             }
         };
 
@@ -82,83 +177,84 @@ const ChampionshipWidget = ({ podium, year: propYear, meeting_name: propMeeting 
 
     // Calculate championship data when selectedYear or selectedMeeting changes
     useEffect(() => {
-        if (!selectedYear || !selectedMeeting || !driversData.length) return;
+        if (!selectedYear || !selectedMeeting || !driversData.length || !meetingsData.length) return;
 
-        const calculateChampionshipData = () => {
-            const pointsMap: Record<string, number> = {};
+        try {
+            const calculateChampionshipData = () => {
+                const pointsMap: Record<string, number> = {};
 
-            driversData.forEach(driver => {
-                if (driver && driver.last_name) {
-                    pointsMap[driver.last_name] = -1;
-                }
-            });
-
-            const meetingsForYear = meetingsData
-                .filter(meeting => meeting.year.toString() === selectedYear.toString())
-                .sort((a, b) => parseInt(a.meeting_key) - parseInt(b.meeting_key));
-
-            const selectedMeetingData = meetingsForYear.find(meeting => meeting.meeting_name === selectedMeeting);
-
-            if (!selectedMeetingData) {
-                setError('Selected meeting not found');
-                return;
-            }
-
-            for (const meeting of meetingsForYear) {
-                if (Array.isArray(meeting.podium)) {
-                    meeting.podium.forEach((driver: string, index: number) => {
-                        if (pointsMap[driver] < 0)
-                            pointsMap[driver] = 0;
-                        if (index < 10) {
-                            const pointsToAdd = racePointsScale[index] || 0;
-                            pointsMap[driver] = (pointsMap[driver] || 0) + pointsToAdd;
-                        }
-                    });
-                }
-
-                if (Array.isArray(meeting.podium_sprint)) {
-                    meeting.podium_sprint.forEach((driver: string, index: number) => {
-                        if (index < 8) {
-                            const pointsToAdd = sprintPointsScale[index] || 0;
-                            pointsMap[driver] = (pointsMap[driver] || 0) + pointsToAdd;
-                        }
-                    });
-                }
-
-                if (meeting.meeting_key === selectedMeetingData.meeting_key) {
-                    break;
-                }
-            }
-
-            // Add points based on the provided podium
-            if (podium) {
-                podium.forEach((driver: string, index: number) => {
-                    if (pointsMap[driver] < 0)
-                        pointsMap[driver] = 0;
-                    if (index < 10) {
-                        const pointsToAdd = racePointsScale[index] || 0;
-                        pointsMap[driver] = (pointsMap[driver] || 0) + pointsToAdd;
+                driversData.forEach(driver => {
+                    if (driver && driver.last_name) {
+                        pointsMap[driver.last_name] = -1;
                     }
                 });
-            }
 
-            const tempData = Object.entries(pointsMap)
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                .filter(([_, points]) => points > -1)
-                .map(([lastName, points]) => ({
-                    lastName,
-                    points,
-                    broadcastName: driversMap[lastName] || lastName
-                }))
-                .sort((a, b) => b.points - a.points);
+                const meetingsForYear = meetingsData
+                    .filter(meeting => meeting.year.toString() === selectedYear.toString())
+                    .sort((a, b) => parseInt(a.meeting_key) - parseInt(b.meeting_key));
 
-            const pointsValues = tempData.map(d => d.points);
-            setMaxPoints(Math.max(...pointsValues));
-            setMinPoints(Math.min(...pointsValues));
-            setChampionshipData(tempData);
-        };
+                const selectedMeetingData = meetingsForYear.find(meeting => meeting.meeting_name === selectedMeeting);
 
-        calculateChampionshipData();
+                if (!selectedMeetingData) {
+                    setError('Selected meeting not found');
+                    return;
+                }
+
+                for (const meeting of meetingsForYear) {
+                    if (Array.isArray(meeting.podium)) {
+                        meeting.podium.forEach((driver: string, index: number) => {
+                            if (pointsMap[driver] === -1) pointsMap[driver] = 0;
+                            if (index < racePointsScale.length) {
+                                pointsMap[driver] = (pointsMap[driver] || 0) + racePointsScale[index];
+                            }
+                        });
+                    }
+
+                    if (Array.isArray(meeting.podium_sprint)) {
+                        meeting.podium_sprint.forEach((driver: string, index: number) => {
+                            if (pointsMap[driver] === -1) pointsMap[driver] = 0;
+                            if (index < sprintPointsScale.length) {
+                                pointsMap[driver] = (pointsMap[driver] || 0) + sprintPointsScale[index];
+                            }
+                        });
+                    }
+
+                    if (meeting.meeting_key === selectedMeetingData.meeting_key) {
+                        break;
+                    }
+                }
+
+                // Add points based on the provided podium
+                if (podium) {
+                    podium.forEach((driver: string, index: number) => {
+                        if (pointsMap[driver] === -1) pointsMap[driver] = 0;
+                        if (index < racePointsScale.length) {
+                            pointsMap[driver] = (pointsMap[driver] || 0) + racePointsScale[index];
+                        }
+                    });
+                }
+
+                const tempData = Object.entries(pointsMap)
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    .filter(([_, points]) => points > -1)
+                    .map(([lastName, points]) => ({
+                        lastName,
+                        points,
+                        broadcastName: driversMap[lastName] || lastName
+                    }))
+                    .sort((a, b) => b.points - a.points);
+
+                const pointsValues = tempData.map(d => d.points);
+                setMaxPoints(Math.max(...pointsValues, 0));
+                setMinPoints(Math.min(...pointsValues, 0));
+                setChampionshipData(tempData);
+            };
+
+            calculateChampionshipData();
+        } catch (err) {
+            console.error('Error calculating championship data:', err);
+            setError('Error calculating championship standings');
+        }
     }, [selectedYear, selectedMeeting, meetingsData, driversMap, driversData, podium]);
 
     // Reset selected meeting and championship data when year changes
@@ -187,97 +283,131 @@ const ChampionshipWidget = ({ podium, year: propYear, meeting_name: propMeeting 
         return ((points - minPoints) / (maxPoints - minPoints)) * 85 + 1;
     };
 
-    const rowHeight = 38;
-    const visibleDrivers = 10;
+    const isLoading = loadingState.drivers || loadingState.meetings;
 
-    if (loading) return <div className="p-4 text-white">Loading championship data...</div>;
-    if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
+    if (isLoading) return <LoadingCard loadingState={loadingState} />;
+    if (error) return <ErrorCard error={error} />;
+    if (!championshipData.length) {
+        return <ErrorCard error="No championship data available" />;
+    }
 
     return (
-        <Card className="w-full max-w-screen-sm bg-black text-white">
+        <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[70vh]">
             <CardHeader className="pb-2">
-                <CardTitle className="gradient-text">Championship Standings</CardTitle>
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                        Championship Standings
+                    </CardTitle>
+                    <Trophy className="h-5 w-5 text-[#5382ec]" />
+                </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                    {!propYear && (
-                        <CustomDropdown_single
-                            options={[
-                                { label: '2023', value: '2023' },
-                                { label: '2024', value: '2024' }
-                            ]}
-                            selectedGroup={{ label: selectedYear || 'Select Year', value: selectedYear || '' }}
-                            onChange={(selected) => selected && setSelectedYear(selected.value)}
-                            backgroundColor="#000000"
-                            textColor="#FFFFFF"
-                            placeholder="Select a year..."
-                        />
-                    )}
-                    {!propMeeting && (
-                        <CustomDropdown_single
-                            options={meetingOptions}
-                            selectedGroup={{ label: selectedMeetingName, value: selectedMeeting || '' }}
-                            onChange={(selected) => selected && setSelectedMeeting(selected.value)}
-                            backgroundColor="#000000"
-                            textColor="#FFFFFF"
-                            placeholder="Select a meeting..."
-                        />
-                    )}
+
+            <CardContent className="relative h-[calc(100%-4rem)]">
+                <div className="h-full overflow-y-auto pr-6 scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out">
+                    <motion.div
+                        className="pr-2 space-y-4"
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                            hidden: { opacity: 0 },
+                            visible: {
+                                opacity: 1,
+                                transition: {
+                                    staggerChildren: 0.05,
+                                    delayChildren: 0.1
+                                }
+                            }
+                        }}
+                    >
+                        <AnimatePresence mode="popLayout">
+                            {championshipData.map((driver, index) => {
+                                const driverInfo = driversData.find(d => d.last_name === driver.lastName);
+                                if (!driverInfo) return null;
+                                const isLeader = index === 0;
+
+                                return (
+                                    <motion.div
+                                        key={driver.lastName}
+                                        className="p-3 rounded-lg bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-all duration-300"
+                                        variants={{
+                                            hidden: { opacity: 0, y: 20, scale: 0.95 },
+                                            visible: {
+                                                opacity: 1,
+                                                y: 0,
+                                                scale: 1,
+                                                transition: {
+                                                    type: "spring",
+                                                    stiffness: 200,
+                                                    damping: 20
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`text-lg font-bold ${
+                                                isLeader
+                                                    ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent'
+                                                    : 'text-gray-400'
+                                            }`}>
+                                                {index + 1}
+                                            </div>
+
+                                            <div className="flex-1 min-w-0">
+                                                <span
+                                                    className="font-medium"
+                                                    style={{ color: driverInfo.team_colour?.startsWith('#')
+                                                            ? driverInfo.team_colour
+                                                            : `#${driverInfo.team_colour}` || '#FFFFFF' }}
+                                                >
+                                                {driver.broadcastName}
+                                            </span>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <motion.div
+                                                    className={`h-2 rounded-full ${
+                                                        isLeader
+                                                            ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]'
+                                                            : 'bg-gray-600'
+                                                    }`}
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${calculateWidth(driver.points)}px` }}
+                                                    transition={{
+                                                        type: "spring",
+                                                        stiffness: 100,
+                                                        damping: 20,
+                                                        delay: index * 0.1
+                                                    }}
+                                                />
+                                                <span className={`min-w-[60px] text-right ${
+                                                    isLeader
+                                                        ? 'text-[#5382ec]'
+                                                        : 'text-gray-300'
+                                                }`}>
+                                                    {driver.points} pts
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </AnimatePresence>
+                    </motion.div>
+
+                    <div className="mt-6 rounded-lg bg-black/20 p-4">
+                        <div className="text-sm text-center space-y-2">
+                            <div className="text-gray-400">Points Scale</div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-500">{minPoints} pts</span>
+                                <div className="flex-1 h-1 mx-4 rounded-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]" />
+                                <span className="text-[#5382ec]">{maxPoints} pts</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </CardContent>
-            {selectedYear && selectedMeeting && (
-                <CardContent className="space-y-4">
-                    <div
-                        className="overflow-y-auto pr-2 custom-scrollbar"
-                        style={{ height: `${visibleDrivers * rowHeight}px` }}
-                    >
-                        {championshipData.map((driver, index) => {
-                            const driverInfo = driversData.find(d => d.last_name === driver.lastName);
-                            return (
-                                <div key={driver.lastName} className="flex items-center gap-2 h-10 mb-2">
-                                    <div className="w-20 flex items-center">
-                                        <span className="mr-2 text-gray-400 w-6 text-right">
-                                            {index + 1}.
-                                        </span>
-                                        <span
-                                            className="font-bold truncate"
-                                            style={{ color: driverInfo?.team_colour || '#FFFFFF' }}
-                                        >
-                                            {driver.broadcastName}
-                                        </span>
-                                    </div>
-
-                                    <div className="flex-1 flex items-center">
-                                        {driver.points > 0 && (
-                                            <motion.div
-                                                className="h-6 rounded-lg bg-yellow-500"
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${calculateWidth(driver.points)}%` }}
-                                                transition={{ duration: 2 }}
-                                            />
-                                        )}
-                                        <span className="ml-2 text-m font-bold gradient-text">
-                                            {driver.points} pts
-                                        </span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    <div className="pt-2 border-t border-gray-800 text-sm text-center gradient-text">
-                        <span className="gradient-text">Points scale: </span>
-                        {minPoints} pts (min) → {maxPoints} pts (max)
-                    </div>
-                </CardContent>
-            )}
         </Card>
     );
 };
 
-export default ChampionshipWidget; 
-
-/**
- * <ChampionshipWidget year="2023" meeting_name="Bahrain Grand Prix"/>
- * <ChampionshipWidget year={selectedYear} meeting_name={selectedMeetingName} />
- */
+export default ChampionshipWidget;
