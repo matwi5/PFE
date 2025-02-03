@@ -67,7 +67,7 @@ const compoundColors: Record<string, string> = {
     SOFT: 'bg-gradient-to-r from-red-500 to-red-600',
     MEDIUM: 'bg-gradient-to-r from-yellow-400 to-yellow-500',
     HARD: 'bg-gradient-to-r from-gray-200 to-gray-300',
-    INTER: 'bg-gradient-to-r from-green-500 to-green-600',
+    INTERMEDIATE: 'bg-gradient-to-r from-green-500 to-green-600',
     WET: 'bg-gradient-to-r from-[#5382ec] to-[#436cbf]',
 };
 
@@ -75,7 +75,7 @@ const tyreImages: Record<string, string> = {
     SOFT: '/images/tyre/soft.png',
     MEDIUM: '/images/tyre/medium.png',
     HARD: '/images/tyre/hard.png',
-    INTER: '/images/tyre/intermediate.png',
+    INTERMEDIATE: '/images/tyre/intermediate.png',
     WET: '/images/tyre/wet.png',
 };
 
@@ -148,7 +148,6 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
             }
 
             try {
-                console.log("oui")
                 setLoading(true);
                 setError(null);
                 setLoadingStatus({ stints: false, drivers: false, positions: false });
@@ -173,8 +172,6 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                 const driversData: Driver[] = await fetchWithRetry(driversUrl);
                 setLoadingStatus(prev => ({ ...prev, drivers: true }));
 
-                console.log("oui3")
-
                 // Validate drivers data
                 if (!Array.isArray(driversData)) {
                     throw new Error('Invalid drivers data format');
@@ -188,8 +185,6 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                 if (!Array.isArray(positionsData)) {
                     throw new Error('Invalid positions data format');
                 }
-
-                console.log(stintsData)
 
                 // Process final positions
                 const finalPositions = positionsData.reduce((acc: Map<number, Position>, pos) => {
