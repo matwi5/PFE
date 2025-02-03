@@ -1,8 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ArrowRight, Map, MapPin, Info, Calendar, Medal, Globe, Trophy, Flag, Car, Timer, History, ClockArrowUp, DatabaseZap, X, Hourglass, ClockArrowDown, TimerReset } from "lucide-react";
+import { Globe} from "lucide-react";
 import { motion } from "framer-motion";
 
 import GrandPrixCard from "../components/pastComponent/GrandPrixCard";
@@ -15,7 +13,7 @@ import ComparerEcuriesCard from "../components/pastComponent/ComparerEcuriesCard
 import ComparisonModal from "../components/pastComponent/ComparisonModal";
 import Championship from "../components/analysisComponent/Championship";
 import F1GapAnalysis from "../components/analysisComponent/F1GapAnalysis";
-import F1LapAnalysis from "../components/analysisComponent/F1GapAnalysis";
+import F1LapAnalysis from "../components/analysisComponent/F1LapAnalysis";
 import SpeedVisualizer from "../components/analysisComponent/SpeedVisualizer";
 import StintVisualizer from "../components/analysisComponent/StintVisualizer";
 
@@ -236,11 +234,11 @@ const MobileView: React.FC<MobileViewProps> = ({
 
                     {activeTab === 'analysis' && (
                         <>
-                            <Championship />
-                            <F1GapAnalysis sessionKey={sessionKey} lap={null} />
-                            <F1LapAnalysis sessionKey={sessionKey} lap={null} />
-                            <SpeedVisualizer sessionKey={sessionKey} lap={null} />
-                            <StintVisualizer sessionKey={sessionKey} lap={null} />
+                            <Championship meeting_name={mainGP.meeting_name} year={selectedYear.toString()} />
+                            <F1GapAnalysis sessionKey={mainGP.sessionKey} lap={null} />
+                            <F1LapAnalysis sessionKey={mainGP.sessionKey} lap={null} />
+                            <SpeedVisualizer sessionKey={mainGP.sessionKey} lap={null} />
+                            <StintVisualizer sessionKey={mainGP.sessionKey} lap={null} />
                         </>
                     )}
 
@@ -527,7 +525,6 @@ const GrandPrixCards = () => {
     // Assuming sessionKey should be derived from selectedMeeting.meeting_key
     const sessionKey = selectedMeeting?.meeting_key || null;
 
-
     if (isMobile) {
         return (
             <MobileView
@@ -705,7 +702,7 @@ const GrandPrixCards = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="break-inside-avoid"
                         >
-                            <Championship />
+                            {mainGP && selectedYear && <Championship meeting_name={mainGP.meeting_name} year={selectedYear.toString()}/>}
                         </motion.div>
 
                         <motion.div
@@ -713,7 +710,7 @@ const GrandPrixCards = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="break-inside-avoid"
                         >
-                            <F1GapAnalysis sessionKey={sessionKey} lap={null} />
+                            {mainGP && <F1GapAnalysis sessionKey={mainGP.sessionKey} lap={null} />}
                         </motion.div>
 
                         <motion.div
@@ -721,7 +718,7 @@ const GrandPrixCards = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="break-inside-avoid"
                         >
-                            <F1LapAnalysis sessionKey={sessionKey} lap={null} />
+                            {mainGP && <F1LapAnalysis sessionKey={mainGP.sessionKey} lap={null} />}
                         </motion.div>
 
                         <motion.div
@@ -729,7 +726,7 @@ const GrandPrixCards = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="break-inside-avoid"
                         >
-                            <SpeedVisualizer sessionKey={sessionKey} lap={null} />
+                            {mainGP && <SpeedVisualizer sessionKey={mainGP.sessionKey} lap={null} />}
                         </motion.div>
 
                         <motion.div
@@ -737,7 +734,7 @@ const GrandPrixCards = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="break-inside-avoid"
                         >
-                            <StintVisualizer sessionKey={sessionKey} lap={null} />
+                            {mainGP && <StintVisualizer sessionKey={mainGP.sessionKey} lap={null}/>}
                         </motion.div>
                     </div>
 

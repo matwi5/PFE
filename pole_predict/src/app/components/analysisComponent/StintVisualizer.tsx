@@ -148,6 +148,7 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
             }
 
             try {
+                console.log("oui")
                 setLoading(true);
                 setError(null);
                 setLoadingStatus({ stints: false, drivers: false, positions: false });
@@ -172,6 +173,8 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                 const driversData: Driver[] = await fetchWithRetry(driversUrl);
                 setLoadingStatus(prev => ({ ...prev, drivers: true }));
 
+                console.log("oui3")
+
                 // Validate drivers data
                 if (!Array.isArray(driversData)) {
                     throw new Error('Invalid drivers data format');
@@ -185,6 +188,8 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                 if (!Array.isArray(positionsData)) {
                     throw new Error('Invalid positions data format');
                 }
+
+                console.log(stintsData)
 
                 // Process final positions
                 const finalPositions = positionsData.reduce((acc: Map<number, Position>, pos) => {

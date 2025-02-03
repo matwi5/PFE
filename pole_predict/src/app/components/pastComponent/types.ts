@@ -11,6 +11,7 @@ export interface GP {
     long_circuit: string;
     meeting_code: string;
     meeting_key: number;
+    session_key: number;
     meeting_name: string;
     nb_tours: number;
     podium: string[];

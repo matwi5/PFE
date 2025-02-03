@@ -31,7 +31,6 @@ interface MeetingData {
 }
 
 interface ChampionshipWidgetProps {
-    podium?: string[];
     year?: string;
     meeting_name?: string;
 }
@@ -102,8 +101,7 @@ const fetchWithRetry = async <T,>(
 };
 
 
-const ChampionshipWidget = ({ podium, year: propYear, meeting_name: propMeeting }: ChampionshipWidgetProps) => {
-    const [selectedYear, setSelectedYear] = useState<string | null>(propYear || null);
+const ChampionshipWidget = ({ year: propYear, meeting_name: propMeeting }: ChampionshipWidgetProps) => {
     const [selectedMeeting, setSelectedMeeting] = useState<string | null>(propMeeting || null);
     const [meetingsData, setMeetingsData] = useState<MeetingData[]>([]);
     const [championshipData, setChampionshipData] = useState<ChampionshipData[]>([]);
@@ -177,7 +175,7 @@ const ChampionshipWidget = ({ podium, year: propYear, meeting_name: propMeeting 
 
     // Calculate championship data when selectedYear or selectedMeeting changes
     useEffect(() => {
-        if (!selectedYear || !selectedMeeting || !driversData.length || !meetingsData.length) return;
+        if (!propYear || !selectedMeeting || !driversData.length || !meetingsData.length) return;
 
         try {
             const calculateChampionshipData = () => {
@@ -190,10 +188,10 @@ const ChampionshipWidget = ({ podium, year: propYear, meeting_name: propMeeting 
                 });
 
                 const meetingsForYear = meetingsData
-                    .filter(meeting => meeting.year.toString() === selectedYear.toString())
+                    .filter(meeting => meeting.year.toString() === propYear.toString())
                     .sort((a, b) => parseInt(a.meeting_key) - parseInt(b.meeting_key));
 
-                const selectedMeetingData = meetingsForYear.find(meeting => meeting.meeting_name === selectedMeeting);
+                const selectedMeetingData = meetingsForYear.find(meeting => meeting.meeting_name === propMeeting);
 
                 if (!selectedMeetingData) {
                     setError('Selected meeting not found');
@@ -224,16 +222,6 @@ const ChampionshipWidget = ({ podium, year: propYear, meeting_name: propMeeting 
                     }
                 }
 
-                // Add points based on the provided podium
-                if (podium) {
-                    podium.forEach((driver: string, index: number) => {
-                        if (pointsMap[driver] === -1) pointsMap[driver] = 0;
-                        if (index < racePointsScale.length) {
-                            pointsMap[driver] = (pointsMap[driver] || 0) + racePointsScale[index];
-                        }
-                    });
-                }
-
                 const tempData = Object.entries(pointsMap)
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     .filter(([_, points]) => points > -1)
@@ -255,7 +243,7 @@ const ChampionshipWidget = ({ podium, year: propYear, meeting_name: propMeeting 
             console.error('Error calculating championship data:', err);
             setError('Error calculating championship standings');
         }
-    }, [selectedYear, selectedMeeting, meetingsData, driversMap, driversData, podium]);
+    }, [propYear, selectedMeeting, meetingsData, driversMap, driversData, propMeeting]);
 
     // Reset selected meeting and championship data when year changes
     useEffect(() => {
@@ -264,19 +252,17 @@ const ChampionshipWidget = ({ podium, year: propYear, meeting_name: propMeeting 
             setChampionshipData([]);
             setError(null);
         }
-    }, [selectedYear, propYear]);
+    }, [propYear]);
 
     // Memoize meeting options to avoid recalculating on every render
     const meetingOptions = useMemo(() => {
         return meetingsData
-            .filter(meeting => meeting.year.toString() === selectedYear)
+            .filter(meeting => meeting.year.toString() === propYear)
             .map(meeting => ({
                 label: meeting.meeting_name,
                 value: meeting.meeting_name
             }));
-    }, [meetingsData, selectedYear]);
-
-    const selectedMeetingName = meetingsData.find(meeting => meeting.meeting_name === selectedMeeting)?.meeting_name || 'Select Meeting';
+    }, [meetingsData, propYear]);
 
     const calculateWidth = (points: number) => {
         if (maxPoints === minPoints) return 100;

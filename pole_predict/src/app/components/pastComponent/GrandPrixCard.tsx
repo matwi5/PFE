@@ -1,10 +1,6 @@
-// components/pastComponent/GrandPrixCard.tsx
-"use client";
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Map, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
+import { Map, MapPin } from "lucide-react";
 import { motion } from 'framer-motion';
 import {
     Select,
@@ -45,6 +41,7 @@ interface GP {
     qualif: string[];
     year: number;
     grand_prix: string;
+    sessionKey: number;
 }
 
 const GrandPrixCard: React.FC<GrandPrixCardProps> = ({
@@ -58,6 +55,12 @@ const GrandPrixCard: React.FC<GrandPrixCardProps> = ({
     handleGPSelect,
     handleYearChange
 }) => {
+    // Add defensive check for filtered GPs
+    const filteredGPs = allGPs.filter(gp =>
+        gp?.year === selectedYear &&
+        gp?.meeting_key !== undefined
+    );
+
     return (
         <Card
             className={`group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 ${hoveredCard === 0 ? 'scale-105' : ''}`}
@@ -74,19 +77,28 @@ const GrandPrixCard: React.FC<GrandPrixCardProps> = ({
                 <motion.div
                     className="p-4 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:bg-black/30"
                 >
-                    <p className="text-xl font-bold text-gray-200">{mainGP?.meeting_name} ({mainGP?.year})</p>
-                    <p className="flex items-center text-gray-300">
-                        <MapPin className="mr-2 h-4 w-4" />
-                        {mainGP?.location}, {mainGP?.country_name}
+                    <p className="text-xl font-bold text-gray-200">
+                        {mainGP?.meeting_name || 'Select a Grand Prix'} {mainGP?.year && `(${mainGP.year})`}
                     </p>
-                    <p className="text-sm text-[#5382ec]">{mainGP?.meeting_code}</p>
+                    {mainGP && (
+                        <p className="flex items-center text-gray-300">
+                            <MapPin className="mr-2 h-4 w-4" />
+                            {mainGP.location}, {mainGP.country_name}
+                        </p>
+                    )}
+                    {mainGP?.meeting_code && (
+                        <p className="text-sm text-[#5382ec]">{mainGP.meeting_code}</p>
+                    )}
                 </motion.div>
                 <div className="mt-4 flex flex-col md:flex-row md:items-center gap-4">
-                    <Select onValueChange={handleYearChange} value={selectedYear.toString()}>
+                    <Select
+                        onValueChange={handleYearChange}
+                        value={selectedYear?.toString()}
+                    >
                         <SelectTrigger
                             className={`w-full md:w-auto border-0 transition-all ${selectedYear
-                                ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
-                                : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
+                                    ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
+                                    : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
                                 }`}
                         >
                             <SelectValue placeholder="Select Year" />
@@ -103,30 +115,31 @@ const GrandPrixCard: React.FC<GrandPrixCardProps> = ({
                             ))}
                         </SelectContent>
                     </Select>
-                    <Select onValueChange={(value) => {
-                        const selectedGP = allGPs.find(gp => gp.meeting_key === parseInt(value));
-                        if (selectedGP) {
-                            handleGPSelect(selectedGP);
-                        }
-                    }}
+                    <Select
+                        onValueChange={(value) => {
+                            const selectedGP = filteredGPs.find(gp =>
+                                gp?.meeting_key?.toString() === value
+                            );
+                            if (selectedGP) {
+                                handleGPSelect(selectedGP);
+                            }
+                        }}
                     >
                         <SelectTrigger
-                            className={`w-full md:w-auto border-0 transition-all border border-gray-800 bg-black/20 text-gray-300 hover:bg-black/30 hover:text-[#2dd4bf] transition-all duration-300`}
+                            className="w-full md:w-auto border-0 transition-all border border-gray-800 bg-black/20 text-gray-300 hover:bg-black/30 hover:text-[#2dd4bf] transition-all duration-300"
                         >
                             <SelectValue placeholder="Other" />
                         </SelectTrigger>
                         <SelectContent className="bg-[#282a2c] border-0">
-                            {allGPs
-                                .filter(gp => gp.year === selectedYear)
-                                .map((gp) => (
-                                    <SelectItem
-                                        key={gp.meeting_key}
-                                        value={gp.meeting_key.toString()}
-                                        className="text-gray-300 hover:bg-[#5382ec]/20 focus:bg-[#5382ec]/30" 
-                                    >
-                                        {gp.meeting_name} ({gp.year})
-                                    </SelectItem>
-                                ))}
+                            {filteredGPs.map((gp) => (
+                                <SelectItem
+                                    key={gp.meeting_key}
+                                    value={gp.meeting_key?.toString() ?? ''}
+                                    className="text-gray-300 hover:bg-[#5382ec]/20 focus:bg-[#5382ec]/30"
+                                >
+                                    {gp.meeting_name} ({gp.year})
+                                </SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>
