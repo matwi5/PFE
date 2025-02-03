@@ -47,7 +47,7 @@ const RegisterForm = () => {
   const [isHovering, setIsHovering] = useState(false);
   const router = useRouter();
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: { currentTarget: { getBoundingClientRect: () => any; }; clientX: number; clientY: number; }) => {
     const cardRect = e.currentTarget.getBoundingClientRect();
     setMousePos({
       x: e.clientX - cardRect.left,
@@ -65,7 +65,7 @@ const RegisterForm = () => {
     };
   };
 
-  const handleRegister = async (e) => {
+  const handleRegister = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     setError("");
     setMessage("");
