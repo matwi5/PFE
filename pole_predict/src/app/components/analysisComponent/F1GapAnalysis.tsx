@@ -401,7 +401,7 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
 
     return (
         <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[73vh]">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 relative z-50"> {/* Added relative and z-50 */}
                 <div className="flex items-center justify-between mb-4">
                     <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                         Gap Analysis
@@ -409,13 +409,13 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
                     <Timer className="h-5 w-5 text-[#5382ec]" />
                 </div>
 
-                <motion.div 
+                <motion.div
                     className="space-y-4"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                 >
-                    <div className="flex flex-wrap gap-4 relative z-50">
-                        <div className="flex-1 min-w-[200px]">
+                    <div className="flex flex-wrap gap-4">
+                        <div className="flex-1 min-w-[200px] relative z-[60]"> {/* Increased z-index */}
                             <CustomDropdown_single
                                 options={modeOptions}
                                 selectedGroup={selectedMode}
@@ -427,7 +427,7 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
                         </div>
 
                         {selectedMode?.value === 'gapToLeader' && (
-                            <div className="flex-1 min-w-[200px]">
+                            <div className="flex-1 min-w-[200px] relative z-[60]"> {/* Increased z-index */}
                                 <CustomDropdown_single
                                     options={driverOptions}
                                     selectedGroup={referenceDriver}
@@ -440,7 +440,7 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
                         )}
 
                         {selectedMode?.value === 'interval' && (
-                            <div className="flex-1 min-w-[200px]">
+                            <div className="flex-1 min-w-[200px] relative z-[60]"> {/* Increased z-index */}
                                 <CustomDropdown_multiple
                                     options={driverOptions}
                                     selectedGroups={selectedDrivers}
