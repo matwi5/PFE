@@ -22,7 +22,6 @@ interface SectorAnalysisProps {
   viewMode: 'chrono' | 'lap' | 'final';
 }
 
-// Fonction utilitaire pour retry les appels API
 const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
     let retries = 0;
     while (retries < maxRetries) {
@@ -63,28 +62,26 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
   viewMode = 'final'
 }) => {
   const [laps, setLaps] = useState<LapData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
     const fetchLaps = async () => {
       if (!driverNumber || !sessionKey) {
         setError('Missing required parameters');
-        setLoading(false);
+        setIsInitialLoad(false);
         return;
       }
 
       try {
-        setLoading(true);
-        setError(null);
-        setIsRetrying(true);
-
+        if (!isInitialLoad) {
+          setIsRefreshing(true);
+        }
+        
         const data: LapData[] = await fetchWithRetry(
           `https://api.openf1.org/v1/laps?driver_number=${driverNumber}&session_key=${sessionKey}`
         );
-
-        setIsRetrying(false);
 
         if (!Array.isArray(data)) {
           throw new Error('Invalid data format received from API');
@@ -130,8 +127,8 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
         console.error('Error fetching lap data:', error);
         setError('Failed to fetch sector data. Please try again.');
       } finally {
-        setLoading(false);
-        setIsRetrying(false);
+        setIsInitialLoad(false);
+        setIsRefreshing(false);
       }
     };
 
@@ -151,9 +148,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
       <CardContent className="flex items-center justify-center h-[calc(100%-4rem)]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
-          <div className="text-gray-400">
-            {isRetrying ? 'Retrying...' : 'Loading sectorial data...'}
-          </div>
+          <div className="text-gray-400">Loading sectorial data...</div>
         </div>
       </CardContent>
     </Card>
@@ -178,8 +173,8 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
     </Card>
   );
 
-  if (loading || isRetrying) return <LoadingState />;
-  if (error) return <ErrorState />;
+  if (isInitialLoad) return <LoadingState />;
+  if (error && laps.length === 0) return <ErrorState />;
 
   return (
     <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[48vh]">
@@ -188,7 +183,12 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
             Sector Analysis
           </CardTitle>
-          <Activity className="h-5 w-5 text-[#5382ec]" />
+          <div className="flex items-center gap-2">
+            {isRefreshing && (
+              <Loader2 className="h-4 w-4 animate-spin text-[#5382ec]" />
+            )}
+            <Activity className="h-5 w-5 text-[#5382ec]" />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="relative h-[calc(100%-4rem)]">
@@ -198,6 +198,11 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
           </div>
         ) : (
           <div className="h-full overflow-y-auto pr-6 scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out">
+            {error && (
+              <div className="mb-4 p-2 rounded bg-red-500/10 text-red-400 text-sm">
+                {error}
+              </div>
+            )}
             <div className="pr-2 space-y-4">
               {laps.map((lap) => (
                 <div
