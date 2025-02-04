@@ -52,7 +52,7 @@ export async function GET(req: Request) {
     ]);
 
     // Créer le prompt pour Gemini
-    const prompt = `Generate a detailed F1 race summary of the Saudi Arabian Grand Prix. Focus on the narrative flow of the race, key moments, and battles. Format the response as a series of clear paragraphs, avoiding section headers or numbering.
+    const prompt = `Generate a detailed F1 race summary of Grand Prix. Focus on the narrative flow of the race, key moments, and battles. Format the response as a series of clear paragraphs, avoiding section headers or numbering.
 
 Include details about:
 - How the race unfolded from start to finish
