@@ -13,7 +13,7 @@ const FeatureSection = ({ title, description, features, images, reverse = false,
     viewport={{ once: true }}
     className={`flex flex-col ${reverse ? 'md:flex-row-reverse' : 'md:flex-row'} gap-8 items-center mb-16`}
   >
-    <div className="flex-1">
+    <div className="w-full md:flex-1">
       <div className={`p-6 rounded-xl border border-gray-800 bg-[#282a2c] 
         ${gradient ? 'bg-gradient-to-r from-[#5382ec]/10 to-[#2dd4bf]/10' : ''}`}>
         <h3 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -35,18 +35,38 @@ const FeatureSection = ({ title, description, features, images, reverse = false,
         </div>
       </div>
     </div>
-    <div className="flex-1">
-      <div className="relative group">
+    <div className="w-full md:flex-1">
+      <div className="relative group h-64 md:h-96">
         <div className="absolute -inset-1 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000"></div>
-        <div className="flex justify-center"> {/* Conteneur pour les images */}
-          {images.map((image, index) => (
-            <img 
-              key={index}
-              src={image} 
-              alt={`${title} - ${index}`}
-              className="relative w-full md:w-1/2 rounded-lg shadow-2xl border border-gray-800"
-            />
-          ))}
+        <div className="relative h-full flex items-center justify-center gap-4 p-1">
+          {images.length === 1 ? (
+            <div className="relative h-full w-full">
+              <div className="absolute inset-0 rounded-lg overflow-hidden">
+                <img 
+                  src={images[0]} 
+                  alt={`${title}`}
+                  className="w-full h-full object-cover object-center"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col md:flex-row w-full h-full gap-4">
+              {images.map((image, index) => (
+                <div 
+                  key={index} 
+                  className="relative h-1/2 md:h-full md:w-1/2"
+                >
+                  <div className="absolute inset-0 rounded-lg overflow-hidden">
+                    <img 
+                      src={image} 
+                      alt={`${title} - ${index + 1}`}
+                      className="w-full h-full object-cover object-center"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -144,10 +164,9 @@ const FeaturesWidget = () => {
         description: "Predict final race positions and potential overtaking opportunities."
       }
     ],
-    images: ["/images/qualpred.png", "/images/qualpred.png"], // Tableau d'images
-    gradient: true,
-    reverse: false
-  }; 
+    images: ["/images/qualpred.png"],
+    gradient: true
+  };
 
   const socialSection = {
     title: "Social Features & Rewards",
@@ -170,32 +189,33 @@ const FeaturesWidget = () => {
       }
     ],
     images: ["/images/bet.png"],
-    reverse: true
   };
 
   return (
-    <div className="w-full bg-[#1B1C1D] py-24 px-4 sm:px-6 lg:px-8">
+    <div className="w-full bg-[#1B1C1D] py-16 md:py-24 px-4 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         className="max-w-7xl mx-auto text-center mb-16"
       >
-        <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent mb-6">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent mb-6">
           Experience Formula 1 Like Never Before
         </h2>
-        <p className="text-gray-300 max-w-3xl mx-auto text-lg">
+        <p className="text-gray-300 max-w-3xl mx-auto text-base md:text-lg">
           Immerse yourself in the world of Formula 1 with our comprehensive platform featuring real-time data, AI-powered predictions, and interactive analysis tools.
         </p>
       </motion.div>
 
-      <FeatureSection {...aiSection} reverse={false} />
-      
-      {mainSections.map((section, index) => (
-        <FeatureSection key={index} {...section} reverse={index % 2 === 0} />
-      ))}
-      
-      <FeatureSection {...socialSection} reverse={mainSections.length % 2 === 0} />
+      <div className="space-y-12 md:space-y-16">
+        <FeatureSection {...aiSection} />
+        
+        {mainSections.map((section, index) => (
+          <FeatureSection key={index} {...section} reverse={index % 2 === 0} />
+        ))}
+        
+        <FeatureSection {...socialSection} />
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -203,12 +223,14 @@ const FeaturesWidget = () => {
         viewport={{ once: true }}
         className="text-center mt-16"
       >
-        <h3 className="text-2xl font-semibold mb-4 text-white">Ready to enhance your F1 experience?</h3>
+        <h3 className="text-xl md:text-2xl font-semibold mb-4 text-white">
+          Ready to enhance your F1 experience?
+        </h3>
         <p className="text-gray-400 mb-8">
           Create an account to start making predictions and earning rewards.
         </p>
         <Link href="/login">
-          <button className="px-8 py-3 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] rounded-lg text-white font-medium hover:opacity-90 transition-opacity">
+          <button className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] rounded-lg text-white font-medium hover:opacity-90 transition-opacity">
             Get Started
           </button>
         </Link>
