@@ -44,7 +44,7 @@ const racePointsScale = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 const sprintPointsScale = [8, 7, 6, 5, 4, 3, 2, 1];
 
 const LoadingCard = ({ loadingState }: { loadingState: LoadingState }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
         <CardContent className="flex flex-col items-center justify-center h-full gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
             <div className="text-white flex flex-col items-center gap-2">
@@ -59,7 +59,7 @@ const LoadingCard = ({ loadingState }: { loadingState: LoadingState }) => (
 );
 
 const ErrorCard = ({ error }: { error: string }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
         <CardContent className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-4 text-center">
                 <AlertTriangle className="h-8 w-8 text-red-500" />
@@ -277,123 +277,123 @@ const ChampionshipWidget = ({ year: propYear, meeting_name: propMeeting }: Champ
         return <ErrorCard error="No championship data available" />;
     }
 
-    return (
-        <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[70vh]">
-            <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                        Championship Standings
-                    </CardTitle>
-                    <Trophy className="h-5 w-5 text-[#5382ec]" />
-                </div>
-            </CardHeader>
-
-            <CardContent className="relative h-[calc(100%-4rem)]">
-                <div className="h-full overflow-y-auto pr-6 scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out">
-                    <motion.div
-                        className="pr-2 space-y-4"
-                        initial="hidden"
-                        animate="visible"
-                        variants={{
-                            hidden: { opacity: 0 },
-                            visible: {
-                                opacity: 1,
-                                transition: {
-                                    staggerChildren: 0.05,
-                                    delayChildren: 0.1
-                                }
-                            }
-                        }}
-                    >
-                        <AnimatePresence mode="popLayout">
-                            {championshipData.map((driver, index) => {
-                                const driverInfo = driversData.find(d => d.last_name === driver.lastName);
-                                if (!driverInfo) return null;
-                                const isLeader = index === 0;
-
-                                return (
-                                    <motion.div
-                                        key={driver.lastName}
-                                        className="p-3 rounded-lg bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-all duration-300"
-                                        variants={{
-                                            hidden: { opacity: 0, y: 20, scale: 0.95 },
-                                            visible: {
-                                                opacity: 1,
-                                                y: 0,
-                                                scale: 1,
-                                                transition: {
-                                                    type: "spring",
-                                                    stiffness: 200,
-                                                    damping: 20
-                                                }
-                                            }
-                                        }}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`text-lg font-bold ${
-                                                isLeader
-                                                    ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent'
-                                                    : 'text-gray-400'
-                                            }`}>
-                                                {index + 1}
-                                            </div>
-
-                                            <div className="flex-1 min-w-0">
-                                                <span
-                                                    className="font-medium"
-                                                    style={{ color: driverInfo.team_colour?.startsWith('#')
-                                                            ? driverInfo.team_colour
-                                                            : `#${driverInfo.team_colour}` || '#FFFFFF' }}
-                                                >
-                                                {driver.broadcastName}
-                                            </span>
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
-                                                <motion.div
-                                                    className={`h-2 rounded-full ${
-                                                        isLeader
-                                                            ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]'
-                                                            : 'bg-gray-600'
-                                                    }`}
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${calculateWidth(driver.points)}px` }}
-                                                    transition={{
-                                                        type: "spring",
-                                                        stiffness: 100,
-                                                        damping: 20,
-                                                        delay: index * 0.1
-                                                    }}
-                                                />
-                                                <span className={`min-w-[60px] text-right ${
-                                                    isLeader
-                                                        ? 'text-[#5382ec]'
-                                                        : 'text-gray-300'
-                                                }`}>
-                                                    {driver.points} pts
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                );
-                            })}
-                        </AnimatePresence>
-                    </motion.div>
-
-                    <div className="mt-6 rounded-lg bg-black/20 p-4">
-                        <div className="text-sm text-center space-y-2">
-                            <div className="text-gray-400">Points Scale</div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-500">{minPoints} pts</span>
-                                <div className="flex-1 h-1 mx-4 rounded-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]" />
-                                <span className="text-[#5382ec]">{maxPoints} pts</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-    );
-};
+     return (
+         <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[750px]">
+             <CardHeader className="pb-2">
+                 <div className="flex items-center justify-between">
+                     <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                         Championship Standings
+                     </CardTitle>
+                     <Trophy className="h-5 w-5 text-[#5382ec]" />
+                 </div>
+             </CardHeader>
+ 
+             <CardContent className="relative h-[700px]">
+                 <div className="h-full overflow-y-auto pr-6 scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out">
+                     <motion.div
+                         className="pr-2 space-y-4"
+                         initial="hidden"
+                         animate="visible"
+                         variants={{
+                             hidden: { opacity: 0 },
+                             visible: {
+                                 opacity: 1,
+                                 transition: {
+                                     staggerChildren: 0.05,
+                                     delayChildren: 0.1
+                                 }
+                             }
+                         }}
+                     >
+                         <AnimatePresence mode="popLayout">
+                             {championshipData.map((driver, index) => {
+                                 const driverInfo = driversData.find(d => d.last_name === driver.lastName);
+                                 if (!driverInfo) return null;
+                                 const isLeader = index === 0;
+ 
+                                 return (
+                                     <motion.div
+                                         key={driver.lastName}
+                                         className="p-3 rounded-lg bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-all duration-300"
+                                         variants={{
+                                             hidden: { opacity: 0, y: 20, scale: 0.95 },
+                                             visible: {
+                                                 opacity: 1,
+                                                 y: 0,
+                                                 scale: 1,
+                                                 transition: {
+                                                     type: "spring",
+                                                     stiffness: 200,
+                                                     damping: 20
+                                                 }
+                                             }
+                                         }}
+                                     >
+                                         <div className="flex items-center gap-4">
+                                             <div className={`text-lg font-bold ${
+                                                 isLeader
+                                                     ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent'
+                                                     : 'text-gray-400'
+                                             }`}>
+                                                 {index + 1}
+                                             </div>
+ 
+                                             <div className="flex-1 min-w-0">
+                                                 <span
+                                                     className="font-medium"
+                                                     style={{ color: driverInfo.team_colour?.startsWith('#')
+                                                             ? driverInfo.team_colour
+                                                             : `#${driverInfo.team_colour}` || '#FFFFFF' }}
+                                                 >
+                                                 {driver.broadcastName}
+                                             </span>
+                                             </div>
+ 
+                                             <div className="flex items-center gap-2">
+                                                 <motion.div
+                                                     className={`h-2 rounded-full ${
+                                                         isLeader
+                                                             ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]'
+                                                             : 'bg-gray-600'
+                                                     }`}
+                                                     initial={{ width: 0 }}
+                                                     animate={{ width: `${calculateWidth(driver.points)}px` }}
+                                                     transition={{
+                                                         type: "spring",
+                                                         stiffness: 100,
+                                                         damping: 20,
+                                                         delay: index * 0.1
+                                                     }}
+                                                 />
+                                                 <span className={`min-w-[60px] text-right ${
+                                                     isLeader
+                                                         ? 'text-[#5382ec]'
+                                                         : 'text-gray-300'
+                                                 }`}>
+                                                     {driver.points} pts
+                                                 </span>
+                                             </div>
+                                         </div>
+                                     </motion.div>
+                                 );
+                             })}
+                         </AnimatePresence>
+                     </motion.div>
+ 
+                     <div className="mt-6 rounded-lg bg-black/20 p-4">
+                         <div className="text-sm text-center space-y-2">
+                             <div className="text-gray-400">Points Scale</div>
+                             <div className="flex justify-between items-center">
+                                 <span className="text-gray-500">{minPoints} pts</span>
+                                 <div className="flex-1 h-1 mx-4 rounded-full bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]" />
+                                 <span className="text-[#5382ec]">{maxPoints} pts</span>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </CardContent>
+         </Card>
+     );
+ };
 
 export default ChampionshipWidget;

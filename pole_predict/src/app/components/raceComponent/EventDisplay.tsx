@@ -166,7 +166,7 @@ const EventDisplay = ({
             <Bell className="h-5 w-5 text-[#5382ec]" />
           </div>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-[calc(100%-4rem)]">
+        <CardContent className="flex items-center justify-center h-48">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
             <motion.div
@@ -194,7 +194,7 @@ const EventDisplay = ({
             <AlertTriangle className="h-5 w-5 text-red-500" />
           </div>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-[calc(100%-4rem)]">
+        <CardContent className="flex items-center justify-center h-48">
           <div className="flex flex-col items-center gap-4 text-center">
             <AlertTriangle className="h-8 w-8 text-red-500" />
             <motion.div
@@ -212,7 +212,7 @@ const EventDisplay = ({
   }
 
   return (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[70vh]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[460px]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -221,7 +221,7 @@ const EventDisplay = ({
           <Bell className="h-5 w-5 text-[#5382ec]" />
         </div>
       </CardHeader>
-      <CardContent className="relative h-[calc(100%-4rem)]">
+      <CardContent className="relative h-[420px]">
         <div
           className="h-full overflow-y-auto pr-6
             scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 

@@ -28,7 +28,7 @@ interface DriverSpeedData {
 }
 
 const LoadingCard = ({ progress }: { progress: { laps: boolean; drivers: boolean } }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
         <CardContent className="flex flex-col items-center justify-center h-full gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
             <div className="text-white flex flex-col items-center gap-2">
@@ -43,7 +43,7 @@ const LoadingCard = ({ progress }: { progress: { laps: boolean; drivers: boolean
 );
 
 const ErrorCard = ({ error }: { error: string }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
         <CardContent className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-4 text-center">
                 <AlertTriangle className="h-8 w-8 text-red-500" />
@@ -237,7 +237,7 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
     if (error) return <ErrorCard error={error} />;
 
     return (
-        <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[70vh]">
+        <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[570px]">
             <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -256,7 +256,7 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="relative h-[calc(100%-5rem)]">
+            <CardContent className="relative h-[490px]">
                 <div className="h-full overflow-y-auto pr-6 scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out">
                     <motion.div 
                         className="pr-2 space-y-4"

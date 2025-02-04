@@ -677,6 +677,14 @@ const GrandPrixCards = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="break-inside-avoid"
                         >
+                            {mainGP && <StintVisualizer sessionKey={mainGP.sessionKey} lap={null}/>}
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="break-inside-avoid"
+                        >
                             <ComparerPilotesCard
                                 hoveredCard={hoveredCard}
                                 setHoveredCard={setHoveredCard}
@@ -727,14 +735,6 @@ const GrandPrixCards = () => {
                             className="break-inside-avoid"
                         >
                             {mainGP && <SpeedVisualizer sessionKey={mainGP.sessionKey} lap={null} />}
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="break-inside-avoid"
-                        >
-                            {mainGP && <StintVisualizer sessionKey={mainGP.sessionKey} lap={null}/>}
                         </motion.div>
                     </div>
 

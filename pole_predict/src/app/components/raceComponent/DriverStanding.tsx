@@ -109,7 +109,7 @@ const useIsMobile = () => {
 };
 
 const LoadingCard: React.FC<{ loadingStatus: LoadingStatus }> = ({ loadingStatus }) => (
-  <Card className="bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+  <Card className="bg-[#282a2c] border border-gray-800 h-48">
     <CardContent className="flex flex-col items-center justify-center h-full gap-4">
       <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
       <div className="text-white flex flex-col items-center gap-2">
@@ -126,7 +126,7 @@ const LoadingCard: React.FC<{ loadingStatus: LoadingStatus }> = ({ loadingStatus
 );
 
 const ErrorCard: React.FC<{ error: string }> = ({ error }) => (
-  <Card className="bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+  <Card className="bg-[#282a2c] border border-gray-800 h-48">
     <CardContent className="flex items-center justify-center h-full">
       <div className="text-red-500">Error: {error}</div>
     </CardContent>
@@ -399,7 +399,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
   if (!sessionKey || !meetingKey) {
     return (
-      <Card className="bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+      <Card className="bg-[#282a2c] border border-gray-800 h-48">
         <CardContent className="flex items-center justify-center h-full">
           <div className="text-white">Session or meeting key not provided</div>
         </CardContent>
@@ -417,7 +417,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
   if (isMobile) {
     return (
-      <Card className="bg-[#282a2c] border border-gray-800 h-[calc(100vh-8rem)]">
+      <Card className="bg-[#282a2c] border border-gray-800 h-[530px]">
         <CardHeader className="pb-2">
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-between">
@@ -436,7 +436,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           </div>
         </CardHeader>
         <CardContent className="p-2">
-          <div className="max-h-[30rem] overflow-y-auto">
+          <div className="max-h-[24rem] overflow-y-auto">
             <div className="space-y-2">
               <AnimatePresence>
                 {enhancedStandings
@@ -559,7 +559,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
   }
 
   return (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 h-[70vh]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 h-[1050px]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -578,7 +578,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="relative h-[calc(100%-4rem)]">
+      <CardContent className="relative h-[990px]">
         <div
           className="h-full overflow-y-auto pr-6
             scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 

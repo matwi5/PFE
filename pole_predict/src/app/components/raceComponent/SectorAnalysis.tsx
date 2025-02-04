@@ -136,7 +136,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
   }, [driverNumber, sessionKey, currentTime, currentLap, viewMode]);
 
   const LoadingState = () => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[48vh]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[550px]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -145,7 +145,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
           <Activity className="h-5 w-5 text-[#5382ec]" />
         </div>
       </CardHeader>
-      <CardContent className="flex items-center justify-center h-[calc(100%-4rem)]">
+      <CardContent className="flex items-center justify-center h-[510px]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
           <div className="text-gray-400">Loading sectorial data...</div>
@@ -155,7 +155,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
   );
 
   const ErrorState = () => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[48vh]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[550px]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -164,7 +164,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
           <AlertTriangle className="h-5 w-5 text-red-500" />
         </div>
       </CardHeader>
-      <CardContent className="flex items-center justify-center h-[calc(100%-4rem)]">
+      <CardContent className="flex items-center justify-center h-[510px]">
         <div className="flex flex-col items-center gap-4 text-center">
           <AlertTriangle className="h-8 w-8 text-red-500" />
           <div className="text-red-400">{error}</div>
@@ -177,7 +177,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
   if (error && laps.length === 0) return <ErrorState />;
 
   return (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[48vh]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[570px]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -191,7 +191,7 @@ const SectorAnalysis: React.FC<SectorAnalysisProps> = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="relative h-[calc(100%-4rem)]">
+      <CardContent className="relative h-[510px]">
         {laps.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-400">
             No available sectorial data

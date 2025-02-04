@@ -50,7 +50,7 @@ interface LapData {
 }
 
 const LoadingCard = ({ loadingStatus }: { loadingStatus: { drivers: boolean; laps: boolean; gaps: boolean } }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
         <CardContent className="flex flex-col items-center justify-center h-full gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
             <div className="text-white flex flex-col items-center gap-2">
@@ -66,7 +66,7 @@ const LoadingCard = ({ loadingStatus }: { loadingStatus: { drivers: boolean; lap
 );
 
 const ErrorCard = ({ error }: { error: string }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
         <CardContent className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-4 text-center">
                 <AlertTriangle className="h-8 w-8 text-red-500" />
@@ -400,7 +400,7 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
     }
 
     return (
-        <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[73vh]">
+        <Card className={`group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out ${showLapInputs ? 'h-[590px]' : 'h-[510px]'}`}>
             <CardHeader className="pb-2 relative z-50"> {/* Added relative and z-50 */}
                 <div className="flex items-center justify-between mb-4">
                     <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -519,7 +519,7 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
                 </motion.div>
             </CardHeader>
 
-            <CardContent className="relative h-[calc(100%-8rem)]">
+            <CardContent className="relative h-[350px]">
                 {!selectedMode || chartData.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                         <div className="text-gray-400 text-center">

@@ -34,7 +34,7 @@ interface DriverMapProps {
 }
 
 const LoadingCard: React.FC = () => (
-  <Card className="bg-[#282a2c] border border-gray-800 h-[80vh]">
+  <Card className="bg-[#282a2c] border border-gray-800 h-48">
     <CardContent className="flex flex-col items-center justify-center h-full gap-4">
       <Loader2Icon className="h-8 w-8 animate-spin text-[#5382ec]" />
       <div className="text-white flex flex-col items-center gap-2">
@@ -45,7 +45,7 @@ const LoadingCard: React.FC = () => (
 );
 
 const ErrorCard: React.FC<{ error: string }> = ({ error }) => (
-  <Card className="bg-[#282a2c] border border-gray-800 h-[80vh]">
+  <Card className="bg-[#282a2c] border border-gray-800 h-48">
     <CardContent className="flex items-center justify-center h-full">
       <div className="text-red-500">{error}</div>
     </CardContent>
@@ -53,7 +53,7 @@ const ErrorCard: React.FC<{ error: string }> = ({ error }) => (
 );
 
 const UnavailableCard: React.FC = () => (
-  <Card className="bg-[#282a2c] border border-gray-800 h-[20vh]">
+  <Card className="bg-[#282a2c] border border-gray-800 h-[200px]">
     <CardHeader className="pb-2">
       <div className="flex items-center justify-between">
         <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -62,7 +62,7 @@ const UnavailableCard: React.FC = () => (
         <MapIcon className="h-5 w-5 text-[#5382ec]" />
       </div>
     </CardHeader>
-    <CardContent className="h-[calc(100%-4rem)] flex items-center justify-center">
+    <CardContent className="h-[150px] flex items-center justify-center">
       <div className="text-gray-400 text-center">
         Driver Map is only available in chrono mode
       </div>
@@ -218,7 +218,7 @@ function DriverMap({
   if (error && !hasLoadedData) return <ErrorCard error={error} />;
 
   return (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 h-[57vh]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 h-[450px]">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -227,7 +227,7 @@ function DriverMap({
           <MapIcon className="h-5 w-5 text-[#5382ec]" />
         </div>
       </CardHeader>
-      <CardContent className="relative h-[calc(100%-4rem)]">
+      <CardContent className="relative h-[400px]">
         <motion.div
           className="relative w-full h-full"
           initial={{ opacity: 0 }}

@@ -71,7 +71,7 @@ const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
 };
 
 const LoadingCard = () => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
         <CardContent className="flex flex-col items-center justify-center h-full gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
             <div className="text-white flex flex-col items-center gap-2">
@@ -85,7 +85,7 @@ const LoadingCard = () => (
 );
 
 const ErrorCard = ({ error }: { error: string }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-[calc(100vh-4rem)]">
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
         <CardContent className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-4 text-center">
                 <AlertTriangle className="h-8 w-8 text-red-500" />
@@ -338,8 +338,7 @@ const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
         if (!sessionKey) return <ErrorCard error="Please provide a valid session key" />;
     
         return (
-            <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[81vh]">
-                <CardHeader className="pb-2">
+<Card className={`group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out ${showLapInputs ? 'h-[590px]' : 'h-[510px]'}`}>                <CardHeader className="pb-2">
                     <div className="flex items-center justify-between mb-4">
                         <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                             Lap Time Analysis
@@ -348,7 +347,7 @@ const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
                     </div>
     
                     <div className="space-y-4">
-                        <div className="flex flex-wrap gap-4 items-center">
+                    <div className="flex gap-4 items-center">
                             <div className="flex-1 min-w-[200px]">
                                 <CustomDropdown_multiple
                                     options={driverOptions}
@@ -428,7 +427,7 @@ const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
                     </div>
                 </CardHeader>
     
-                <CardContent className="relative h-[calc(100%-8rem)]">
+                <CardContent className="relative h-[380px]">
                     {selectedDrivers.length === 0 ? (
                         <div className="flex items-center justify-center h-full">
                             <div className="text-gray-400 text-center">

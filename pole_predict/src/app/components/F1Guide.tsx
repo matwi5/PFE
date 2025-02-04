@@ -72,13 +72,15 @@ const GuideSection = ({
                       </div>
                     ))}
                   </div>
-                  <div className="relative group">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000"></div>
-                    <img
-                      src={image}
-                      alt={title}
-                      className="relative rounded-lg w-full object-cover aspect-video"
-                    />
+                  <div className="relative group flex items-center justify-center h-54 mt-2">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] rounded-lg blur opacity-45 group-hover:opacity-85 transition duration-1000"></div>
+                    <div className="relative w-full h-full rounded-lg overflow-hidden">
+                      <img
+                        src={image}
+                        alt={title}
+                        className="w-full h-full object-cover object-center"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -109,7 +111,7 @@ const F1Guide = () => {
         "Points are awarded to the top 10 finishers: 25 for 1st, 18 for 2nd, 15 for 3rd, down to 1 point for 10th.",
         "Both Drivers' and Constructors' Championships are awarded at the season's end."
       ],
-      image: "/images/f1tech.png"
+      image: "https://miro.medium.com/v2/resize:fit:1200/1*hlh2WRaYM2lBELYwdblxMw.gif"
     },
     {
       title: "Race Strategy",
@@ -122,7 +124,7 @@ const F1Guide = () => {
         "Teams use real-time data and predictive models to optimize their strategy.",
         "The timing of pit stops can make the difference between winning and losing."
       ],
-      image: "/images/f1strat.png"
+      image: "https://miro.medium.com/v2/resize:fit:1200/1*_4B8KCTLPaEXqu9q6-31zA.gif"
     },
     {
       title: "Tire Management",
@@ -135,7 +137,7 @@ const F1Guide = () => {
         "Drivers must manage tire wear throughout their stint.",
         "Different tracks and conditions favor different tire strategies."
       ],
-      image: "/images/tiremanagment.png"
+      image: "https://i.imgur.com/hZLgRQe.gif"
     },
     {
       title: "Car Technology",
@@ -148,7 +150,7 @@ const F1Guide = () => {
         "DRS (Drag Reduction System) aids overtaking in designated zones.",
         "Cars can accelerate from 0-100 km/h in about 2.6 seconds."
       ],
-      image: "/images/f1tech.png"
+      image: "https://i.postimg.cc/QM3stxgk/2022-2023-streamlines.gif"
     },
     {
       title: "Pit Stops",
@@ -161,7 +163,7 @@ const F1Guide = () => {
         "Perfect coordination is essential for quick and safe stops.",
         "The pit stop timing can greatly influence race outcomes."
       ],
-      image: "/images/pitstop.png"
+      image: "https://meetgroove.com/wp-content/uploads/2018/06/pit-crew-gif-4801470.gif"
     },
     {
       title: "Track Dynamics",
@@ -174,7 +176,7 @@ const F1Guide = () => {
         "Different sections of tracks offer various overtaking opportunities.",
         "Track evolution throughout a race weekend affects grip levels."
       ],
-      image: "/images/track.png"
+      image: "https://miro.medium.com/v2/resize:fit:1200/1*x-OJbQ3arZCnAYQh-50X8Q.gif"
     },
     {
       title: "Race Performance",
@@ -187,7 +189,7 @@ const F1Guide = () => {
         "Communication between driver and team is constant during races.",
         "Performance data is continuously analyzed for optimization."
       ],
-      image: "/images/performances.png"
+      image: "https://images.squarespace-cdn.com/content/v1/65e17d125655fd707264f641/4bcbe0ad-40b2-478a-96ff-ee6baf09be64/What+is+Drag+in+F1+animation"
     }
   ];
 
