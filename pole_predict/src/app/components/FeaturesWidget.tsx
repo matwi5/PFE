@@ -6,7 +6,7 @@ import {
   Timer, ChevronRight, LineChart, Car, Medal, Database
 } from 'lucide-react';
 
-const FeatureSection = ({ title, description, features, image, reverse = false, gradient = false }) => (
+const FeatureSection = ({ title, description, features, images, reverse = false, gradient = false }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
@@ -38,11 +38,16 @@ const FeatureSection = ({ title, description, features, image, reverse = false, 
     <div className="flex-1">
       <div className="relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000"></div>
-        <img 
-          src={image} 
-          alt={title}
-          className="relative w-full rounded-lg shadow-2xl border border-gray-800"
-        />
+        <div className="flex justify-center"> {/* Conteneur pour les images */}
+          {images.map((image, index) => (
+            <img 
+              key={index}
+              src={image} 
+              alt={`${title} - ${index}`}
+              className="relative w-full md:w-1/2 rounded-lg shadow-2xl border border-gray-800"
+            />
+          ))}
+        </div>
       </div>
     </div>
   </motion.div>
@@ -70,7 +75,7 @@ const FeaturesWidget = () => {
           description: "Understand tire strategies, fuel management, and racing lines used in previous races."
         }
       ],
-      image: "/api/placeholder/600/400"
+      images: ["/images/pastpics.png"]
     },
     {
       title: "Live Race Experience",
@@ -92,7 +97,7 @@ const FeaturesWidget = () => {
           description: "Track live sector times, gaps, and position changes during the race."
         }
       ],
-      image: "/api/placeholder/600/400",
+      images: ["/images/livepics.png"],
       reverse: true
     },
     {
@@ -115,7 +120,7 @@ const FeaturesWidget = () => {
           description: "Predicted qualifying and race performance based on practice session data."
         }
       ],
-      image: "/api/placeholder/600/400"
+      images: ["/images/upcoming.png"]
     }
   ];
 
@@ -139,10 +144,10 @@ const FeaturesWidget = () => {
         description: "Predict final race positions and potential overtaking opportunities."
       }
     ],
-    image: "/images/.png",
+    images: ["/images/qualpred.png", "/images/qualpred.png"], // Tableau d'images
     gradient: true,
     reverse: false
-  };
+  }; 
 
   const socialSection = {
     title: "Social Features & Rewards",
@@ -164,7 +169,7 @@ const FeaturesWidget = () => {
         description: "Unlock special badges for consistent accuracy and participation milestones."
       }
     ],
-    image: "/api/placeholder/600/400",
+    images: ["/images/bet.png"],
     reverse: true
   };
 
