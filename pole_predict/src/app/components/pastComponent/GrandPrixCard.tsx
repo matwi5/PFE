@@ -94,25 +94,30 @@ const GrandPrixCard: React.FC<GrandPrixCardProps> = ({
             <CardContent className="text-gray-300">
                 {mainGP && (
                     <CustomDialog
-                        buttonStyle={buttonStyle}
-                        getHoverStyles={getHoverStyles}
-                        triggerContent={
-                            <div className="p-4 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300">
-                                <p className="text-xl font-bold text-gray-200">
-                                    {mainGP.meeting_name} {mainGP.year && `(${mainGP.year})`}
-                                </p>
-                                <p className="flex items-center text-gray-300">
-                                    <MapPin className="mr-2 h-4 w-4" />
-                                    {mainGP.location}, {mainGP.country_name}
-                                </p>
-                                {mainGP.meeting_code && (
-                                    <p className="text-sm text-[#5382ec]">{mainGP.meeting_code}</p>
-                                )}
-                            </div>
-                        }
-                    >
-                        <GPSummaryCard gp={mainGP} />
-                    </CustomDialog>
+                    buttonStyle={buttonStyle}
+                    getHoverStyles={getHoverStyles}
+                    triggerContent={
+                        <div className="p-4 pb-8 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 relative">
+                            <p className="text-xl font-bold text-gray-200">
+                                {mainGP.meeting_name} {mainGP.year && `(${mainGP.year})`}
+                            </p>
+                            <p className="flex items-center text-gray-300">
+                                <MapPin className="mr-2 h-4 w-4" />
+                                {mainGP.location}, {mainGP.country_name}
+                            </p>
+                            {mainGP.meeting_code && (
+                                <p className="text-sm text-[#5382ec]">{mainGP.meeting_code}</p>
+                            )}
+                            <p className="absolute bottom-3 right-3 text-sm font-medium animate-gradient-text 
+                                         bg-gradient-to-r from-[#5382ec] to-[#d56676] bg-clip-text text-transparent 
+                                         bg-[length:200%_auto] animate-text-shine">
+                                Click to generate AI summary
+                            </p>
+                        </div>
+                    }
+                >
+                    <GPSummaryCard gp={mainGP} />
+                </CustomDialog>
                 )}
                 {!mainGP && (
                     <div className="p-4 rounded-lg bg-black/20">
