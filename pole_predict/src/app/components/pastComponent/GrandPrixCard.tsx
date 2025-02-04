@@ -9,6 +9,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import CustomDialog from "../generalDataComponent/CustomDialog";
+import GPDetailCard from "./GPSummaryCard";
 
 interface GrandPrixCardProps {
     mainGP: GP | null;
@@ -41,7 +43,7 @@ interface GP {
     qualif: string[];
     year: number;
     grand_prix: string;
-    sessionKey: number;
+    sessionKey: string;
 }
 
 const GrandPrixCard: React.FC<GrandPrixCardProps> = ({
@@ -55,11 +57,27 @@ const GrandPrixCard: React.FC<GrandPrixCardProps> = ({
     handleGPSelect,
     handleYearChange
 }) => {
-    // Add defensive check for filtered GPs
     const filteredGPs = allGPs.filter(gp =>
         gp?.year === selectedYear &&
         gp?.meeting_key !== undefined
     );
+
+    const buttonStyle: React.CSSProperties = {
+        width: '100%',
+        padding: '0',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        textAlign: 'left'
+    };
+
+    const getHoverStyles = (e: React.MouseEvent<HTMLButtonElement>, isEntering: boolean) => {
+        const target = e.currentTarget.firstElementChild as HTMLElement;
+        if (target) {
+            target.style.transform = isEntering ? 'scale(1.02)' : '';
+            target.style.backgroundColor = isEntering ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.2)';
+        }
+    };
 
     return (
         <Card
@@ -74,22 +92,33 @@ const GrandPrixCard: React.FC<GrandPrixCardProps> = ({
                 </div>
             </CardHeader>
             <CardContent className="text-gray-300">
-                <motion.div
-                    className="p-4 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:bg-black/30"
-                >
-                    <p className="text-xl font-bold text-gray-200">
-                        {mainGP?.meeting_name || 'Select a Grand Prix'} {mainGP?.year && `(${mainGP.year})`}
-                    </p>
-                    {mainGP && (
-                        <p className="flex items-center text-gray-300">
-                            <MapPin className="mr-2 h-4 w-4" />
-                            {mainGP.location}, {mainGP.country_name}
-                        </p>
-                    )}
-                    {mainGP?.meeting_code && (
-                        <p className="text-sm text-[#5382ec]">{mainGP.meeting_code}</p>
-                    )}
-                </motion.div>
+                {mainGP && (
+                    <CustomDialog
+                        buttonStyle={buttonStyle}
+                        getHoverStyles={getHoverStyles}
+                        triggerContent={
+                            <div className="p-4 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300">
+                                <p className="text-xl font-bold text-gray-200">
+                                    {mainGP.meeting_name} {mainGP.year && `(${mainGP.year})`}
+                                </p>
+                                <p className="flex items-center text-gray-300">
+                                    <MapPin className="mr-2 h-4 w-4" />
+                                    {mainGP.location}, {mainGP.country_name}
+                                </p>
+                                {mainGP.meeting_code && (
+                                    <p className="text-sm text-[#5382ec]">{mainGP.meeting_code}</p>
+                                )}
+                            </div>
+                        }
+                    >
+                        <GPDetailCard gp={mainGP} />
+                    </CustomDialog>
+                )}
+                {!mainGP && (
+                    <div className="p-4 rounded-lg bg-black/20">
+                        <p className="text-xl font-bold text-gray-200">Select a Grand Prix</p>
+                    </div>
+                )}
                 <div className="mt-4 flex flex-col md:flex-row md:items-center gap-4">
                     <Select
                         onValueChange={handleYearChange}
@@ -97,8 +126,8 @@ const GrandPrixCard: React.FC<GrandPrixCardProps> = ({
                     >
                         <SelectTrigger
                             className={`w-full md:w-auto border-0 transition-all ${selectedYear
-                                    ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
-                                    : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
+                                ? "bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white"
+                                : "bg-[#282a2c] text-gray-300 hover:bg-[#5382ec]/20"
                                 }`}
                         >
                             <SelectValue placeholder="Select Year" />
