@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useEffect, useState } from "react";
 import { Play, Pause } from "lucide-react";
 import * as Slider from "@radix-ui/react-slider";

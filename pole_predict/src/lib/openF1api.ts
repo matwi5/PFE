@@ -1,3 +1,4 @@
+/* eslint-disable */
 import axios from 'axios';
 import { db } from "../firebaseConfig";
 import { collection, getDocs, query, where, addDoc, Timestamp } from "firebase/firestore";

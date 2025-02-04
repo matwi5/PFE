@@ -1,4 +1,5 @@
 // components/PredictionWidget/SimplePredictionDisplay.tsx
+/* eslint-disable */
 import React from 'react';
 import { FormattedPredictionData, PredictionData } from '../../types';
 

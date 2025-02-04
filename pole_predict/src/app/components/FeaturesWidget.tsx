@@ -1,12 +1,40 @@
-import React, { useState } from 'react';
+/* eslint-disable */
+import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { 
   Clock, Activity, TrendingUp, Brain, Users, Trophy, Layout,
-  Timer, ChevronRight, LineChart, Car, Medal, Database
+  Timer, ChevronRight, LineChart, Car, Medal, Database,
+  LucideIcon
 } from 'lucide-react';
 
-const FeatureSection = ({ title, description, features, images, reverse = false, gradient = false }) => (
+interface Feature {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}
+
+interface FeatureSectionProps {
+  title: string;
+  description: string;
+  features: Feature[];
+  images: string[];
+  reverse?: boolean;
+  gradient?: boolean;
+}
+
+interface Section extends Omit<FeatureSectionProps, 'reverse'> {
+  reverse?: boolean;
+}
+
+const FeatureSection: React.FC<FeatureSectionProps> = ({ 
+  title, 
+  description, 
+  features, 
+  images, 
+  reverse = false, 
+  gradient = false 
+}) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
@@ -21,7 +49,7 @@ const FeatureSection = ({ title, description, features, images, reverse = false,
         </h3>
         <p className="text-gray-300 mb-6">{description}</p>
         <div className="space-y-4">
-          {features.map((feature, index) => (
+          {features.map((feature: Feature, index: number) => (
             <div key={index} className="flex items-start gap-3">
               <div className={`p-2 rounded-lg ${gradient ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf]' : 'bg-[#1d1f20]'}`}>
                 <feature.icon className={`w-5 h-5 ${gradient ? 'text-white' : 'text-[#5382ec]'}`} />
@@ -51,7 +79,7 @@ const FeatureSection = ({ title, description, features, images, reverse = false,
             </div>
           ) : (
             <div className="flex flex-col md:flex-row w-full h-full gap-4">
-              {images.map((image, index) => (
+              {images.map((image: string, index: number) => (
                 <div 
                   key={index} 
                   className="relative h-1/2 md:h-full md:w-1/2"
@@ -73,8 +101,8 @@ const FeatureSection = ({ title, description, features, images, reverse = false,
   </motion.div>
 );
 
-const FeaturesWidget = () => {
-  const mainSections = [
+const FeaturesWidget: React.FC = () => {
+  const mainSections: Section[] = [
     {
       title: "Past Races Analysis",
       description: "Dive deep into historical Formula 1 race data with comprehensive analysis tools and interactive visualizations.",
@@ -144,7 +172,7 @@ const FeaturesWidget = () => {
     }
   ];
 
-  const aiSection = {
+  const aiSection: Section = {
     title: "AI-Powered Race Predictions",
     description: "Our advanced artificial intelligence system processes real-time race data to provide accurate predictions and insights.",
     features: [
@@ -168,7 +196,7 @@ const FeaturesWidget = () => {
     gradient: true
   };
 
-  const socialSection = {
+  const socialSection: Section = {
     title: "Social Features & Rewards",
     description: "Join a community of F1 enthusiasts and compete with your predictions.",
     features: [

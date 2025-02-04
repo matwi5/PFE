@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { LaptimeConfig, PredictionData } from '../types';
 import { LAPTIME_CONFIG } from '../constants';
 

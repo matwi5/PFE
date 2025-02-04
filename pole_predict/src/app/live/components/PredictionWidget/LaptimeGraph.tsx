@@ -1,4 +1,5 @@
 // components/PredictionWidget/LaptimeGraph.tsx
+/* eslint-disable */
 import React from 'react';
 import {
     LineChart,

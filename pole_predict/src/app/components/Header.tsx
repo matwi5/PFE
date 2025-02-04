@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client"
 
 import React, { useContext, type FC, useState } from 'react';

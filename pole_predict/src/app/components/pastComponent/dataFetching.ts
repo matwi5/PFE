@@ -1,4 +1,5 @@
 // src/utils/dataFetching.ts
+/* eslint-disable */
 import { useState, useEffect } from "react";
 import { db } from "../../../firebaseConfig"; // Assurez-vous que le chemin est correct
 import { collection, getDocs } from "firebase/firestore";

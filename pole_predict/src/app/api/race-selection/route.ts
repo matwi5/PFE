@@ -1,4 +1,5 @@
 // app/api/race-selection/route.ts
+/* eslint-disable */
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 

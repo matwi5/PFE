@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Car, 
   Flag, 
@@ -11,10 +12,22 @@ import {
   Minus,
   PieChart, 
   Map, 
-  Activity 
+  Activity,
+  LucideIcon 
 } from 'lucide-react';
 
-const GuideSection = ({ 
+interface GuideSectionProps {
+  title: string;
+  description: string;
+  points: string[];
+  image: string;
+  Icon: LucideIcon;
+  isOpen: boolean;
+  onToggle: () => void;
+  index: number;
+}
+
+const GuideSection: React.FC<GuideSectionProps> = ({ 
   title, description, points, image, Icon, isOpen, onToggle, index 
 }) => {
   return (
@@ -75,10 +88,13 @@ const GuideSection = ({
                   <div className="relative group flex items-center justify-center h-54 mt-2">
                     <div className="absolute -inset-1 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] rounded-lg blur opacity-45 group-hover:opacity-85 transition duration-1000"></div>
                     <div className="relative w-full h-full rounded-lg overflow-hidden">
-                      <img
+                    <Image
                         src={image}
                         alt={title}
+                        width={600}
+                        height={400}
                         className="w-full h-full object-cover object-center"
+                        unoptimized={true} // Since we're using GIF images
                       />
                     </div>
                   </div>
@@ -92,14 +108,22 @@ const GuideSection = ({
   );
 };
 
-const F1Guide = () => {
-  const [openSection, setOpenSection] = useState(null);
+interface Section {
+  title: string;
+  description: string;
+  Icon: LucideIcon;
+  points: string[];
+  image: string;
+}
 
-  const handleToggle = (index) => {
+const F1Guide: React.FC = () => {
+  const [openSection, setOpenSection] = useState<number | null>(null);
+
+  const handleToggle = (index: number) => {
     setOpenSection(openSection === index ? null : index);
   };
 
-  const sections = [
+  const sections: Section[] = [
     {
       title: "Formula 1 Basics",
       description: "An introduction to the pinnacle of motorsport",

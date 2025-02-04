@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import DetailCard from "./DetailCard";
 
 interface Driver {
@@ -46,11 +47,16 @@ const DriverDetailCard: React.FC<{ driver: Driver }> = ({ driver }) => {
           transition={{ duration: 0.5 }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 rounded-full"></div>
-          <img
-            src={driver.headshot_url}
-            alt={`${driver.name} headshot`}
-            className="w-full h-full rounded-full object-cover border-4 border-[#5382ec] transition-transform duration-300 hover:scale-105 shadow-xl"
-          />
+          <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-[#5382ec] transition-transform duration-300 hover:scale-105 shadow-xl">
+            <Image
+              src={driver.headshot_url}
+              alt={`${driver.name} headshot`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 144px, 192px"
+              priority
+            />
+          </div>
         </motion.div>
         
         <motion.h2 
@@ -83,11 +89,15 @@ const DriverDetailCard: React.FC<{ driver: Driver }> = ({ driver }) => {
           title="Nationality" 
           value={
             <div className="flex items-center justify-center gap-2">
-              <img
-                src={driver.flag_url}
-                alt={`${driver.country_code} flag`}
-                className="w-6 h-4 shadow-sm"
-              />
+              <div className="relative w-6 h-4">
+                <Image
+                  src={driver.flag_url}
+                  alt={`${driver.country_code} flag`}
+                  fill
+                  className="shadow-sm"
+                  sizes="24px"
+                />
+              </div>
               <p className="text-white">{driver.country_code}</p>
             </div>
           }
@@ -125,11 +135,9 @@ const DriverDetailCard: React.FC<{ driver: Driver }> = ({ driver }) => {
           <p className="text-center text-[#5382ec] font-semibold mb-4">World Championships</p>
           <div className="flex justify-center flex-wrap gap-4">
             {Array.from({ length: driver.WorldChampionships }).map((_, index) => (
-              <motion.img
+              <motion.div
                 key={index}
-                src="/images/coupe.webp"
-                alt={`Championship Trophy ${index + 1}`}
-                className="w-16 h-16 sm:w-20 sm:h-20"
+                className="relative w-16 h-16 sm:w-20 sm:h-20"
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ 
@@ -139,7 +147,15 @@ const DriverDetailCard: React.FC<{ driver: Driver }> = ({ driver }) => {
                   stiffness: 260,
                   damping: 20
                 }}
-              />
+              >
+                <Image
+                  src="/images/coupe.webp"
+                  alt={`Championship Trophy ${index + 1}`}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 640px) 64px, 80px"
+                />
+              </motion.div>
             ))}
           </div>
         </motion.div>

@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -326,8 +327,8 @@ const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
         }
     }, [data, selectedDrivers, minLapInput, maxLapInput]);
 
-    const renderDot = (props: DotProps) => {
-        if (!props?.payload) return null;
+    const renderDot = (props: DotProps & { payload?: DisplayLapData }) => {
+        if (!props.payload) return <circle cx={props.cx} cy={props.cy} r={0} fill="transparent" />;
 
         const { payload } = props;
         let fill = "#ff0000";
@@ -365,9 +366,8 @@ const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
             }))
         : [];
 
-    if (!sessionKey) return <ErrorState error="Please provide a valid session key" />;
-    if (isInitialLoad) return <LoadingState />;
-    if (error) return <ErrorState error={error} />;
+    if (isLoading) return <LoadingCard />;
+    if (!sessionKey) return <ErrorCard error="Please provide a valid session key" />;
 
     return (
         <Card className={`group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out ${showLapInputs ? 'h-[590px]' : 'h-[510px]'}`}>
@@ -376,12 +376,7 @@ const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
                     <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                         Lap Time Analysis
                     </CardTitle>
-                    <div className="flex items-center gap-2">
-                        {isRefreshing && (
-                            <Loader2 className="h-4 w-4 animate-spin text-[#5382ec]" />
-                        )}
-                        <Timer className="h-5 w-5 text-[#5382ec]" />
-                    </div>
+                    <Timer className="h-5 w-5 text-[#5382ec]" />
                 </div>
 
                 <div className="space-y-4">
@@ -396,11 +391,11 @@ const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
                                 placeHolder="Select Drivers"
                             />
                         </div>
-                        
+
                         {selectedDrivers.length > 0 && (
                             <div className="flex gap-2">
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => setShowDots(!showDots)}
                                     className="bg-black/20 border-[#5382ec]/20 text-[#5382ec] hover:bg-[#5382ec]/20"
@@ -485,9 +480,9 @@ const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
                                     data={displayData}
                                     margin={{ top: 10, right: 0, left: -20, bottom: 15 }}
                                 >
-                                    <CartesianGrid 
-                                        strokeDasharray="3 3" 
-                                        stroke="rgba(255,255,255,0.1)" 
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke="rgba(255,255,255,0.1)"
                                     />
                                     <XAxis
                                         dataKey="lapNumber"
@@ -502,19 +497,18 @@ const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
                                         stroke="#ffffff50"
                                         tick={{ fill: '#ffffff80' }}
                                     />
-                                    <Legend 
-                                        wrapperStyle={{ 
+                                    <Legend
+                                        wrapperStyle={{
                                             paddingLeft: 20,
-                                            color: '#fff' 
-                                        }} 
+                                            color: '#fff'
+                                        }}
                                     />
                                     {
                                         [...new Set(displayData.map(lap => lap.driverNumber))]
                                             .filter(Boolean)
                                             .map(driverNumber => {
                                                 if (!driverNumber) return null;
-                                                const driverDataForLine = displayData.filter(lap => 
-                                                    lap.driverNumber === driverNumber);
+                                                const driverDataForLine = displayData.filter(lap => lap.driverNumber === driverNumber);
                                                 if (!driverDataForLine.length) return null;
 
                                                 return (

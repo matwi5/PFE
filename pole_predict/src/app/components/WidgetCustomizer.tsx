@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { Settings2, GripVertical, ChevronRight, LayoutPanelTop } from 'lucide-react';

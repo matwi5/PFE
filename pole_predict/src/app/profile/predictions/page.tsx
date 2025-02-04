@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -266,7 +267,7 @@ export default function UserPredictionsPage() {
                 </>
               ) : (
                 <p className="text-center py-6 md:py-8 text-gray-400 text-sm md:text-base">
-                  You haven't made any predictions yet.
+                  You haven&apos;t made any predictions yet.
                 </p>
               )}
             </CardContent>

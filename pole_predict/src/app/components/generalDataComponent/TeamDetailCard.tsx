@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import DetailCard from "./DetailCard";
 
 interface Team {
@@ -29,10 +30,7 @@ const StatCard: React.FC<{
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5, delay }}
   >
-    <p
-      className="font-semibold mb-2"
-      style={{ color: color }} // Always use the team color
-    >
+    <p className="font-semibold mb-2" style={{ color: color }}>
       {title}
     </p>
     <div className="flex items-center">{value}</div>
@@ -52,10 +50,12 @@ const TeamDetailCard: React.FC<{ team: Team }> = ({ team }) => {
             transition={{ duration: 0.5 }}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 rounded-lg"></div>
-            <img
+            <Image
               src={team.logo_url}
               alt={`${team.name} logo`}
-              className="w-full object-contain"
+              width={200}
+              height={200}
+              className="w-full object-contain rounded-lg"
             />
           </motion.div>
           <motion.h2
@@ -76,10 +76,12 @@ const TeamDetailCard: React.FC<{ team: Team }> = ({ team }) => {
             title="Base"
             value={
               <div className="flex items-center gap-2">
-                <img
+                <Image
                   src={team.country_flag}
                   alt={`${team.country} flag`}
-                  className="w-6 h-6 rounded-sm"
+                  width={24}
+                  height={24}
+                  className="rounded-sm"
                 />
                 <p className="text-white">{team.base}</p>
               </div>
@@ -122,12 +124,12 @@ const TeamDetailCard: React.FC<{ team: Team }> = ({ team }) => {
               Car
             </p>
             <div className="relative overflow-hidden rounded-lg">
-              <motion.img
+              <Image
                 src={team.car_image}
                 alt={`${team.name} car`}
+                width={1920}
+                height={1080}
                 className="w-full rounded-lg"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.3 }}
               />
             </div>
           </div>
@@ -148,9 +150,11 @@ const TeamDetailCard: React.FC<{ team: Team }> = ({ team }) => {
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.3, delay: 0.8 }}
               >
-                <img
+                <Image
                   src={team.pilote1_url}
                   alt="Driver 1"
+                  width={500}
+                  height={500}
                   className="w-full h-auto rounded"
                 />
               </motion.div>
@@ -162,9 +166,11 @@ const TeamDetailCard: React.FC<{ team: Team }> = ({ team }) => {
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.3, delay: 0.9 }}
               >
-                <img
+                <Image
                   src={team.pilote2_url}
                   alt="Driver 2"
+                  width={500}
+                  height={500}
                   className="w-full h-auto rounded"
                 />
               </motion.div>
