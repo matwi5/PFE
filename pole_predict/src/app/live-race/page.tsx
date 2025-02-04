@@ -11,7 +11,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/ca
 import RaceCarTelemetry from "../components/raceComponent/RaceCarTelemetry";
 import SectorAnalysis from "../components/raceComponent/SectorAnalysis";
 import DriverProfile from "../components/raceComponent/DriverProfile";
-import CircuitMap from "../components/raceComponent/CircuitMap";
 import { motion } from "framer-motion";
 import { Gauge } from "lucide-react";
 import VitalStatisticsWidget from '../upcoming-race/components/VitalStatisticsWidget';
@@ -377,7 +376,6 @@ const MobileView = ({
           {activeTab === 'telemetry' && (
             <>
               {widgetConfig.visibility['telemetry'] && widgetComponents['telemetry']}
-              {widgetConfig.visibility['circuit-map'] && widgetComponents['circuit-map']}
               {widgetConfig.visibility['driver-map'] && widgetComponents['driver-map']}
               {widgetConfig.visibility['sector-analysis'] && widgetComponents['sector-analysis']}
               {widgetConfig.visibility['stint-visualizer'] && widgetComponents['stint-visualizer']}
@@ -471,7 +469,6 @@ const RaceControlEvents = () => {
       'driver-standings',
       'telemetry',
       'driver-map',
-      'circuit-map',
       'sector-analysis',
       'event-display',
       'stint-visualizer',
@@ -489,7 +486,6 @@ const RaceControlEvents = () => {
       'vital-statistics': true,
       'telemetry': true,
       'driver-map': true,
-      'circuit-map': true,
       'sector-analysis': true,
       'stint-visualizer': true,
       'speed-visualizer': true,
@@ -870,7 +866,6 @@ const RaceControlEvents = () => {
       />
     ),
     'telemetry': realTimeDataContent,
-    'circuit-map': <CircuitMap />,
     'sector-analysis': selectedDriver && (
       <SectorAnalysis
         driverNumber={Number(selectedDriverNumber)}
@@ -1105,16 +1100,6 @@ const RaceControlEvents = () => {
                       className="break-inside-avoid"
                     >
                       {widgetComponents['driver-map']}
-                    </motion.div>
-                  )}
-
-                  {widgetId === 'circuit-map' && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      {widgetComponents['circuit-map']}
                     </motion.div>
                   )}
 

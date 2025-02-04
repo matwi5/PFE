@@ -64,7 +64,7 @@ const UnavailableCard: React.FC = () => (
     </CardHeader>
     <CardContent className="h-[calc(100%-4rem)] flex items-center justify-center">
       <div className="text-gray-400 text-center">
-        Driver Map is only available in chronological mode
+        Driver Map is only available in chrono mode
       </div>
     </CardContent>
   </Card>
