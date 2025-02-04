@@ -84,13 +84,13 @@ const GPDetailCard: React.FC<{ gp: GrandPrix }> = ({ gp }) => {
 
       <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard
-          title="Nombre de tours"
+          title="Number of laps"
           value={<p className="text-white text-2xl font-bold">{gp.nombre_de_tours}</p>}
           delay={0.5}
         />
 
         <StatCard
-          title="Record du circuit"
+          title="Circuit record"
           value={
             <div className="flex flex-col items-center">
               <p className="text-white text-lg sm:text-xl font-mono">{gp.record_de_circuit}</p>
@@ -101,16 +101,16 @@ const GPDetailCard: React.FC<{ gp: GrandPrix }> = ({ gp }) => {
         />
 
         <StatCard
-          title="Particularités"
+          title="Particularities"
           value={<p className="text-white text-sm sm:text-base leading-relaxed">{gp.particularites}</p>}
           delay={0.7}
           fullWidth
         />
 
-        <StatCard title="Pays" value={<p className="text-white text-lg font-bold">{gp.pays}</p>} delay={0.8} />
-        <StatCard title="Type de circuit" value={<p className="text-white text-lg font-bold">{gp.type}</p>} delay={0.9} />
-        <StatCard title="Rythme" value={<p className="text-white text-lg font-bold">{gp.pace}</p>} delay={1.0} />
-        <StatCard title="Exigence principale" value={<p className="text-white text-lg font-bold">{gp.requirement}</p>} delay={1.1} />
+        <StatCard title="Country" value={<p className="text-white text-lg font-bold">{gp.pays}</p>} delay={0.8} />
+        <StatCard title="Circuit type" value={<p className="text-white text-lg font-bold">{gp.type}</p>} delay={0.9} />
+        <StatCard title="Pace" value={<p className="text-white text-lg font-bold">{gp.pace}</p>} delay={1.0} />
+        <StatCard title="Main requirement" value={<p className="text-white text-lg font-bold">{gp.requirement}</p>} delay={1.1} />
         <StatCard title="Altitude" value={<p className="text-white text-lg font-bold">{gp.elevation}</p>} delay={1.2} />
 
 

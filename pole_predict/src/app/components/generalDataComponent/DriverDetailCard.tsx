@@ -66,12 +66,12 @@ const DriverDetailCard: React.FC<{ driver: Driver }> = ({ driver }) => {
       {/* Stats Grid - Primary Info */}
       <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <StatCard 
-          title="Équipe" 
+          title="Team" 
           value={<p className="text-white text-lg">{driver.team_name}</p>}
           delay={0.3}
         />
         <StatCard 
-          title="Numéro" 
+          title="Number" 
           value={<p className="text-white text-2xl font-bold" style={{ color: driver.team_colour }}>{driver.driver_number}</p>}
           delay={0.4}
         />
@@ -80,7 +80,7 @@ const DriverDetailCard: React.FC<{ driver: Driver }> = ({ driver }) => {
       {/* Stats Grid - Secondary Info */}
       <div className="relative z-10 grid grid-cols-2 sm:grid-cols-2 gap-4 mb-4">
         <StatCard 
-          title="Nationalité" 
+          title="Nationality" 
           value={
             <div className="flex items-center justify-center gap-2">
               <img
@@ -103,7 +103,7 @@ const DriverDetailCard: React.FC<{ driver: Driver }> = ({ driver }) => {
       {/* Stats Grid - Performance Stats */}
       <div className="relative z-10 grid grid-cols-2 gap-4 mb-4">
         <StatCard 
-          title="Victoires" 
+          title="Victories" 
           value={<p className="text-white text-2xl font-bold">{driver.NumberOfVictories}</p>}
           delay={0.7}
         />
@@ -122,7 +122,7 @@ const DriverDetailCard: React.FC<{ driver: Driver }> = ({ driver }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.9 }}
         >
-          <p className="text-center text-[#5382ec] font-semibold mb-4">Championnats du Monde</p>
+          <p className="text-center text-[#5382ec] font-semibold mb-4">World Championships</p>
           <div className="flex justify-center flex-wrap gap-4">
             {Array.from({ length: driver.WorldChampionships }).map((_, index) => (
               <motion.img
