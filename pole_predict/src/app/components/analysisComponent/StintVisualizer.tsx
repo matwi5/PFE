@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Loader2, AlertTriangle } from 'lucide-react';
+import { Timer, Loader2, AlertTriangle, Activity } from 'lucide-react';
 
 interface Stint {
     compound: string;
@@ -40,12 +40,6 @@ interface DriverStints {
     };
 }
 
-interface LoadingStatus {
-    stints: boolean;
-    drivers: boolean;
-    positions: boolean;
-}
-
 const useIsMobile = () => {
     const [isMobile, setIsMobile] = useState(false);
 
@@ -79,15 +73,12 @@ const tyreImages: Record<string, string> = {
     WET: '/images/tyre/wet.png',
 };
 
-// Fonction utilitaire pour retry les appels API
 const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
     let retries = 0;
     while (retries < maxRetries) {
         try {
             const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             if (!data) throw new Error('No data received');
             return data;
@@ -102,53 +93,88 @@ const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
 
 const TyreCompoundsLegend = () => {
     const compounds = [
-      { name: 'Soft', color: 'bg-gradient-to-r from-red-500 to-red-600' },
-      { name: 'Medium', color: 'bg-gradient-to-r from-yellow-400 to-yellow-500' },
-      { name: 'Hard', color: 'bg-gradient-to-r from-gray-200 to-gray-300' },
-      { name: 'Inter', color: 'bg-gradient-to-r from-green-500 to-green-600' },
-      { name: 'Wet', color: 'bg-gradient-to-r from-blue-500 to-blue-600' }
+        { name: 'Soft', color: 'bg-gradient-to-r from-red-500 to-red-600' },
+        { name: 'Medium', color: 'bg-gradient-to-r from-yellow-400 to-yellow-500' },
+        { name: 'Hard', color: 'bg-gradient-to-r from-gray-200 to-gray-300' },
+        { name: 'Inter', color: 'bg-gradient-to-r from-green-500 to-green-600' },
+        { name: 'Wet', color: 'bg-gradient-to-r from-blue-500 to-blue-600' }
     ];
-  
+
     return (
-      <div className="flex flex-col w-full space-y-2 md:space-y-0 md:flex-row md:items-center md:justify-center">
-        <div className="grid grid-cols-3 gap-2 md:flex md:flex-row md:gap-2">
-          {compounds.map(({ name, color }) => (
-            <div
-              key={name}
-              className="flex items-center justify-center p-2 rounded-lg bg-black/20 hover:bg-black/40 transition-all duration-200"
-            >
-              <div className="flex items-center gap-2">
-                <div className={`w-2.5 h-2.5 rounded-full ${color} shadow-lg`} />
-                <span className="text-xs font-medium text-gray-200">
-                  {name}
-                </span>
-              </div>
+        <div className="flex flex-col w-full space-y-2 md:space-y-0 md:flex-row md:items-center md:justify-center">
+            <div className="grid grid-cols-3 gap-2 md:flex md:flex-row md:gap-2">
+                {compounds.map(({ name, color }) => (
+                    <div
+                        key={name}
+                        className="flex items-center justify-center p-2 rounded-lg bg-black/20 hover:bg-black/40 transition-all duration-200"
+                    >
+                        <div className="flex items-center gap-2">
+                            <div className={`w-2.5 h-2.5 rounded-full ${color} shadow-lg`} />
+                            <span className="text-xs font-medium text-gray-200">
+                                {name}
+                            </span>
+                        </div>
+                    </div>
+                ))}
             </div>
-          ))}
         </div>
-      </div>
     );
-  };
+};
 
-const LoadingCard = ({ loadingStatus }: { loadingStatus: LoadingStatus }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
-        <CardContent className="flex flex-col items-center justify-center h-full gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
-            <div className="text-white flex flex-col items-center gap-2">
-                <div>Loading stint data...</div>
-                <div className="text-sm text-gray-400">
-                    {!loadingStatus.stints && "Fetching stints..."}
-                    {loadingStatus.stints && !loadingStatus.drivers && "Fetching driver info..."}
-                    {loadingStatus.drivers && !loadingStatus.positions && "Fetching positions..."}
+const LoadingState = () => {
+    const LoadingProgress = () => {
+        const [loadingPhase, setLoadingPhase] = useState(0);
+        
+        useEffect(() => {
+            const phases = ['Fetching stints...', 'Loading driver info...', 'Getting positions...'];
+            let currentPhase = 0;
+            
+            const interval = setInterval(() => {
+                currentPhase = (currentPhase + 1) % phases.length;
+                setLoadingPhase(currentPhase);
+            }, 2000);
+            
+            return () => clearInterval(interval);
+        }, []);
+        
+        const phases = ['Fetching stints...', 'Loading driver info...', 'Getting positions...'];
+        return <span>{phases[loadingPhase]}</span>;
+    };
+
+    return (
+        <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[600px]">
+            <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                        Race Stint Analysis
+                    </CardTitle>
+                    <Activity className="h-5 w-5 text-[#5382ec]" />
                 </div>
-            </div>
-        </CardContent>
-    </Card>
-);
+            </CardHeader>
+            <CardContent className="flex items-center justify-center h-[500px]">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
+                    <div className="text-gray-400">Loading race stint data...</div>
+                    <div className="text-sm text-gray-500">
+                        <LoadingProgress />
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
 
-const ErrorCard = ({ error }: { error: string }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
-        <CardContent className="flex items-center justify-center h-full">
+const ErrorState = ({ error }: { error: string }) => (
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[600px]">
+        <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                    Race Stint Analysis
+                </CardTitle>
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+            </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[500px]">
             <div className="flex flex-col items-center gap-4 text-center">
                 <AlertTriangle className="h-8 w-8 text-red-500" />
                 <div className="text-red-400">{error}</div>
@@ -161,62 +187,47 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
     const isMobile = useIsMobile();
     const [driverStints, setDriverStints] = useState<DriverStints>({});
     const [maxLaps, setMaxLaps] = useState(70);
-    const [loading, setLoading] = useState(true);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>({
-        stints: false,
-        drivers: false,
-        positions: false
-    });
 
     useEffect(() => {
         const fetchAllData = async () => {
             if (!sessionKey) {
                 setError("No session key provided");
-                setLoading(false);
+                setIsInitialLoad(false);
                 return;
             }
 
             try {
-                setLoading(true);
-                setError(null);
-                setLoadingStatus({ stints: false, drivers: false, positions: false });
+                if (!isInitialLoad) {
+                    setIsRefreshing(true);
+                }
 
-                // Prepare URLs
                 const stintsUrl = lap
                     ? `https://api.openf1.org/v1/stints?session_key=${sessionKey}&lap_end<=${lap}`
                     : `https://api.openf1.org/v1/stints?session_key=${sessionKey}`;
                 const driversUrl = `https://api.openf1.org/v1/drivers?session_key=${sessionKey}`;
                 const positionsUrl = `https://api.openf1.org/v1/position?session_key=${sessionKey}`;
 
-                // Fetch stints data
-                const stintsData: Stint[] = await fetchWithRetry(stintsUrl);
-                setLoadingStatus(prev => ({ ...prev, stints: true }));
+                const [stintsData, driversData, positionsData] = await Promise.all([
+                    fetchWithRetry(stintsUrl),
+                    fetchWithRetry(driversUrl),
+                    fetchWithRetry(positionsUrl)
+                ]);
 
-                // Validate stints data
                 if (!Array.isArray(stintsData) || stintsData.length === 0) {
                     throw new Error('No valid stints data found');
                 }
 
-                // Fetch drivers data
-                const driversData: Driver[] = await fetchWithRetry(driversUrl);
-                setLoadingStatus(prev => ({ ...prev, drivers: true }));
-
-                // Validate drivers data
                 if (!Array.isArray(driversData)) {
                     throw new Error('Invalid drivers data format');
                 }
 
-                // Fetch positions data
-                const positionsData: Position[] = await fetchWithRetry(positionsUrl);
-                setLoadingStatus(prev => ({ ...prev, positions: true }));
-
-                // Validate positions data
                 if (!Array.isArray(positionsData)) {
                     throw new Error('Invalid positions data format');
                 }
 
-                // Process final positions
                 const finalPositions = positionsData.reduce((acc: Map<number, Position>, pos) => {
                     if (!pos?.driver_number || !pos?.date) return acc;
 
@@ -227,7 +238,6 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                     return acc;
                 }, new Map());
 
-                // Process drivers data
                 const driverMap = new Map(
                     driversData
                         .filter(driver => driver?.driver_number && driver?.name_acronym)
@@ -240,7 +250,6 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                         ])
                 );
 
-                // Process stints by driver
                 const stintsByDriver = stintsData.reduce((acc: DriverStints, stint) => {
                     if (!stint?.driver_number || !stint?.lap_start || !stint?.lap_end) return acc;
 
@@ -260,7 +269,6 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                     return acc;
                 }, {});
 
-                // Calculate total laps for each driver
                 Object.values(stintsByDriver).forEach(driver => {
                     const validStints = driver.stints.filter(stint =>
                         stint?.lap_end && !isNaN(stint.lap_end)
@@ -270,20 +278,19 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                     }
                 });
 
-                // Sort stints by lap_start for each driver
                 Object.values(stintsByDriver).forEach(driver => {
                     driver.stints.sort((a, b) => a.lap_start - b.lap_start);
                 });
 
                 setDriverStints(stintsByDriver);
                 setMaxLaps(Math.max(...stintsData.map(stint => stint.lap_end || 0)));
-                setLoading(false);
                 setError(null);
-
             } catch (err) {
                 console.error('Error in fetchAllData:', err);
                 setError(err instanceof Error ? err.message : 'Failed to fetch data');
-                setLoading(false);
+            } finally {
+                setIsInitialLoad(false);
+                setIsRefreshing(false);
             }
         };
 
@@ -297,13 +304,13 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
     const calculateWidth = (start: number, end: number) => {
         if (!start || !end || isNaN(start) || isNaN(end) || end < start) return '0%';
         const width = ((end - start + 1) / maxLaps) * 100;
-        return `${Math.max(width, 5)}%`; // Minimum width of 5%
+        return `${Math.max(width, 5)}%`;
     };
 
-    if (!sessionKey) return <ErrorCard error="No session key provided" />;
-    if (loading) return <LoadingCard loadingStatus={loadingStatus} />;
-    if (error) return <ErrorCard error={error} />;
-    if (sortedDrivers.length === 0) return <ErrorCard error="No stint data available" />;
+    if (!sessionKey) return <ErrorState error="No session key provided" />;
+    if (isInitialLoad) return <LoadingState />;
+    if (error) return <ErrorState error={error} />;
+    if (sortedDrivers.length === 0) return <ErrorState error="No stint data available" />;
 
     return (
         <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[600px]">
@@ -312,13 +319,18 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                     <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                         Race Stint Analysis
                     </CardTitle>
-                    <Timer className="h-5 w-5 text-[#5382ec]" />
+                    <div className="flex items-center gap-2">
+                        {isRefreshing && (
+                            <Loader2 className="h-4 w-4 animate-spin text-[#5382ec]" />
+                        )}
+                        <Timer className="h-5 w-5 text-[#5382ec]" />
+                    </div>
                 </div>
                 <TyreCompoundsLegend />
             </CardHeader>
             <CardContent className="relative h-[500px]">
                 <div className="h-full overflow-y-auto pr-6 scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out">
-                    <motion.div
+                <motion.div
                         className="pr-2 space-y-4"
                         initial="hidden"
                         animate="visible"

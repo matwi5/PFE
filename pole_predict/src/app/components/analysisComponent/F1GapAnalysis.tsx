@@ -16,7 +16,7 @@ import CustomDropdown_multiple from "./component/CustomDropdown_multiple";
 import CustomDropdown_single, { DropdownOption } from "./component/CustomDropdown_single";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Timer, ChevronDown, AlertTriangle } from "lucide-react";
+import { Loader2, Timer, ChevronDown, AlertTriangle, Activity } from "lucide-react";
 
 interface F1GapAnalysisProps {
     sessionKey: number;
@@ -49,35 +49,6 @@ interface LapData {
     lap_number: number;
 }
 
-const LoadingCard = ({ loadingStatus }: { loadingStatus: { drivers: boolean; laps: boolean; gaps: boolean } }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
-        <CardContent className="flex flex-col items-center justify-center h-full gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
-            <div className="text-white flex flex-col items-center gap-2">
-                <div>Loading gap analysis data...</div>
-                <div className="text-sm text-gray-400">
-                    {!loadingStatus.drivers && "Fetching drivers..."}
-                    {loadingStatus.drivers && !loadingStatus.laps && "Fetching lap data..."}
-                    {loadingStatus.laps && !loadingStatus.gaps && "Fetching gap data..."}
-                </div>
-            </div>
-        </CardContent>
-    </Card>
-);
-
-const ErrorCard = ({ error }: { error: string }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
-        <CardContent className="flex items-center justify-center h-full">
-            <div className="flex flex-col items-center gap-4 text-center">
-                <AlertTriangle className="h-8 w-8 text-red-500" />
-                <div className="text-red-400">{error}</div>
-            </div>
-        </CardContent>
-    </Card>
-);
-
-
-// Fonction utilitaire pour retry les appels API
 const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
     let retries = 0;
     while (retries < maxRetries) {
@@ -93,12 +64,72 @@ const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
     }
 };
 
+const LoadingState = () => {
+    const [loadingPhase, setLoadingPhase] = useState(0);
+
+    useEffect(() => {
+        const phases = ['Fetching drivers...', 'Loading lap data...', 'Processing gap data...'];
+        let currentPhase = 0;
+
+        const interval = setInterval(() => {
+            currentPhase = (currentPhase + 1) % phases.length;
+            setLoadingPhase(currentPhase);
+        }, 2000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const phases = ['Fetching drivers...', 'Loading lap data...', 'Processing gap data...'];
+
+    return (
+        <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[510px]">
+            <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                        Gap Analysis
+                    </CardTitle>
+                    <Activity className="h-5 w-5 text-[#5382ec]" />
+                </div>
+            </CardHeader>
+            <CardContent className="flex items-center justify-center h-[450px]">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
+                    <div className="text-gray-400">Loading gap analysis data...</div>
+                    <div className="text-sm text-gray-500">
+                        {phases[loadingPhase]}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+const ErrorState = ({ error }: { error: string }) => (
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[510px]">
+        <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                    Gap Analysis
+                </CardTitle>
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+            </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[450px]">
+            <div className="flex flex-col items-center gap-4 text-center">
+                <AlertTriangle className="h-8 w-8 text-red-500" />
+                <div className="text-red-400">{error}</div>
+            </div>
+        </CardContent>
+    </Card>
+);
+
+
 const fetchDriversData = async (sessionKey: number): Promise<DriverData> => {
     try {
         const url = `https://api.openf1.org/v1/drivers?session_key=${sessionKey}`;
         const drivers = await fetchWithRetry(url);
         const driverDataMap: DriverData = {};
-        
+
         drivers.forEach(driver => {
             if (driver?.driver_number) {
                 driverDataMap[driver.driver_number] = {
@@ -107,7 +138,7 @@ const fetchDriversData = async (sessionKey: number): Promise<DriverData> => {
                 };
             }
         });
-        
+
         return driverDataMap;
     } catch (error) {
         console.error('Error fetching driver data:', error);
@@ -139,6 +170,7 @@ const fetchGapData = async (sessionKey: number): Promise<GapData[]> => {
 };
 
 const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
+    // États de données
     const [driverData, setDriverData] = useState<DriverData>({});
     const [lapData, setLapData] = useState<LapData[]>([]);
     const [gapData, setGapData] = useState<GapData[]>([]);
@@ -148,66 +180,88 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
     const [chartData, setChartData] = useState<[]>([]);
     const [driverOptions, setDriverOptions] = useState<DropdownOption[]>([]);
     const [yAxisDomain, setYAxisDomain] = useState<[number, number]>([0, 10]);
+
+    // États UI
     const [showDots, setShowDots] = useState(false);
     const [minLapInput, setMinLapInput] = useState('2');
     const [maxLapInput, setMaxLapInput] = useState('Infinity');
     const [showLapInputs, setShowLapInputs] = useState(false);
-    const [loading, setLoading] = useState<boolean>(true);
+
+    // États de chargement
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [dataLoadingStatus, setDataLoadingStatus] = useState({
-        drivers: false,
-        laps: false,
-        gaps: false
-    });
 
     const modeOptions: DropdownOption[] = [
         { label: "Gap to Leader", value: "gapToLeader" },
         { label: "Interval", value: "interval" },
     ];
 
+    // Effet principal pour le chargement des données
     useEffect(() => {
         const loadAllData = async () => {
-            if (!sessionKey) return;
-            
-            setLoading(true);
-            setError(null);
-            
+            if (!sessionKey) {
+                setError("No session key provided");
+                setIsInitialLoad(false);
+                return;
+            }
+
             try {
-                // Charger les données des pilotes
-                setDataLoadingStatus(prev => ({ ...prev, drivers: true }));
-                const driversData = await fetchDriversData(sessionKey);
-                setDriverData(driversData);
-                setDataLoadingStatus(prev => ({ ...prev, drivers: false }));
-                
-                const options = Object.entries(driversData)
-                    .filter(([driverNumber]) => driverNumber) // Filter out invalid driver numbers
+                if (!isInitialLoad) {
+                    setIsRefreshing(true);
+                }
+                setError(null);
+
+                // Prepare URLs
+                const driversUrl = `https://api.openf1.org/v1/drivers?session_key=${sessionKey}`;
+                const lapsUrl = lap
+                    ? `https://api.openf1.org/v1/laps?session_key=${sessionKey}&lap_number<=${lap}`
+                    : `https://api.openf1.org/v1/laps?session_key=${sessionKey}`;
+                const gapsUrl = `https://api.openf1.org/v1/intervals?session_key=${sessionKey}`;
+
+                // Fetch all data in parallel
+                const [driversData, lapsData, gapsData] = await Promise.all([
+                    fetchWithRetry(driversUrl),
+                    fetchWithRetry(lapsUrl),
+                    fetchWithRetry(gapsUrl)
+                ]);
+
+                // Process drivers data
+                const processedDriverData: DriverData = {};
+                driversData.forEach((driver: any) => {
+                    if (driver?.driver_number && driver?.name_acronym) {
+                        processedDriverData[driver.driver_number] = {
+                            name_acronym: driver.name_acronym,
+                            team_colour: driver.team_colour || 'FFFFFF'
+                        };
+                    }
+                });
+                setDriverData(processedDriverData);
+
+                // Set driver options
+                const options = Object.entries(processedDriverData)
+                    .filter(([driverNumber]) => driverNumber)
                     .map(([driverNumber, driverInfo]) => ({
                         value: driverNumber,
                         label: driverInfo.name_acronym
                     }));
                 setDriverOptions(options);
 
-                // Charger les données des tours
-                setDataLoadingStatus(prev => ({ ...prev, laps: true }));
-                const lapsData = await fetchLapData(sessionKey, lap);
+                // Set lap data and gap data
                 setLapData(lapsData);
-                setDataLoadingStatus(prev => ({ ...prev, laps: false }));
-
-                // Charger les données des écarts
-                setDataLoadingStatus(prev => ({ ...prev, gaps: true }));
-                const gapsData = await fetchGapData(sessionKey);
                 setGapData(gapsData);
-                setDataLoadingStatus(prev => ({ ...prev, gaps: false }));
 
-                setLoading(false);
             } catch (err) {
+                console.error('Error in loadAllData:', err);
                 setError(err instanceof Error ? err.message : 'Failed to fetch data');
-                setLoading(false);
+            } finally {
+                setIsInitialLoad(false);
+                setIsRefreshing(false);
             }
         };
 
         loadAllData();
-    }, [sessionKey, lap]);
+    }, [sessionKey, lap, isInitialLoad]);
 
     useEffect(() => {
         if (selectedMode && gapData.length > 0 && lapData.length > 0 && driverData) {
@@ -275,7 +329,7 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
             const lapStartDate = new Date(lapItem.date_start);
             const closestGapItem = driverGapData.reduce((closest, current) => {
                 if (!current?.date) return closest;
-                
+
                 const currentDate = new Date(current.date);
                 const closestDate = closest ? new Date(closest.date) : null;
                 const currentTimeDiff = Math.abs(lapStartDate.getTime() - currentDate.getTime());
@@ -314,7 +368,7 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
 
             const closestGap1Item = driver1GapData.reduce((closest, current) => {
                 if (!current?.date) return closest;
-                
+
                 const currentDate = new Date(current.date);
                 const closestDate = closest ? new Date(closest.date) : null;
                 const currentTimeDiff = Math.abs(lapStartDate.getTime() - currentDate.getTime());
@@ -327,7 +381,7 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
 
             const closestGap2Item = driver2GapData.reduce((closest, current) => {
                 if (!current?.date) return closest;
-                
+
                 const currentDate = new Date(current.date);
                 const closestDate = closest ? new Date(closest.date) : null;
                 const currentTimeDiff = Math.abs(lapStartDate.getTime() - currentDate.getTime());
@@ -339,9 +393,9 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
             }, null as GapData | null);
 
             if (closestGap1Item && closestGap2Item &&
-                !isNaN(closestGap1Item.gap_to_leader) && 
+                !isNaN(closestGap1Item.gap_to_leader) &&
                 !isNaN(closestGap2Item.gap_to_leader)) {
-                
+
                 const existingEntryIndex = intervalData.findIndex(
                     entry => entry.lap_number === lapItem.lap_number
                 );
@@ -391,22 +445,23 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
         fontWeight: 'bold'
     };
 
-    if (loading) {
-        return <LoadingCard loadingStatus={dataLoadingStatus} />;
-    }
-
-    if (!sessionKey) {
-        return <ErrorCard error="Please provide a valid session key" />;
-    }
+    if (!sessionKey) return <ErrorState error="Please provide a valid session key" />;
+    if (isInitialLoad) return <LoadingState />;
+    if (error) return <ErrorState error={error} />;
 
     return (
         <Card className={`group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out ${showLapInputs ? 'h-[590px]' : 'h-[510px]'}`}>
-            <CardHeader className="pb-2 relative z-50"> {/* Added relative and z-50 */}
+            <CardHeader className="pb-2 relative z-50">
                 <div className="flex items-center justify-between mb-4">
                     <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                         Gap Analysis
                     </CardTitle>
-                    <Timer className="h-5 w-5 text-[#5382ec]" />
+                    <div className="flex items-center gap-2">
+                        {isRefreshing && (
+                            <Loader2 className="h-4 w-4 animate-spin text-[#5382ec]" />
+                        )}
+                        <Timer className="h-5 w-5 text-[#5382ec]" />
+                    </div>
                 </div>
 
                 <motion.div
@@ -455,8 +510,8 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
                     </div>
 
                     <div className="flex gap-2">
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => setShowDots(!showDots)}
                             className="bg-black/20 border-[#5382ec]/20 text-[#5382ec] hover:bg-[#5382ec]/20"
@@ -536,9 +591,9 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
 
                             <ResponsiveContainer width="100%" height={300}>
                                 <LineChart data={chartData} margin={{ top: 10, right: 0, left: -30, bottom: 15 }}>
-                                    <CartesianGrid 
-                                        strokeDasharray="3 3" 
-                                        stroke="rgba(255,255,255,0.1)" 
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke="rgba(255,255,255,0.1)"
                                     />
                                     <XAxis
                                         dataKey="lap_number"
@@ -570,7 +625,7 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
                                             return null;
                                         }}
                                     />
-                                    
+
                                     {selectedMode.value === 'gapToLeader' && referenceDriver && (
                                         <Line
                                             type="monotone"

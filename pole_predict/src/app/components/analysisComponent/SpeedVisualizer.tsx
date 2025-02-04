@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gauge, Loader2, AlertTriangle } from 'lucide-react';
+import { Gauge, Loader2, AlertTriangle, Activity } from 'lucide-react';
 
 interface LapData {
     driver_number: number;
@@ -27,24 +27,73 @@ interface DriverSpeedData {
     };
 }
 
-const LoadingCard = ({ progress }: { progress: { laps: boolean; drivers: boolean } }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
-        <CardContent className="flex flex-col items-center justify-center h-full gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
-            <div className="text-white flex flex-col items-center gap-2">
-                <div>Loading speed data...</div>
-                <div className="text-sm text-gray-400">
-                    {!progress.laps && "Fetching lap times..."}
-                    {progress.laps && !progress.drivers && "Fetching driver info..."}
-                </div>
-            </div>
-        </CardContent>
-    </Card>
-);
+const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
+    let retries = 0;
+    while (retries < maxRetries) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            retries++;
+            if (retries === maxRetries) throw error;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log(`Retry attempt ${retries} for ${url}`);
+        }
+    }
+};
 
-const ErrorCard = ({ error }: { error: string }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
-        <CardContent className="flex items-center justify-center h-full">
+const LoadingState = () => {
+    const [loadingPhase, setLoadingPhase] = useState(0);
+    
+    useEffect(() => {
+        const phases = ['Fetching lap times...', 'Loading driver info...', 'Processing speed data...'];
+        let currentPhase = 0;
+        
+        const interval = setInterval(() => {
+            currentPhase = (currentPhase + 1) % phases.length;
+            setLoadingPhase(currentPhase);
+        }, 2000);
+        
+        return () => clearInterval(interval);
+    }, []);
+    
+    const phases = ['Fetching lap times...', 'Loading driver info...', 'Processing speed data...'];
+
+    return (
+        <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[570px]">
+            <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                        Speed Analysis
+                    </CardTitle>
+                    <Activity className="h-5 w-5 text-[#5382ec]" />
+                </div>
+            </CardHeader>
+            <CardContent className="flex items-center justify-center h-[500px]">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
+                    <div className="text-gray-400">Loading speed data...</div>
+                    <div className="text-sm text-gray-500">
+                        {phases[loadingPhase]}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+const ErrorState = ({ error }: { error: string }) => (
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[570px]">
+        <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                    Speed Analysis
+                </CardTitle>
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+            </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[500px]">
             <div className="flex flex-col items-center gap-4 text-center">
                 <AlertTriangle className="h-8 w-8 text-red-500" />
                 <div className="text-red-400">{error}</div>
@@ -53,91 +102,63 @@ const ErrorCard = ({ error }: { error: string }) => (
     </Card>
 );
 
-
-// Fonction utilitaire pour retry les appels API
-const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
-    let retries = 0;
-    while (retries < maxRetries) {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return await response.json();
-        } catch (error) {
-            retries++;
-            if (retries === maxRetries) throw error;
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Attendre 1s avant de réessayer
-            console.log(`Retry attempt ${retries} for ${url}`);
-        }
-    }
-};
-
 const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number | null}) => {
     const [driverData, setDriverData] = useState<DriverSpeedData>({});
-    const [loading, setLoading] = useState(true);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [maxAverageSpeed, setMaxAverageSpeed] = useState(0);
     const [minAverageSpeed, setMinAverageSpeed] = useState(0);
     const [totalSessionLaps, setTotalSessionLaps] = useState(0);
-    const [dataFetchProgress, setDataFetchProgress] = useState({ 
-        laps: false, 
-        drivers: false 
-    });
 
     useEffect(() => {
         const fetchAllData = async () => {
             if (!sessionKey) {
                 setError("No session key provided");
-                setLoading(false);
+                setIsInitialLoad(false);
                 return;
             }
 
             try {
-                setLoading(true);
+                if (!isInitialLoad) {
+                    setIsRefreshing(true);
+                }
                 setError(null);
-                setDataFetchProgress({ laps: false, drivers: false });
 
-                // Fetch laps data
-                const url = lap
+                // Prepare URLs
+                const lapsUrl = lap
                     ? `https://api.openf1.org/v1/laps?session_key=${sessionKey}&lap_number<${lap}`
                     : `https://api.openf1.org/v1/laps?session_key=${sessionKey}`;
-                
-                const lapsData: LapData[] = await fetchWithRetry(url);
-                setDataFetchProgress(prev => ({ ...prev, laps: true }));
+                const driversUrl = `https://api.openf1.org/v1/drivers?session_key=${sessionKey}`;
 
-                // Validate laps data
-                if (!Array.isArray(lapsData)) {
-                    throw new Error('Invalid laps data format received');
-                }
+                // Fetch data in parallel
+                const [lapsData, driversData] = await Promise.all([
+                    fetchWithRetry(lapsUrl),
+                    fetchWithRetry(driversUrl)
+                ]);
 
-                // Fetch drivers data
-                const url2 = `https://api.openf1.org/v1/drivers?session_key=${sessionKey}`;
-                const driversData: Driver[] = await fetchWithRetry(url2);
-                setDataFetchProgress(prev => ({ ...prev, drivers: true }));
-
-                // Validate drivers data
-                if (!Array.isArray(driversData)) {
-                    throw new Error('Invalid drivers data format received');
-                }
+                // Validate data
+                if (!Array.isArray(lapsData)) throw new Error('Invalid laps data format received');
+                if (!Array.isArray(driversData)) throw new Error('Invalid drivers data format received');
 
                 const driverMap = new Map(
-                    driversData.filter(driver => driver?.driver_number && driver?.name_acronym).map(driver => [
-                        driver.driver_number,
-                        {
-                            acronym: driver.name_acronym,
-                            teamColor: driver.team_colour || 'FFFFFF'
-                        }
-                    ])
+                    driversData
+                        .filter(driver => driver?.driver_number && driver?.name_acronym)
+                        .map(driver => [
+                            driver.driver_number,
+                            {
+                                acronym: driver.name_acronym,
+                                teamColor: driver.team_colour || 'FFFFFF'
+                            }
+                        ])
                 );
 
                 const processedData: DriverSpeedData = {};
                 const sessionLapNumbers = new Set<number>();
 
-                // First pass: Track all valid laps and count total laps per driver
+                // Process data
                 lapsData.forEach(lap => {
                     if (!lap?.lap_number || !lap?.driver_number) return;
-                    
                     sessionLapNumbers.add(lap.lap_number);
 
                     if (!processedData[lap.driver_number]) {
@@ -155,30 +176,24 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
                     processedData[lap.driver_number].totalLaps++;
                 });
 
-                // Second pass: Collect valid speed data
+                // Process speeds
                 lapsData.forEach(lap => {
                     if (lap?.st_speed && !isNaN(lap.st_speed) && lap?.driver_number) {
                         processedData[lap.driver_number]?.speeds.push(lap.st_speed);
                     }
                 });
 
-                // Calculate total laps in session
                 const maxLap = Math.max(...Array.from(sessionLapNumbers));
                 setTotalSessionLaps(maxLap);
 
-                if (maxLap === 0) {
-                    throw new Error('No valid lap data found');
-                }
+                if (maxLap === 0) throw new Error('No valid lap data found');
 
-                // Filter drivers who completed most laps (allowing for 2 laps margin)
                 const validDrivers = Object.entries(processedData)
                     .filter(([, data]) => data.totalLaps > maxLap-2 && data.speeds.length > 0);
 
-                if (validDrivers.length === 0) {
-                    throw new Error('No drivers with complete data found');
-                }
+                if (validDrivers.length === 0) throw new Error('No drivers with complete data found');
 
-                // Calculate averages for valid drivers
+                // Calculate averages
                 validDrivers.forEach(([, data]) => {
                     const validSpeeds = data.speeds.filter(speed => !isNaN(speed));
                     if (validSpeeds.length === 0) return;
@@ -188,16 +203,12 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
                     );
                 });
 
-                // Calculate speed boundaries
                 const averages = validDrivers.map(([, data]) => data.averageSpeed).filter(speed => !isNaN(speed));
-                if (averages.length === 0) {
-                    throw new Error('No valid speed data found');
-                }
+                if (averages.length === 0) throw new Error('No valid speed data found');
 
                 setMaxAverageSpeed(Math.max(...averages));
                 setMinAverageSpeed(Math.min(...averages));
 
-                // Create filtered dataset
                 const filteredData = validDrivers.reduce((acc, [num, data]) => {
                     if (data.averageSpeed > 0) {
                         acc[Number(num)] = data;
@@ -206,18 +217,19 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
                 }, {} as DriverSpeedData);
 
                 setDriverData(filteredData);
-                setLoading(false);
                 setError(null);
 
             } catch (err) {
                 console.error('Error in fetchAllData:', err);
                 setError(err instanceof Error ? err.message : 'Failed to fetch data');
-                setLoading(false);
+            } finally {
+                setIsInitialLoad(false);
+                setIsRefreshing(false);
             }
         };
 
         fetchAllData();
-    }, [lap, sessionKey]);
+    }, [lap, sessionKey, isInitialLoad]);
 
     const calculateWidth = (speed: number) => {
         if (!speed || isNaN(speed)) return 0;
@@ -229,12 +241,10 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
         .filter(([, data]) => data.averageSpeed > 0)
         .sort(([, a], [, b]) => b.averageSpeed - a.averageSpeed);
 
-    const rowHeight = 38;
-    const scrollAreaHeight = Math.min(10 * rowHeight, sortedDrivers.length * rowHeight);
-
-    if (!sessionKey) return <ErrorCard error="No session key provided" />;
-    if (loading) return <LoadingCard progress={dataFetchProgress} />;
-    if (error) return <ErrorCard error={error} />;
+    if (!sessionKey) return <ErrorState error="No session key provided" />;
+    if (isInitialLoad) return <LoadingState />;
+    if (error) return <ErrorState error={error} />;
+    if (sortedDrivers.length === 0) return <ErrorState error="No speed data available" />;
 
     return (
         <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[570px]">
@@ -243,7 +253,12 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
                     <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                         Speed Analysis
                     </CardTitle>
-                    <Gauge className="h-5 w-5 text-[#5382ec]" />
+                    <div className="flex items-center gap-2">
+                        {isRefreshing && (
+                            <Loader2 className="h-4 w-4 animate-spin text-[#5382ec]" />
+                        )}
+                        <Gauge className="h-5 w-5 text-[#5382ec]" />
+                    </div>
                 </div>
                 <div className="mt-2 text-sm text-gray-400 flex items-center justify-between px-2">
                     <div className="flex gap-2 items-center">

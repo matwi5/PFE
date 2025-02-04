@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from "@/firebaseConfig";
-import { Loader2, Trophy, AlertTriangle } from "lucide-react";
+import { Loader2, Trophy, AlertTriangle, Activity } from "lucide-react";
 
 const firestore = db;
 
@@ -34,52 +34,9 @@ interface ChampionshipWidgetProps {
     meeting_key: string;
 }
 
-interface LoadingState {
-    drivers: boolean;
-    meetings: boolean;
-}
-
 const racePointsScale = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 const sprintPointsScale = [8, 7, 6, 5, 4, 3, 2, 1];
 
-const LoadingCard = ({ loadingState }: { loadingState: LoadingState }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
-        <CardContent className="flex flex-col items-center justify-center h-full gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
-            <div className="text-white flex flex-col items-center gap-2">
-                <div>Loading championship data...</div>
-                <div className="text-sm text-gray-400">
-                    {loadingState.drivers && "Fetching drivers information..."}
-                    {loadingState.meetings && "Fetching race results..."}
-                </div>
-            </div>
-        </CardContent>
-    </Card>
-);
-
-const ErrorCard = ({ error }: { error: string }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
-        <CardContent className="flex items-center justify-center h-full">
-            <div className="flex flex-col items-center gap-4 text-center">
-                <AlertTriangle className="h-8 w-8 text-red-500" />
-                <div className="text-red-400">{error}</div>
-            </div>
-        </CardContent>
-    </Card>
-);
-
-// Fonction utilitaire pour la gestion des erreurs Firestore
-const handleFirestoreError = (error): string => {
-    if (error?.code === 'permission-denied') {
-        return 'Access to database denied. Please check your permissions.';
-    }
-    if (error?.code === 'unavailable') {
-        return 'Database is currently unavailable. Please try again later.';
-    }
-    return error?.message || 'An unknown error occurred';
-};
-
-// Fonction pour récupérer les données avec retry
 const fetchWithRetry = async <T,>(
     fetchFn: () => Promise<T>,
     maxRetries = 3,
@@ -99,31 +56,105 @@ const fetchWithRetry = async <T,>(
     throw lastError;
 };
 
+const handleFirestoreError = (error): string => {
+    if (error?.code === 'permission-denied') {
+        return 'Access to database denied. Please check your permissions.';
+    }
+    if (error?.code === 'unavailable') {
+        return 'Database is currently unavailable. Please try again later.';
+    }
+    return error?.message || 'An unknown error occurred';
+};
+
+const LoadingState = () => {
+    const [loadingPhase, setLoadingPhase] = useState(0);
+
+    useEffect(() => {
+        const phases = ['Fetching drivers information...', 'Loading race results...', 'Calculating standings...'];
+        let currentPhase = 0;
+
+        const interval = setInterval(() => {
+            currentPhase = (currentPhase + 1) % phases.length;
+            setLoadingPhase(currentPhase);
+        }, 2000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const phases = ['Fetching drivers information...', 'Loading race results...', 'Calculating standings...'];
+
+    return (
+        <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[750px]">
+            <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                        Championship Standings
+                    </CardTitle>
+                    <Activity className="h-5 w-5 text-[#5382ec]" />
+                </div>
+            </CardHeader>
+            <CardContent className="flex items-center justify-center h-[670px]">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
+                    <div className="text-gray-400">Loading championship data...</div>
+                    <div className="text-sm text-gray-500">
+                        {phases[loadingPhase]}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+const ErrorState = ({ error }: { error: string }) => (
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[750px]">
+        <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                    Championship Standings
+                </CardTitle>
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+            </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[670px]">
+            <div className="flex flex-col items-center gap-4 text-center">
+                <AlertTriangle className="h-8 w-8 text-red-500" />
+                <div className="text-red-400">{error}</div>
+            </div>
+        </CardContent>
+    </Card>
+);
+
 const ChampionshipWidget_Live = ({ currentStandings, meeting_key }: ChampionshipWidgetProps) => {
+    // Data states
     const [championshipData, setChampionshipData] = useState<ChampionshipData[]>([]);
     const [driversMap, setDriversMap] = useState<Record<string, string>>({});
-    const [loadingState, setLoadingState] = useState<LoadingState>({
-        drivers: true,
-        meetings: true
-    });
-    const [error, setError] = useState<string | null>(null);
     const [maxPoints, setMaxPoints] = useState(0);
     const [minPoints, setMinPoints] = useState(0);
     const [driversData, setDriversData] = useState<DriverData[]>([]);
     const [meetingsData, setMeetingsData] = useState<MeetingData[]>([]);
 
-    // Fetch drivers and meetings data on mount
+    // Loading states
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Fetch initial data
     useEffect(() => {
         const fetchData = async () => {
+            if (!isInitialLoad) {
+                setIsRefreshing(true);
+            }
             setError(null);
 
             try {
-                // Fetch drivers data with retry
-                setLoadingState(prev => ({ ...prev, drivers: true }));
-                const driversSnapshot = await fetchWithRetry(
-                    () => getDocs(collection(firestore, 'drivers'))
-                );
+                // Fetch both drivers and meetings data in parallel
+                const [driversSnapshot, meetingsSnapshot] = await Promise.all([
+                    fetchWithRetry(() => getDocs(collection(firestore, 'drivers'))),
+                    fetchWithRetry(() => getDocs(collection(firestore, 'meetings')))
+                ]);
 
+                // Process drivers data
                 const driversMapping: Record<string, string> = {};
                 const newDriversData: DriverData[] = [];
 
@@ -137,14 +168,8 @@ const ChampionshipWidget_Live = ({ currentStandings, meeting_key }: Championship
 
                 setDriversMap(driversMapping);
                 setDriversData(newDriversData);
-                setLoadingState(prev => ({ ...prev, drivers: false }));
 
-                // Fetch meetings data with retry
-                setLoadingState(prev => ({ ...prev, meetings: true }));
-                const meetingsSnapshot = await fetchWithRetry(
-                    () => getDocs(collection(firestore, 'meetings'))
-                );
-
+                // Process meetings data
                 const meetings = meetingsSnapshot.docs
                     .map(doc => {
                         const data = doc.data() as MeetingData;
@@ -152,25 +177,22 @@ const ChampionshipWidget_Live = ({ currentStandings, meeting_key }: Championship
                     })
                     .filter((meeting): meeting is MeetingData => meeting !== null);
 
-
-                setLoadingState(prev => ({ ...prev, meetings: false }));
-                //setMeetingsData(meetings);
-                return meetings;
+                setMeetingsData(meetings);
+                setError(null);
 
             } catch (err) {
                 console.error('Error fetching data:', err);
                 setError(handleFirestoreError(err));
-                setLoadingState({
-                    drivers: false,
-                    meetings: false
-                });
+            } finally {
+                setIsInitialLoad(false);
+                setIsRefreshing(false);
             }
         };
 
-        fetchData().then(setMeetingsData);
-    }, []);
+        fetchData();
+    }, [isInitialLoad]);
 
-    // Calculate championship data when data is loaded and meeting_key or podium changes
+    // Calculate championship standings
     useEffect(() => {
         if (!driversData.length || !meetingsData.length) return;
 
@@ -277,13 +299,9 @@ const ChampionshipWidget_Live = ({ currentStandings, meeting_key }: Championship
         return ((points - minPoints) / (maxPoints - minPoints)) * 85 + 1;
     };
 
-    const isLoading = loadingState.drivers || loadingState.meetings;
-
-    if (isLoading) return <LoadingCard loadingState={loadingState} />;
-    if (error) return <ErrorCard error={error} />;
-    if (!championshipData.length) {
-        return <ErrorCard error="No championship data available" />;
-    }
+    if (isInitialLoad) return <LoadingState />;
+    if (error) return <ErrorState error={error} />;
+    if (!championshipData.length) return <ErrorState error="No championship data available" />;
 
     return (
         <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[750px]">
@@ -292,7 +310,12 @@ const ChampionshipWidget_Live = ({ currentStandings, meeting_key }: Championship
                     <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
                         Championship Standings
                     </CardTitle>
-                    <Trophy className="h-5 w-5 text-[#5382ec]" />
+                    <div className="flex items-center gap-2">
+                        {isRefreshing && (
+                            <Loader2 className="h-4 w-4 animate-spin text-[#5382ec]" />
+                        )}
+                        <Trophy className="h-5 w-5 text-[#5382ec]" />
+                    </div>
                 </div>
             </CardHeader>
 
