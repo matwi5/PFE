@@ -10,7 +10,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import CustomDialog from "../generalDataComponent/CustomDialog";
-import GPDetailCard from "./GPSummaryCard";
+import GPSummaryCard from "./GPSummaryCard";
 
 interface GrandPrixCardProps {
     mainGP: GP | null;
@@ -111,7 +111,7 @@ const GrandPrixCard: React.FC<GrandPrixCardProps> = ({
                             </div>
                         }
                     >
-                        <GPDetailCard gp={mainGP} />
+                        <GPSummaryCard gp={mainGP} />
                     </CustomDialog>
                 )}
                 {!mainGP && (
