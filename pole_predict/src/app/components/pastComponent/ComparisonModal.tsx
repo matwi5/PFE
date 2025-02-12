@@ -92,16 +92,24 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
   };
 
   const handleDriverChange = (index: number, driver: Driver) => {
-    setSelectedDrivers((prev) => ({ ...prev, [index]: driver }));
+    const updatedDrivers = { ...selectedDrivers, [index]: driver };
+    setSelectedDrivers(updatedDrivers); // Appeler avec un objet, pas une fonction
     toggleDropdown(index);
   };
 
   const handleTeamChange = (index: number, team: Team) => {
-    setSelectedTeamsForComparison((prev) => ({ ...prev, [index]: team }));
+    const updatedTeams = { ...selectedTeamsForComparison, [index]: team };
+    setSelectedTeamsForComparison(updatedTeams); // Appeler avec un objet, pas une fonction
     toggleTeamDropdown(index);
   };
 
-  const MetricBar = ({ value, maxValue, color = "from-[#5382ec] to-[#2dd4bf]" }) => (
+  interface MetricBarProps {
+    value: number;
+    maxValue: number;
+    color?: string;
+  }
+
+  const MetricBar: React.FC<MetricBarProps> = ({ value, maxValue, color = "from-[#5382ec] to-[#2dd4bf]" }) => (
     <div className="bg-[#1d1f20] h-2 rounded-full overflow-hidden">
       <motion.div
         initial={{ width: 0 }}
@@ -112,7 +120,13 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
     </div>
   );
 
-  const StatCard = ({ icon, title, children }) => (
+  interface StatCardProps {
+    icon: React.ReactElement;
+    title: string;
+    children: React.ReactNode;
+  }
+
+  const StatCard: React.FC<StatCardProps> = ({ icon, title, children }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -310,7 +324,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
                             <ul className="max-h-56 overflow-y-auto py-1">
                               {drivers.map((driver) => (
                                 <li
-                                  key={driver.id}
+                                  key={driver.id} // Assurez-vous que `id` est défini dans l'interface `Driver`
                                   className="px-4 py-2 hover:bg-[#2f3133] cursor-pointer flex items-center gap-2"
                                   onClick={() => handleDriverChange(index, driver)}
                                 >

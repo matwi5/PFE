@@ -61,7 +61,7 @@ interface DriverStandingsProps {
   currentLap: number;
   onDriverSelect: (driverNumber: string | null) => void;
   selectedDriverNumber: string | null;
- onStandingsUpdate?: (standings: {position: number, acronym: string}[]) => void;
+  onStandingsUpdate?: (standings: { position: number, acronym: string }[]) => void;
 }
 
 interface LoadingStatus {
@@ -73,23 +73,23 @@ interface LoadingStatus {
 
 // Fonction utilitaire pour retry les appels API
 const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
-    let retries = 0;
-    while (retries < maxRetries) {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            if (!data) throw new Error('No data received');
-            return data;
-        } catch (error) {
-            retries++;
-            if (retries === maxRetries) throw error;
-            console.log(`Retry attempt ${retries} for ${url}`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+  let retries = 0;
+  while (retries < maxRetries) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (!data) throw new Error('No data received');
+      return data;
+    } catch (error) {
+      retries++;
+      if (retries === maxRetries) throw error;
+      console.log(`Retry attempt ${retries} for ${url}`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
+  }
 };
 
 const useIsMobile = () => {
@@ -99,10 +99,10 @@ const useIsMobile = () => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkIsMobile();
     window.addEventListener('resize', checkIsMobile);
-    
+
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
@@ -182,19 +182,19 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
         });
 
         // Fetch drivers
-        const driversData = await fetchWithRetry('https://api.openf1.org/v1/drivers');
-        const uniqueDrivers = Array.from(new Map(
-          driversData.filter((driver: Driver) => 
+        const driversData: any[] = await fetchWithRetry('https://api.openf1.org/v1/drivers');
+        const uniqueDrivers: Driver[] = Array.from(new Map(
+          driversData.filter((driver: any) =>
             driver?.driver_number && driver?.name_acronym
-          ).map((driver: Driver) => [driver.driver_number, driver])
+          ).map((driver: any) => [driver.driver_number, driver as Driver])
         ).values());
         setDrivers(uniqueDrivers);
         setLoadingStatus(prev => ({ ...prev, drivers: true }));
 
         // Fetch positions
         const positionsUrl = `https://api.openf1.org/v1/position?session_key=${sessionKey}&meeting_key=${meetingKey}`;
-        const positionsData = await fetchWithRetry(positionsUrl);
-        const validPositions = positionsData.filter((pos: DriverPosition) => 
+        const positionsData: any[] = await fetchWithRetry(positionsUrl);
+        const validPositions: DriverPosition[] = positionsData.filter((pos: any) =>
           pos?.driver_number && pos?.position && pos?.date
         );
         setPositions(validPositions);
@@ -202,8 +202,8 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
         // Fetch intervals
         const intervalsUrl = `https://api.openf1.org/v1/intervals?session_key=${sessionKey}`;
-        const intervalsData = await fetchWithRetry(intervalsUrl);
-        const validIntervals = intervalsData.filter((int: Interval) => 
+        const intervalsData: any[] = await fetchWithRetry(intervalsUrl);
+        const validIntervals: Interval[] = intervalsData.filter((int: any) =>
           int?.driver_number && (int?.interval !== undefined || int?.gap_to_leader !== undefined)
         );
         setIntervals(validIntervals);
@@ -211,8 +211,8 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
         // Fetch lap times
         const lapTimesUrl = `https://api.openf1.org/v1/laps?session_key=${sessionKey}`;
-        const lapTimesData = await fetchWithRetry(lapTimesUrl);
-        const validLapTimes = lapTimesData.filter((lap: LapTime) => 
+        const lapTimesData: any[] = await fetchWithRetry(lapTimesUrl);
+        const validLapTimes: LapTime[] = lapTimesData.filter((lap: any) =>
           lap?.driver_number && lap?.lap_number && lap?.date_start
         );
         setLapTimes(validLapTimes);
@@ -224,10 +224,10 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
           new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
         );
 
-        const sortedPositions = [...validPositions].sort((a, b) => 
+        const sortedPositions = [...validPositions].sort((a, b) =>
           new Date(a.date).getTime() - new Date(b.date).getTime()
         );
-        
+
         if (sortedPositions.length > 0) {
           lapStartMap.set(1, sortedPositions[0].date);
         }
@@ -378,12 +378,12 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
         if (standings.length > 0) {
           const standingsData = standings
-              .filter(standing => standing.status === 'active')
-              .map(standing => ({
-                position: standing.position,
-                acronym: standing.driver_details?.name_acronym || ''
-              }));
-  
+            .filter(standing => standing.status === 'active')
+            .map(standing => ({
+              position: standing.position,
+              acronym: standing.driver_details?.name_acronym || ''
+            }));
+
           if (onStandingsUpdate) {
             onStandingsUpdate(standingsData);
           }
@@ -444,13 +444,13 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                   .filter((standing) => standing.status === 'active')
                   .map((standing, index) => {
                     if (!standing?.driver_number) return null;
-                    
+
                     const isLeader = index === 0;
                     const displayValue = gapMode === 'interval' ? standing.interval : standing.gap_to_leader;
                     const teamColor = standing.driver_details?.team_colour || '2b2b2b';
                     const isExpanded = expandedDriver === standing.driver_number;
                     const isSelected = selectedDriverNumber === standing.driver_number.toString();
-  
+
                     return (
                       <motion.div
                         key={standing.driver_number}
@@ -467,12 +467,11 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                             className="flex items-center gap-2 p-2 bg-black/20"
                             onClick={() => setExpandedDriver(isExpanded ? null : standing.driver_number)}
                           >
-                            <div className={`w-6 text-center font-bold ${
-                              isLeader ? 'text-[#5382ec]' : 'text-gray-400'
-                            }`}>
+                            <div className={`w-6 text-center font-bold ${isLeader ? 'text-[#5382ec]' : 'text-gray-400'
+                              }`}>
                               {standing.position}
                             </div>
-  
+
                             <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
                               {standing.driver_details?.headshot_url ? (
                                 <img
@@ -491,23 +490,23 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                                 </div>
                               )}
                             </div>
-  
+
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-medium text-white truncate">
                                 {standing.driver_details?.name_acronym}
                               </div>
                             </div>
-  
+
                             <div className="text-right font-mono text-xs text-gray-300">
                               {formatGap(displayValue, isLeader)}
                             </div>
-  
+
                             <ChevronDown
                               className={`w-4 h-4 text-gray-400 transition-transform duration-200 
                                 ${isExpanded ? 'transform rotate-180' : ''}`}
                             />
                           </div>
-  
+
                           {isExpanded && (
                             <motion.div
                               initial={{ height: 0 }}
@@ -591,7 +590,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                 .filter(standing => standing.status === 'active')
                 .map((standing, index) => {
                   if (!standing?.driver_number) return null;
-                  
+
                   const isLeader = index === 0;
                   const displayValue = gapMode === 'interval' ? standing.interval : standing.gap_to_leader;
                   const teamColor = standing.driver_details?.team_colour || '2b2b2b';
@@ -626,9 +625,8 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                         ${isSelected ? 'ring-2 ring-inset ring-[#5382ec]' : ''}`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`text-lg font-bold ${
-                            isLeader ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent' : 'text-gray-400'
-                          }`}>
+                          <div className={`text-lg font-bold ${isLeader ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent' : 'text-gray-400'
+                            }`}>
                             {standing.position}
                           </div>
 
@@ -678,9 +676,8 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                           </div>
 
                           <div className="text-right font-mono">
-                            <div className={`text-sm font-medium ${
-                              isLeader ? 'text-[#5382ec]' : 'text-gray-300'
-                            }`}>
+                            <div className={`text-sm font-medium ${isLeader ? 'text-[#5382ec]' : 'text-gray-300'
+                              }`}>
                               {formatGap(displayValue, isLeader)}
                             </div>
                           </div>

@@ -49,7 +49,6 @@ interface GrandPrix {
     image_circuit: string;
 }
 
-
 const InformationsCard: React.FC<InformationsCardProps> = ({
     mainGP,
     hoveredCard,
@@ -60,6 +59,9 @@ const InformationsCard: React.FC<InformationsCardProps> = ({
     getCircuitImageUrl,
     handleImageClick
 }) => {
+    // Gestion des valeurs `undefined` pour `date_start` et `gmt_offset`
+    const formattedDate = formatDate(mainGP?.date_start || "", mainGP?.gmt_offset || "");
+
     return (
         <Card
             className={`group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-shadow duration-300 ${hoveredCard === 2 ? 'scale-105' : ''}`}
@@ -67,7 +69,7 @@ const InformationsCard: React.FC<InformationsCardProps> = ({
             <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                         Information
+                        Information
                     </CardTitle>
                     <Globe className="h-5 w-5 text-[#5382ec]" />
                 </div>
@@ -77,7 +79,7 @@ const InformationsCard: React.FC<InformationsCardProps> = ({
                     className="p-4 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:bg-black/30"
                 >
                     <p className="text-sm text-[#5382ec] mb-2">Date and Time</p>
-                    <p className="text-xl font-semibold text-gray-200">{formatDate(mainGP?.date_start, mainGP?.gmt_offset)}</p>
+                    <p className="text-xl font-semibold text-gray-200">{formattedDate}</p>
                 </motion.div>
                 <motion.div
                     className="p-4 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:bg-black/30"

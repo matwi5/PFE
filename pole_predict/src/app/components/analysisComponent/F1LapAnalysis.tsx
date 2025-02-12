@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from "@/components/ui/input";
 import CustomDropdown_multiple from "./component/CustomDropdown_multiple";
 import { Button } from "@/components/ui/button";
-import { Loader2, ChevronDown, Timer, AlertTriangle, Activity } from "lucide-react";
+import { Loader2, ChevronDown, Timer, AlertTriangle } from "lucide-react";
 
 interface LapData {
     lap_number: number;
@@ -55,6 +55,7 @@ const formatTime = (seconds: number): string => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
+// Fonction utilitaire pour retry les appels API
 const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
     let retries = 0;
     while (retries < maxRetries) {
@@ -65,63 +66,28 @@ const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
         } catch (error) {
             retries++;
             if (retries === maxRetries) throw error;
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log(`Retry attempt ${retries} for ${url}`);
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Attendre 1s avant de réessayer
         }
     }
 };
 
-const LoadingState = () => {
-    const [loadingPhase, setLoadingPhase] = useState(0);
-    
-    useEffect(() => {
-        const phases = ['Fetching lap times...', 'Loading driver info...', 'Processing race control data...'];
-        let currentPhase = 0;
-        
-        const interval = setInterval(() => {
-            currentPhase = (currentPhase + 1) % phases.length;
-            setLoadingPhase(currentPhase);
-        }, 2000);
-        
-        return () => clearInterval(interval);
-    }, []);
-    
-    const phases = ['Fetching lap times...', 'Loading driver info...', 'Processing race control data...'];
-
-    return (
-        <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[510px]">
-            <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                        Lap Time Analysis
-                    </CardTitle>
-                    <Activity className="h-5 w-5 text-[#5382ec]" />
+const LoadingCard = () => (
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
+        <CardContent className="flex flex-col items-center justify-center h-full gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
+            <div className="text-white flex flex-col items-center gap-2">
+                <div>Loading lap time data...</div>
+                <div className="text-sm text-gray-400">
+                    Fetching race information...
                 </div>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center h-[450px]">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#5382ec]" />
-                    <div className="text-gray-400">Loading race data...</div>
-                    <div className="text-sm text-gray-500">
-                        {phases[loadingPhase]}
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-    );
-};
-
-const ErrorState = ({ error }: { error: string }) => (
-    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[510px]">
-        <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
-                    Lap Time Analysis
-                </CardTitle>
-                <AlertTriangle className="h-5 w-5 text-red-500" />
             </div>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center h-[450px]">
+        </CardContent>
+    </Card>
+);
+
+const ErrorCard = ({ error }: { error: string }) => (
+    <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 h-48">
+        <CardContent className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-4 text-center">
                 <AlertTriangle className="h-8 w-8 text-red-500" />
                 <div className="text-red-400">{error}</div>
@@ -131,7 +97,6 @@ const ErrorState = ({ error }: { error: string }) => (
 );
 
 const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
-    // États
     const [allLaps, setAllLaps] = useState<LapData[]>([]);
     const [data, setData] = useState<DisplayLapData[]>([]);
     const [timeRange, setTimeRange] = useState({ min: 0, max: 0 });
@@ -146,46 +111,86 @@ const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
     const [minLapInput, setMinLapInput] = useState('2');
     const [maxLapInput, setMaxLapInput] = useState('Infinity');
     const [showLapInputs, setShowLapInputs] = useState(false);
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Effet principal pour charger les données
     useEffect(() => {
-        const fetchAllData = async () => {
-            if (!sessionKey) {
-                setError("No session key provided");
-                setIsInitialLoad(false);
-                return;
-            }
+        const fetchDriversData = async () => {
+            if (!sessionKey) return;
 
             try {
-                if (!isInitialLoad) {
-                    setIsRefreshing(true);
-                }
-                setError(null);
+                const url = `https://api.openf1.org/v1/drivers?session_key=${sessionKey}`;
+                const drivers = await fetchWithRetry(url);
 
-                // Prepare URLs
-                const lapsUrl = lap
-                    ? `https://api.openf1.org/v1/laps?session_key=${sessionKey}&lap_number<${lap}`
-                    : `https://api.openf1.org/v1/laps?session_key=${sessionKey}`;
-                const driversUrl = `https://api.openf1.org/v1/drivers?session_key=${sessionKey}`;
-                const raceControlUrl = lap
+                const fetchedDriverData: DriverData = {};
+                drivers.forEach((driver: any) => {
+                    if (driver?.driver_number && driver?.name_acronym) {
+                        fetchedDriverData[driver.driver_number] = {
+                            name_acronym: driver.name_acronym,
+                            team_colour: driver.team_colour || 'FFFFFF',
+                        };
+                    }
+                });
+
+                setDriverData(fetchedDriverData);
+            } catch (error) {
+                setError('Error fetching driver data. Retrying...');
+                console.error('Error fetching driver data:', error);
+            }
+        };
+
+        setIsLoading(true);
+        fetchDriversData();
+    }, [sessionKey]);
+
+    useEffect(() => {
+        const fetchRaceControlData = async () => {
+            if (!sessionKey) return;
+
+            try {
+                const url = lap
                     ? `https://api.openf1.org/v1/race_control?session_key=${sessionKey}&lap_number<${lap}`
                     : `https://api.openf1.org/v1/race_control?session_key=${sessionKey}`;
 
-                // Fetch all data in parallel
-                const [lapsData, driversData, raceControlEvents] = await Promise.all([
-                    fetchWithRetry(lapsUrl),
-                    fetchWithRetry(driversUrl),
-                    fetchWithRetry(raceControlUrl)
-                ]);
+                const data = await fetchWithRetry(url);
+                setRaceControlData(data);
+            } catch (error) {
+                setError('Error fetching race control data. Retrying...');
+                console.error('Error fetching race control data:', error);
+            }
+        };
 
-                // Process safety car laps
+        fetchRaceControlData();
+    }, [sessionKey, lap]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!sessionKey) return;
+
+            try {
+                const url = lap
+                    ? `https://api.openf1.org/v1/laps?session_key=${sessionKey}&lap_number<${lap}`
+                    : `https://api.openf1.org/v1/laps?session_key=${sessionKey}`;
+
+                const laps: LapData[] = await fetchWithRetry(url);
+
+                const validLaps = laps
+                    .filter(lap =>
+                        lap?.duration_sector_1 &&
+                        lap?.duration_sector_2 &&
+                        lap?.duration_sector_3 &&
+                        !isNaN(lap.duration_sector_1) &&
+                        !isNaN(lap.duration_sector_2) &&
+                        !isNaN(lap.duration_sector_3)
+                    )
+                    .sort((a, b) => a.lap_number - b.lap_number);
+
+                setAllLaps(validLaps);
+
                 const safetyCarLaps = new Set<number>();
                 let isSafetyCarActive = false;
 
-                raceControlEvents.forEach((event) => {
+                raceControlData.forEach((event) => {
                     if (event?.category === "SafetyCar" || event?.category === "Flag") {
                         if (event.message?.includes("DEPLOYED")) {
                             isSafetyCarActive = true;
@@ -199,40 +204,12 @@ const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
                     }
                 });
 
-                setRaceControlData(raceControlEvents);
-
-                // Process valid laps
-                const validLaps = lapsData
-                    .filter(lap =>
-                        lap?.duration_sector_1 &&
-                        lap?.duration_sector_2 &&
-                        lap?.duration_sector_3 &&
-                        !isNaN(lap.duration_sector_1) &&
-                        !isNaN(lap.duration_sector_2) &&
-                        !isNaN(lap.duration_sector_3)
-                    )
-                    .sort((a, b) => a.lap_number - b.lap_number)
-                    .map(lap => ({
-                        ...lap,
-                        hasSafetyCar: safetyCarLaps.has(lap.lap_number)
-                    }));
-
-                setAllLaps(validLaps);
-
-                // Process driver data
-                const processedDriverData: DriverData = {};
-                driversData.forEach((driver: any) => {
-                    if (driver?.driver_number && driver?.name_acronym) {
-                        processedDriverData[driver.driver_number] = {
-                            name_acronym: driver.name_acronym,
-                            team_colour: driver.team_colour || 'FFFFFF'
-                        };
-                    }
+                validLaps.forEach((lap) => {
+                    lap.hasSafetyCar = safetyCarLaps.has(lap.lap_number);
                 });
-                setDriverData(processedDriverData);
 
-                // Process lap display data
                 const lapDisplayData: DisplayLapData[] = [];
+
                 validLaps.forEach((lap) => {
                     if (!lap) return;
 
@@ -263,43 +240,35 @@ const F1LapAnalysis: React.FC<F1LapAnalysisProps> = ({ sessionKey, lap }) => {
 
                 setData(lapDisplayData);
 
-                // Calculate max lap and time range
-                const maxLapNumber = validLaps.reduce((max, lap) => 
-                    Math.max(max, lap?.lap_number || 0), 0);
-                setMaxLap(maxLapNumber);
-                setFilterMaxLap(maxLapNumber);
-
-                const validTimes = lapDisplayData
+                const meanTimes = lapDisplayData
                     .filter(lap => !lap.isPitLap)
                     .map(lap => lap.totalTime);
 
-                if (validTimes.length > 0) {
-                    setTimeRange({
-                        min: Math.min(...validTimes) - 1,
-                        max: Math.max(...validTimes) + 1
-                    });
+                if (meanTimes.length > 0) {
+                    const minMeanTime = Math.min(...meanTimes);
+                    const maxMeanTime = Math.max(...meanTimes);
+                    setTimeRange({ min: minMeanTime - 1, max: maxMeanTime + 1 });
                 }
 
+                const maxLapNumber = validLaps.reduce((max, lap) => Math.max(max, lap?.lap_number || 0), 0);
+                setMaxLap(maxLapNumber);
+                setFilterMaxLap(maxLapNumber);
+                setIsLoading(false);
                 setError(null);
 
-            } catch (err) {
-                console.error('Error in fetchAllData:', err);
-                setError(err instanceof Error ? err.message : 'Failed to fetch data');
-            } finally {
-                setIsInitialLoad(false);
-                setIsRefreshing(false);
+            } catch (error) {
+                setError('Error fetching lap data. Retrying...');
+                console.error('Error fetching lap data:', error);
             }
         };
 
-        fetchAllData();
-    }, [sessionKey, lap, isInitialLoad]);
+        fetchData();
+    }, [sessionKey, raceControlData, lap]);
 
-    // Effet pour la filtration des données
     useEffect(() => {
         try {
             let filteredData = selectedDrivers.length > 0
-                ? data.filter(lap => selectedDrivers.some(selected => 
-                    parseInt(selected.value) === lap.driverNumber))
+                ? data.filter(lap => selectedDrivers.some(selected => parseInt(selected.value) === lap.driverNumber))
                 : [];
 
             const minLapNum = parseInt(minLapInput, 10);

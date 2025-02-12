@@ -271,16 +271,16 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                 }, {});
 
                 Object.values(stintsByDriver).forEach(driver => {
-                    const validStints = driver.stints.filter(stint =>
+                    const validStints = driver.stints.filter((stint: { lap_end: number; }) =>
                         stint?.lap_end && !isNaN(stint.lap_end)
                     );
                     if (validStints.length > 0) {
-                        driver.totalLaps = Math.max(...validStints.map(stint => stint.lap_end));
+                        driver.totalLaps = Math.max(...validStints.map((stint: { lap_end: any; }) => stint.lap_end));
                     }
                 });
 
                 Object.values(stintsByDriver).forEach(driver => {
-                    driver.stints.sort((a, b) => a.lap_start - b.lap_start);
+                    driver.stints.sort((a: { lap_start: number; }, b: { lap_start: number; }) => a.lap_start - b.lap_start);
                 });
 
                 setDriverStints(stintsByDriver);
@@ -382,7 +382,7 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                                     </div>
     
                                     <div className="flex items-center gap-1 min-h-[2rem] relative w-full">
-                                        {stints.map((stint, index) => {
+                                        {stints.map((stint: any, index: any) => {
                                             if (!stint?.compound || !stint?.lap_start || !stint?.lap_end) return null;
                                             const width = calculateWidth(stint.lap_start, stint.lap_end);
                                             const lapCount = stint.lap_end - stint.lap_start + 1;

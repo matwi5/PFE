@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { db } from "../../../firebaseConfig"; // Assurez-vous que le chemin est correct
 import { collection, getDocs } from "firebase/firestore";
-import { GP, Driver, Team, GrandPrix } from "./types"; // Assurez-vous d'avoir un fichier types.ts avec ces interfaces
+import { GP, Driver, Team, GrandPrix, Meeting } from "./types"; // Assurez-vous d'avoir un fichier types.ts avec ces interfaces
 
 export const useDataFetching = () => {
   const [allGPs, setAllGPs] = useState<GP[]>([]);
@@ -14,8 +14,8 @@ export const useDataFetching = () => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(2023);
-  const [meetings, setMeetings] = useState<any[]>([]);
-  const [selectedMeeting, setSelectedMeeting] = useState<any | null>(null);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [driverData, setDriverData] = useState<{ [key: number]: any }>({
     0: {},
     1: {},
@@ -24,17 +24,15 @@ export const useDataFetching = () => {
     0: {},
     1: {},
   });
-  const [selectedDrivers, setSelectedDrivers] = useState<{ [key: number]: any }>(
-    {
-      0: {},
-      1: {},
-    }
-  );
+  const [selectedDrivers, setSelectedDrivers] = useState<{ [key: number]: Driver }>({
+    0: {} as Driver,
+    1: {} as Driver,
+  });
   const [selectedTeamsForComparison, setSelectedTeamsForComparison] = useState<{
-    [key: number]: any;
+    [key: number]: Team;
   }>({
-    0: {},
-    1: {},
+    0: {} as Team,
+    1: {} as Team,
   });
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [coordinates, setCoordinates] = useState<{
@@ -97,7 +95,7 @@ export const useDataFetching = () => {
       const fetchedDrivers = driverDocs.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      }));
+      })) as Driver[];
       setDrivers(fetchedDrivers);
 
       if (fetchedDrivers.length > 0) {
@@ -118,7 +116,7 @@ export const useDataFetching = () => {
       let fetchedMeetings = meetingDocs.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      }));
+      })) as Meeting[];
 
       const years = [
         ...new Set(
@@ -144,227 +142,218 @@ export const useDataFetching = () => {
   };
 
   const fetchTeamAverageData = async (index: number) => {
-    // Implémentation similaire à votre code original
     if (selectedTeamsForComparison[index] && selectedMeeting) {
-            const teamName = selectedTeamsForComparison[index].name;
-            const meetingKey = selectedMeeting.meeting_key;
-            const yearSession = selectedMeeting.year;
+      const teamName = selectedTeamsForComparison[index].name;
+      const meetingKey = selectedMeeting.meeting_key;
+      const yearSession = selectedMeeting.year;
 
-            // Find drivers for the selected team and meeting
-            const teamDrivers = drivers.filter(driver =>
-                driver.team_name === teamName && driver.year.includes(yearSession)
-            );
+      const teamDrivers = drivers.filter(
+        (driver) =>
+          driver.team_name === teamName && driver.year.includes(yearSession)
+      );
 
-            if (teamDrivers.length === 0) {
-                console.warn(`No drivers found for team ${teamName} in meeting ${selectedMeeting.meeting_name}`);
-                setTeamData(prevState => ({
-                    ...prevState,
-                    [index]: { error: 'No data available for this team at this GP' } // Indicate no data
-                }));
-                return;
-            }
+      if (teamDrivers.length === 0) {
+        console.warn(`No drivers found for team ${teamName} in meeting ${selectedMeeting.meeting_name}`);
+        setTeamData((prevState) => ({
+          ...prevState,
+          [index]: { error: "No data available for this team at this GP" },
+        }));
+        return;
+      }
 
-            let teamRaceDurations: number[] = [];
-            let teamMaxSpeeds: number[] = [];
-            let teamAvgSector1s: number[] = [];
-            let teamAvgSector2s: number[] = [];
-            let teamAvgSector3s: number[] = [];
-            let teamAvgLapTimes: number[] = [];
-            let teamAvgPitDurations: number[] = [];
-            let teamBestPitDurations: number[] = [];
+      let teamRaceDurations: number[] = [];
+      let teamMaxSpeeds: number[] = [];
+      let teamAvgSector1s: number[] = [];
+      let teamAvgSector2s: number[] = [];
+      let teamAvgSector3s: number[] = [];
+      let teamAvgLapTimes: number[] = [];
+      let teamAvgPitDurations: number[] = [];
+      let teamBestPitDurations: number[] = [];
 
-            for (const driver of teamDrivers) {
-                try {
-                    const sessionsResponse = await fetch(
-                        `https://api.openf1.org/v1/sessions?meeting_key=${meetingKey}&year=${yearSession}`
-                    );
-                    const sessionsData = await sessionsResponse.json();
+      for (const driver of teamDrivers) {
+        try {
+          const sessionsResponse = await fetch(
+            `https://api.openf1.org/v1/sessions?meeting_key=${meetingKey}&year=${yearSession}`
+          );
+          const sessionsData = await sessionsResponse.json();
 
-                    const raceSession = sessionsData.find((session: any) => session.session_name === 'Race');
-                    let sessionKeyToUse = meetingKey;
-                    if (raceSession) {
-                        sessionKeyToUse = raceSession.session_key;
-                    } else {
-                        sessionKeyToUse = meetingKey; // Fallback to meeting key
-                        console.warn("Race session not found, fetching laps for meeting key instead for team avg.");
-                    }
+          const raceSession = sessionsData.find(
+            (session: any) => session.session_name === "Race"
+          );
+          let sessionKeyToUse = meetingKey;
+          if (raceSession) {
+            sessionKeyToUse = raceSession.session_key;
+          } else {
+            sessionKeyToUse = meetingKey;
+            console.warn("Race session not found, fetching laps for meeting key instead for team avg.");
+          }
 
-                    const lapsResponse = await fetch(
-                        `https://api.openf1.org/v1/laps?session_key=${sessionKeyToUse}&driver_number=${driver.driver_number}`
-                    );
-                    const lapData = await lapsResponse.json();
+          const lapsResponse = await fetch(
+            `https://api.openf1.org/v1/laps?session_key=${sessionKeyToUse}&driver_number=${driver.driver_number}`
+          );
+          const lapData = await lapsResponse.json();
 
-                    if (!Array.isArray(lapData)) {
-                        console.error("Lap data is not an array for driver:", driver.name, lapData);
-                        continue; // Skip to next driver if lap data is invalid
-                    }
+          if (!Array.isArray(lapData)) {
+            console.error("Lap data is not an array for driver:", driver.name, lapData);
+            continue;
+          }
 
-                    // Race Duration
-                    const raceDurations = lapData
-                        .map((lap: any) => lap.lap_duration)
-                        .filter((duration: any) => duration !== null);
-                    const totalRaceDuration = raceDurations.reduce((sum: number, duration: number) => sum + duration, 0);
-                    if (totalRaceDuration > 0) teamRaceDurations.push(totalRaceDuration);
+          const raceDurations = lapData
+            .map((lap: any) => lap.lap_duration)
+            .filter((duration: any) => duration !== null);
+          const totalRaceDuration = raceDurations.reduce((sum: number, duration: number) => sum + duration, 0);
+          if (totalRaceDuration > 0) teamRaceDurations.push(totalRaceDuration);
 
-                    // Lap Data Calculation
-                    const sector1Durations = lapData.map((lap: any) => lap.duration_sector_1).filter((val: any) => val !== null);
-                    const sector2Durations = lapData.map((lap: any) => lap.duration_sector_2).filter((val: any) => val !== null);
-                    const sector3Durations = lapData.map((lap: any) => lap.duration_sector_3).filter((val: any) => val !== null);
-                    const lapDurations = lapData.map((lap: any) => lap.lap_duration).filter((val: any) => val !== null);
-                    const pitDurations = lapData
-                        .filter((lap: any) => lap.is_pit_out_lap)
-                        .map((lap: any) => lap.lap_duration);
+          const sector1Durations = lapData.map((lap: any) => lap.duration_sector_1).filter((val: any) => val !== null);
+          const sector2Durations = lapData.map((lap: any) => lap.duration_sector_2).filter((val: any) => val !== null);
+          const sector3Durations = lapData.map((lap: any) => lap.duration_sector_3).filter((val: any) => val !== null);
+          const lapDurations = lapData.map((lap: any) => lap.lap_duration).filter((val: any) => val !== null);
+          const pitDurations = lapData
+            .filter((lap: any) => lap.is_pit_out_lap)
+            .map((lap: any) => lap.lap_duration);
 
-                    const bestPitDuration = pitDurations.length > 0 ? Math.min(...pitDurations) : null;
-                    const averagePitDuration = pitDurations.length > 0 ? pitDurations.reduce((sum: number, duration: number) => sum + duration, 0) / pitDurations.length : null;
+          const bestPitDuration = pitDurations.length > 0 ? Math.min(...pitDurations) : null;
+          const averagePitDuration = pitDurations.length > 0 ? pitDurations.reduce((sum: number, duration: number) => sum + duration, 0) / pitDurations.length : null;
 
-                    const maxSpeed = Math.max(...lapData.map((lap: any) => lap.i1_speed).filter((val: any) => val !== null), 0);
+          const maxSpeed = Math.max(...lapData.map((lap: any) => lap.i1_speed).filter((val: any) => val !== null), 0);
 
-                    if (maxSpeed > 0) teamMaxSpeeds.push(maxSpeed);
-                    if (sector1Durations.length > 0) teamAvgSector1s.push(sector1Durations.reduce((sum: number, duration: number) => sum + duration, 0) / sector1Durations.length);
-                    if (sector2Durations.length > 0) teamAvgSector2s.push(sector2Durations.reduce((sum: number, duration: number) => sum + duration, 0) / sector2Durations.length);
-                    if (sector3Durations.length > 0) teamAvgSector3s.push(sector3Durations.reduce((sum: number, duration: number) => sum + duration, 0) / sector3Durations.length);
-                    if (lapDurations.length > 0) teamAvgLapTimes.push(lapDurations.reduce((sum: number, duration: number) => sum + duration, 0) / lapDurations.length);
-                    if (averagePitDuration !== null) teamAvgPitDurations.push(averagePitDuration);
-                    if (bestPitDuration !== null) teamBestPitDurations.push(bestPitDuration);
-
-                } catch (apiError) {
-                    console.error("Error fetching lap data for driver:", driver.name, apiError);
-                    // Consider how to handle API errors for individual drivers within a team. For now, skip driver stats if error occurs.
-                }
-            }
-
-            const avgRaceDuration = teamRaceDurations.length > 0 ? `${(teamRaceDurations.reduce((sum, duration) => sum + duration, 0) / teamRaceDurations.length / 60).toFixed(2)} minutes` : 'N/A';
-            const avgMaxSpeed = teamMaxSpeeds.length > 0 ? (teamMaxSpeeds.reduce((sum, speed) => sum + speed, 0) / teamMaxSpeeds.length).toFixed(0) : 'N/A';
-            const avgSector1 = teamAvgSector1s.length > 0 ? (teamAvgSector1s.reduce((sum, duration) => sum + duration, 0) / teamAvgSector1s.length).toFixed(2) + ' s' : 'N/A';
-            const avgSector2 = teamAvgSector2s.length > 0 ? (teamAvgSector2s.reduce((sum, duration) => sum + duration, 0) / teamAvgSector2s.length).toFixed(2) + ' s' : 'N/A';
-            const avgSector3 = teamAvgSector3s.length > 0 ? (teamAvgSector3s.reduce((sum, duration) => sum + duration, 0) / teamAvgSector3s.length).toFixed(2) + ' s' : 'N/A';
-            const avgLapTime = teamAvgLapTimes.length > 0 ? (teamAvgLapTimes.reduce((sum, duration) => sum + duration, 0) / teamAvgLapTimes.length).toFixed(2) + ' s' : 'N/A';
-            const avgPitTime = teamAvgPitDurations.length > 0 ? (teamAvgPitDurations.reduce((sum, duration) => sum + duration, 0) / teamAvgPitDurations.length).toFixed(2) + ' s' : 'N/A';
-            const bestPitTime = teamBestPitDurations.length > 0 ? Math.min(...teamBestPitDurations).toFixed(2) + ' s' : 'N/A';
-
-            setTeamData((prevState) => ({
-                ...prevState,
-                [index]: {
-                    raceDuration: avgRaceDuration,
-                    maxSpeed: avgMaxSpeed,
-                    averageSector1: avgSector1,
-                    averageSector2: avgSector2,
-                    averageSector3: avgSector3,
-                    averageLapTime: avgLapTime,
-                    averagePitDuration: avgPitTime,
-                    bestPitDuration: bestPitTime,
-                },
-            }));
-
+          if (maxSpeed > 0) teamMaxSpeeds.push(maxSpeed);
+          if (sector1Durations.length > 0) teamAvgSector1s.push(sector1Durations.reduce((sum: number, duration: number) => sum + duration, 0) / sector1Durations.length);
+          if (sector2Durations.length > 0) teamAvgSector2s.push(sector2Durations.reduce((sum: number, duration: number) => sum + duration, 0) / sector2Durations.length);
+          if (sector3Durations.length > 0) teamAvgSector3s.push(sector3Durations.reduce((sum: number, duration: number) => sum + duration, 0) / sector3Durations.length);
+          if (lapDurations.length > 0) teamAvgLapTimes.push(lapDurations.reduce((sum: number, duration: number) => sum + duration, 0) / lapDurations.length);
+          if (averagePitDuration !== null) teamAvgPitDurations.push(averagePitDuration);
+          if (bestPitDuration !== null) teamBestPitDurations.push(bestPitDuration);
+        } catch (apiError) {
+          console.error("Error fetching lap data for driver:", driver.name, apiError);
         }
+      }
+
+      const avgRaceDuration = teamRaceDurations.length > 0 ? `${(teamRaceDurations.reduce((sum, duration) => sum + duration, 0) / teamRaceDurations.length / 60).toFixed(2)} minutes` : 'N/A';
+      const avgMaxSpeed = teamMaxSpeeds.length > 0 ? (teamMaxSpeeds.reduce((sum, speed) => sum + speed, 0) / teamMaxSpeeds.length).toFixed(0) : 'N/A';
+      const avgSector1 = teamAvgSector1s.length > 0 ? (teamAvgSector1s.reduce((sum, duration) => sum + duration, 0) / teamAvgSector1s.length).toFixed(2) + ' s' : 'N/A';
+      const avgSector2 = teamAvgSector2s.length > 0 ? (teamAvgSector2s.reduce((sum, duration) => sum + duration, 0) / teamAvgSector2s.length).toFixed(2) + ' s' : 'N/A';
+      const avgSector3 = teamAvgSector3s.length > 0 ? (teamAvgSector3s.reduce((sum, duration) => sum + duration, 0) / teamAvgSector3s.length).toFixed(2) + ' s' : 'N/A';
+      const avgLapTime = teamAvgLapTimes.length > 0 ? (teamAvgLapTimes.reduce((sum, duration) => sum + duration, 0) / teamAvgLapTimes.length).toFixed(2) + ' s' : 'N/A';
+      const avgPitTime = teamAvgPitDurations.length > 0 ? (teamAvgPitDurations.reduce((sum, duration) => sum + duration, 0) / teamAvgPitDurations.length).toFixed(2) + ' s' : 'N/A';
+      const bestPitTime = teamBestPitDurations.length > 0 ? Math.min(...teamBestPitDurations).toFixed(2) + ' s' : 'N/A';
+
+      setTeamData((prevState) => ({
+        ...prevState,
+        [index]: {
+          raceDuration: avgRaceDuration,
+          maxSpeed: avgMaxSpeed,
+          averageSector1: avgSector1,
+          averageSector2: avgSector2,
+          averageSector3: avgSector3,
+          averageLapTime: avgLapTime,
+          averagePitDuration: avgPitTime,
+          bestPitDuration: bestPitTime,
+        },
+      }));
+    }
   };
 
   const fetchDriverLapAndRaceData = async (index: number) => {
-    // Implémentation similaire à votre code original
     if (selectedDrivers[index] && selectedMeeting) {
-            const driverNumber = selectedDrivers[index].driver_number;
-            const meetingKey = selectedMeeting.meeting_key;
-            const yearSession = selectedMeeting.year;
+      const driverNumber = selectedDrivers[index].driver_number;
+      const meetingKey = selectedMeeting.meeting_key;
+      const yearSession = selectedMeeting.year;
 
-            try {
-                const sessionsResponse = await fetch(
-                    `https://api.openf1.org/v1/sessions?meeting_key=${meetingKey}&year=${yearSession}`
-                );
-                const sessionsData = await sessionsResponse.json();
+      try {
+        const sessionsResponse = await fetch(
+          `https://api.openf1.org/v1/sessions?meeting_key=${meetingKey}&year=${yearSession}`
+        );
+        const sessionsData = await sessionsResponse.json();
 
-                const raceSession = sessionsData.find((session: any) => session.session_name === 'Race');
-                let sessionKeyToUse = meetingKey;
-                if (raceSession) {
-                    sessionKeyToUse = raceSession.session_key;
-                } else {
-                    sessionKeyToUse = meetingKey; // Use meeting key if race session not found, as fallback
-                    console.warn("Race session not found, fetching laps for meeting key instead. Consider showing a warning to user.");
-                }
-
-                const lapsResponse = await fetch(
-                    `https://api.openf1.org/v1/laps?session_key=${sessionKeyToUse}&driver_number=${driverNumber}`
-                );
-                const lapData = await lapsResponse.json();
-
-                // Ensure lapData is an array before proceeding
-                if (!Array.isArray(lapData)) {
-                    console.error("Lap data is not an array:", lapData);
-                    setDriverData((prevState) => ({
-                        ...prevState,
-                        [index]: {
-                            ...prevState[index],
-                            raceDuration: 'N/A',
-                            maxSpeed: 'N/A',
-                            averageSector1: 'N/A',
-                            averageSector2: 'N/A',
-                            averageSector3: 'N/A',
-                            averageLapTime: 'N/A',
-                            averagePitDuration: 'N/A',
-                            bestPitDuration: 'N/A',
-                        },
-                    }));
-                    return; // Exit the function if lapData is not valid
-                }
-
-                // Race Duration Calculation
-                const raceDurations = lapData
-                    .map((lap: any) => lap.lap_duration)
-                    .filter((duration: any) => duration !== null);
-                const totalRaceDuration = raceDurations.reduce((sum: number, duration: number) => sum + duration, 0);
-                const formattedRaceDuration = totalRaceDuration > 0 ? `${(totalRaceDuration / 60).toFixed(2)} minutes` : 'N/A';
-
-                // Lap Data Calculation
-                const sector1Durations = lapData.map((lap: any) => lap.duration_sector_1).filter((val: any) => val !== null);
-                const sector2Durations = lapData.map((lap: any) => lap.duration_sector_2).filter((val: any) => val !== null);
-                const sector3Durations = lapData.map((lap: any) => lap.duration_sector_3).filter((val: any) => val !== null);
-                const lapDurations = lapData.map((lap: any) => lap.lap_duration).filter((val: any) => val !== null);
-                const pitDurations = lapData
-                    .filter((lap: any) => lap.is_pit_out_lap)
-                    .map((lap: any) => lap.lap_duration);
-
-                const bestPitDuration = pitDurations.length > 0 ? Math.min(...pitDurations) : null;
-                const averagePitDuration = pitDurations.length > 0 ? pitDurations.reduce((sum: number, duration: number) => sum + duration, 0) / pitDurations.length : null;
-
-                const maxSpeed = Math.max(...lapData.map((lap: any) => lap.i1_speed).filter((val: any) => val !== null), 0);
-                const averageSector1 = sector1Durations.length > 0 ? sector1Durations.reduce((sum: number, duration: number) => sum + duration, 0) / sector1Durations.length : null;
-                const averageSector2 = sector2Durations.length > 0 ? sector2Durations.reduce((sum: number, duration: number) => sum + duration, 0) / sector2Durations.length : null;
-                const averageSector3 = sector3Durations.length > 0 ? sector3Durations.reduce((sum: number, duration: number) => sum + duration, 0) / sector3Durations.length : null;
-                const averageLapTime = lapDurations.length > 0 ? lapDurations.reduce((sum: number, duration: number) => sum + duration, 0) / lapDurations.length : null;
-
-                setDriverData((prevState) => ({
-                    ...prevState,
-                    [index]: {
-                        ...prevState[index],
-                        raceDuration: formattedRaceDuration,
-                        maxSpeed: maxSpeed > 0 ? maxSpeed : 'N/A',
-                        averageSector1: averageSector1 !== null ? averageSector1.toFixed(2) + ' s' : 'N/A',
-                        averageSector2: averageSector2 !== null ? averageSector2.toFixed(2) + ' s' : 'N/A',
-                        averageSector3: averageSector3 !== null ? averageSector3.toFixed(2) + ' s' : 'N/A',
-                        averageLapTime: averageLapTime !== null ? averageLapTime.toFixed(2) + ' s' : 'N/A',
-                        averagePitDuration: averagePitDuration !== null ? averagePitDuration.toFixed(2) + ' s' : 'N/A',
-                        bestPitDuration: bestPitDuration !== null ? bestPitDuration.toFixed(2) + ' s' : 'N/A',
-                    },
-                }));
-
-            } catch (error) {
-                console.error("Error fetching lap and race data:", error);
-                setDriverData((prevState) => ({
-                    ...prevState,
-                    [index]: {
-                        ...prevState[index],
-                        raceDuration: 'Error fetching data',
-                        maxSpeed: 'Error',
-                        averageSector1: 'Error',
-                        averageSector2: 'Error',
-                        averageSector3: 'Error',
-                        averageLapTime: 'Error',
-                        averagePitDuration: 'Error',
-                        bestPitDuration: 'Error',
-                    },
-                }));
-            }
+        const raceSession = sessionsData.find((session: any) => session.session_name === 'Race');
+        let sessionKeyToUse = meetingKey;
+        if (raceSession) {
+          sessionKeyToUse = raceSession.session_key;
+        } else {
+          sessionKeyToUse = meetingKey;
+          console.warn("Race session not found, fetching laps for meeting key instead. Consider showing a warning to user.");
         }
+
+        const lapsResponse = await fetch(
+          `https://api.openf1.org/v1/laps?session_key=${sessionKeyToUse}&driver_number=${driverNumber}`
+        );
+        const lapData = await lapsResponse.json();
+
+        if (!Array.isArray(lapData)) {
+          console.error("Lap data is not an array:", lapData);
+          setDriverData((prevState) => ({
+            ...prevState,
+            [index]: {
+              ...prevState[index],
+              raceDuration: 'N/A',
+              maxSpeed: 'N/A',
+              averageSector1: 'N/A',
+              averageSector2: 'N/A',
+              averageSector3: 'N/A',
+              averageLapTime: 'N/A',
+              averagePitDuration: 'N/A',
+              bestPitDuration: 'N/A',
+            },
+          }));
+          return;
+        }
+
+        const raceDurations = lapData
+          .map((lap: any) => lap.lap_duration)
+          .filter((duration: any) => duration !== null);
+        const totalRaceDuration = raceDurations.reduce((sum: number, duration: number) => sum + duration, 0);
+        const formattedRaceDuration = totalRaceDuration > 0 ? `${(totalRaceDuration / 60).toFixed(2)} minutes` : 'N/A';
+
+        const sector1Durations = lapData.map((lap: any) => lap.duration_sector_1).filter((val: any) => val !== null);
+        const sector2Durations = lapData.map((lap: any) => lap.duration_sector_2).filter((val: any) => val !== null);
+        const sector3Durations = lapData.map((lap: any) => lap.duration_sector_3).filter((val: any) => val !== null);
+        const lapDurations = lapData.map((lap: any) => lap.lap_duration).filter((val: any) => val !== null);
+        const pitDurations = lapData
+          .filter((lap: any) => lap.is_pit_out_lap)
+          .map((lap: any) => lap.lap_duration);
+
+        const bestPitDuration = pitDurations.length > 0 ? Math.min(...pitDurations) : null;
+        const averagePitDuration = pitDurations.length > 0 ? pitDurations.reduce((sum: number, duration: number) => sum + duration, 0) / pitDurations.length : null;
+
+        const maxSpeed = Math.max(...lapData.map((lap: any) => lap.i1_speed).filter((val: any) => val !== null), 0);
+        const averageSector1 = sector1Durations.length > 0 ? sector1Durations.reduce((sum: number, duration: number) => sum + duration, 0) / sector1Durations.length : null;
+        const averageSector2 = sector2Durations.length > 0 ? sector2Durations.reduce((sum: number, duration: number) => sum + duration, 0) / sector2Durations.length : null;
+        const averageSector3 = sector3Durations.length > 0 ? sector3Durations.reduce((sum: number, duration: number) => sum + duration, 0) / sector3Durations.length : null;
+        const averageLapTime = lapDurations.length > 0 ? lapDurations.reduce((sum: number, duration: number) => sum + duration, 0) / lapDurations.length : null;
+
+        setDriverData((prevState) => ({
+          ...prevState,
+          [index]: {
+            ...prevState[index],
+            raceDuration: formattedRaceDuration,
+            maxSpeed: maxSpeed > 0 ? maxSpeed : 'N/A',
+            averageSector1: averageSector1 !== null ? averageSector1.toFixed(2) + ' s' : 'N/A',
+            averageSector2: averageSector2 !== null ? averageSector2.toFixed(2) + ' s' : 'N/A',
+            averageSector3: averageSector3 !== null ? averageSector3.toFixed(2) + ' s' : 'N/A',
+            averageLapTime: averageLapTime !== null ? averageLapTime.toFixed(2) + ' s' : 'N/A',
+            averagePitDuration: averagePitDuration !== null ? averagePitDuration.toFixed(2) + ' s' : 'N/A',
+            bestPitDuration: bestPitDuration !== null ? bestPitDuration.toFixed(2) + ' s' : 'N/A',
+          },
+        }));
+      } catch (error) {
+        console.error("Error fetching lap and race data:", error);
+        setDriverData((prevState) => ({
+          ...prevState,
+          [index]: {
+            ...prevState[index],
+            raceDuration: 'Error fetching data',
+            maxSpeed: 'Error',
+            averageSector1: 'Error',
+            averageSector2: 'Error',
+            averageSector3: 'Error',
+            averageLapTime: 'Error',
+            averagePitDuration: 'Error',
+            bestPitDuration: 'Error',
+          },
+        }));
+      }
+    }
   };
 
   const fetchCoordinates = async (location: string) => {
@@ -386,11 +375,11 @@ export const useDataFetching = () => {
     }
   };
 
-    useEffect(() => {
-        if (mainGP) {
-            fetchCoordinates(mainGP.location + ", " + mainGP.country_name);
-        }
-    }, [mainGP]);
+  useEffect(() => {
+    if (mainGP) {
+      fetchCoordinates(mainGP.location + ", " + mainGP.country_name);
+    }
+  }, [mainGP]);
 
   useEffect(() => {
     fetchDrivers();
@@ -454,6 +443,6 @@ export const useDataFetching = () => {
     setMeetings,
     coordinates,
     fetchCoordinates,
-    setDrivers
+    setDrivers,
   };
 };

@@ -196,11 +196,11 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
 
                 // Calculate averages
                 validDrivers.forEach(([, data]) => {
-                    const validSpeeds = data.speeds.filter(speed => !isNaN(speed));
+                    const validSpeeds = data.speeds.filter((speed: number) => !isNaN(speed));
                     if (validSpeeds.length === 0) return;
                     
                     data.averageSpeed = Number(
-                        (validSpeeds.reduce((a, b) => a + b, 0) / validSpeeds.length).toFixed(1)
+                        (validSpeeds.reduce((a: any, b: any) => a + b, 0) / validSpeeds.length).toFixed(1)
                     );
                 });
 

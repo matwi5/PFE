@@ -1,3 +1,5 @@
+import { Key } from "react";
+
 export interface GP {
     circuit_key: number;
     circuit_short_name: string;
@@ -21,6 +23,7 @@ export interface GP {
 }
 
 export interface Driver {
+    id: Key | null | undefined;
     flagColors: string[];
     broadcast_name: string;
     country_code: string;
@@ -62,4 +65,12 @@ export interface GrandPrix {
     record_de_circuit: string;
     recordman_circuit: string;
     image_circuit: string;
+}
+
+export interface Meeting {
+    id: Key | null | undefined;
+    meeting_key: number;
+    meeting_name: string;
+    year: number;
+    // Ajoutez d'autres propriétés si nécessaire
 }

@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface GeneralDataCardProps {
-  icon: React.ReactNode;
+  icon: React.ReactElement; // Changez ce type pour garantir que c'est un élément React
   title: string;
   content: string;
   linkText: string;

@@ -60,7 +60,7 @@ const useCloudMarkers = (map: L.Map, weatherData: WeatherData, coordinates: [num
                     return initialPositions;
                 }
 
-                const updatedPositions = prevPositions.map(([lat, lng]) => {
+                const updatedPositions = prevPositions.map<[number, number]>(([lat, lng]) => {
                     const newLat = lat + (weatherData.windspeed / 2000) * Math.cos((weatherData.winddir * Math.PI) / 180);
                     const newLng = lng + (weatherData.windspeed / 2000) * Math.sin((weatherData.winddir * Math.PI) / 180);
                     return [newLat, newLng];

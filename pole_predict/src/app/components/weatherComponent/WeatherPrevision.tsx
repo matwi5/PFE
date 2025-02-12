@@ -4,7 +4,7 @@ import { FeatureCollection } from "geojson";
 import { Card, CardContent } from "@/components/ui/card";
 import { Cloud, CloudRain, Sun, CloudSun } from "lucide-react";
 import L from "leaflet";
-import {db} from "@/firebaseConfig";
+import { db } from "@/firebaseConfig";
 
 const firestore = db;
 
@@ -37,7 +37,7 @@ interface WeatherWidgetProps {
     dates: string[];
 }
 
-const WeatherIcon = ({ condition, className = "w-8 h-8" }) => {
+const WeatherIcon = ({ condition, className = "w-8 h-8" }: { condition: string, className?: string }) => {
     switch (condition) {
         case 'cloud_rain':
             return <CloudRain className={className} />;
@@ -68,12 +68,12 @@ interface WeatherHour {
 
 const WeatherPrevision: React.FC<WeatherWidgetProps> = ({ circuitName, dates }) => {
     const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
-    const [selectedCircuitCoords, setSelectedCircuitCoords] = useState<[number, number]>();
+    const [selectedCircuitCoords, setSelectedCircuitCoords] = useState<[number, number] | undefined>(undefined);
 
 
     // fetchWeatherData function (kept the same)
     const fetchWeatherData = useCallback(async () => {
-        if(!selectedCircuitCoords) return;
+        if (!selectedCircuitCoords) return;
         const [lat, lon] = selectedCircuitCoords;
         const parsedDates = dates.map(date => new Date(date));
         const minDate = new Date(Math.min(...parsedDates.map(date => date.getTime())));
@@ -119,7 +119,7 @@ const WeatherPrevision: React.FC<WeatherWidgetProps> = ({ circuitName, dates }) 
 
                     if (hourlyData) {
                         // Determine the weather condition based on the 'icon' property
-                        let condition = "cloud";
+                        let condition: string = "cloud";
                         if (hourlyData.icon.includes("rain")) {
                             condition = "cloud_rain";
                         } else if (hourlyData.icon.includes("partly-cloudy")) {
@@ -143,6 +143,7 @@ const WeatherPrevision: React.FC<WeatherWidgetProps> = ({ circuitName, dates }) 
             return data;
         } catch (error) {
             console.error(`Error processing date range ${formattedMinDate} to ${formattedMaxDate}:`, error);
+            return [];
         }
     }, [selectedCircuitCoords, dates]);
 
@@ -197,19 +198,26 @@ const WeatherPrevision: React.FC<WeatherWidgetProps> = ({ circuitName, dates }) 
 
                         const geoJsonLayer = L.geoJSON(geoJson);
                         const bounds = geoJsonLayer.getBounds();
-                        //setSelectedCircuitCoords([bounds.getCenter().lat, bounds.getCenter().lng]);
-                        return [bounds.getCenter().lat, bounds.getCenter().lng]
+                        const coords: [number, number] = [bounds.getCenter().lat, bounds.getCenter().lng];
+                        return coords
                     } else {
                         console.warn(
                             `No valid coordinates found for circuit: ${circuitName}, geometry type: ${selectedCircuit.geometry.type}`,
                         );
+                        return undefined;
                     }
                 }
+                return undefined
             } catch (error) {
                 console.error('Error fetching data from Firestore:', error);
+                return undefined;
             }
         };
-        fetchData().then(setSelectedCircuitCoords);
+        fetchData().then(coords => {
+            if (coords) {
+                setSelectedCircuitCoords(coords);
+            }
+        });
     }, [circuitName]);
 
     useEffect(() => {

@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import L from 'leaflet';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { Feature, FeatureCollection } from 'geojson';
+import type { FeatureCollection } from 'geojson';
 import 'leaflet/dist/leaflet.css';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/firebaseConfig';
@@ -46,10 +46,10 @@ interface WeatherData {
 }
 
 // eslint-disable-next-line @next/next/no-async-client-component
-const WeatherMap: React.FC<{ meeting_name: string; date: string}> = ({
-                                                                                        meeting_name,
-                                                                                       date,
-                                                                                   }) => {
+const WeatherMap: React.FC<{ meeting_name: string; date: string }> = ({
+    meeting_name,
+    date,
+}) => {
     const [files, setFiles] = useState<Feature[]>([]);
     const [meetings, setMeetings] = useState<Meeting[]>([]);
     const [geoJsonData, setGeoJsonData] = useState<FeatureCollection | null>(null);
@@ -173,13 +173,18 @@ const WeatherMap: React.FC<{ meeting_name: string; date: string}> = ({
             try {
                 const querySnapshot = await getDocs(collection(firestore, 'geojson_files'));
                 const queryMeetings = await getDocs(collection(firestore, 'meetings'));
-                setMeetings(queryMeetings.docs.map((doc) => doc.data() as Meeting))
-                return querySnapshot.docs.map((doc) => doc.data() as Feature);
+
+                setMeetings(queryMeetings.docs.map((doc) => doc.data() as Meeting));
+
+                const fetchedFiles = querySnapshot.docs.map((doc) => doc.data() as Feature);
+                setFiles(fetchedFiles);
+
             } catch (error) {
                 console.error('Error fetching data from Firestore:', error);
             }
         };
-        fetchData().then(setFiles);
+
+        fetchData();
     }, []);
 
     useEffect(() => {
