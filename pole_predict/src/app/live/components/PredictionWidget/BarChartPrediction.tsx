@@ -178,23 +178,23 @@ export const BarChartPrediction: React.FC<BarChartPredictionProps> = ({ type, da
                         animationDuration={300}
                         animationBegin={0}
                     >
-                        {chartData.map((entry, index) => (
-                            <Cell
-                                key={`cell-${index}`}
-                                fill={getBarColor(index)}
-                                onMouseOver={(props) => {
-                                    const currentColor = getBarColor(index);
-                                    if (props.target) {
-                                        props.target.style.fill = lightenColor(currentColor, 0.2);
-                                    }
-                                }}
-                                onMouseOut={(props) => {
-                                    if (props.target) {
-                                        props.target.style.fill = getBarColor(index);
-                                    }
-                                }}
-                            />
-                        ))}
+                        {chartData.map((entry, index) => {
+                            const barColor = getBarColor(index);
+                            return (
+                                <Cell
+                                    key={`cell-${index}`}
+                                    fill={barColor}
+                                    onMouseOver={(event) => {
+                                        const target = event.target as SVGRectElement;
+                                        target.style.fill = lightenColor(barColor, 0.2);
+                                    }}
+                                    onMouseOut={(event) => {
+                                        const target = event.target as SVGRectElement;
+                                        target.style.fill = barColor;
+                                    }}
+                                />
+                            );
+                        })}
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>

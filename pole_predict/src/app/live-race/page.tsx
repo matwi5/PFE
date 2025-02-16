@@ -33,8 +33,10 @@ import { Loader2 } from "lucide-react";
 import WeatherMap from "@/app/components/weatherComponent/WeatherMap";
 
 import DriverMap from "../components/raceComponent/DriverMap";
+import { ReactElement } from "react";
 
-const PredictionAlert = ({ open, onClose }) => {
+// Correctly typed PredictionAlert component
+const PredictionAlert = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   if (!open) return null;
 
   return (
@@ -44,7 +46,7 @@ const PredictionAlert = ({ open, onClose }) => {
     >
       <Alert
         className="bg-[#282a2c] border border-gray-800 max-w-md w-full cursor-default"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()} // Added explicit type for event
       >
         <div className="flex justify-center mb-4">
           <div className="p-3 rounded-full bg-blue-500/10">
@@ -190,7 +192,6 @@ const useIsMobile = () => {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
-  // Return false during SSR, actual value after mount
   return hasMounted ? isMobile : false;
 };
 
@@ -213,7 +214,6 @@ const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
   throw new Error(`Failed after ${maxRetries} retries`);
 };
 
-// État global pour la gestion des erreurs et du chargement
 interface GlobalLoadingState {
   meetings: boolean;
   sessions: boolean;
@@ -233,7 +233,31 @@ interface GlobalErrorState {
 }
 
 
-const MobileView = ({
+interface MobileViewProps {
+  meetings: Meeting[];
+  sessions: Session[];
+  selectedMeeting: string;
+  selectedSession: string;
+  setSelectedMeeting: (meeting: string) => void;
+  setSelectedSession: (session: string) => void;
+  currentTime: string;
+  sessionStartTime: string;
+  sessionEndTime: string;
+  setCurrentTime: (time: string) => void;
+  viewMode: "chrono" | "lap" | "final";
+  setViewMode: (mode: "chrono" | "lap" | "final") => void;
+  currentLap: number;
+  totalLaps: number;
+  setCurrentLap: (lap: number) => void;
+  setTotalLaps: (laps: number) => void;
+  selectedDriver: Driver | null;
+  isExpertMode: boolean;
+  setIsExpertMode: (expertMode: boolean) => void;
+  widgetConfig: WidgetConfig;
+  widgetComponents: { [key: string]: ReactElement | null };
+}
+
+const MobileView: React.FC<MobileViewProps> = ({
   meetings,
   sessions,
   selectedMeeting,
@@ -259,22 +283,19 @@ const MobileView = ({
   const [activeTab, setActiveTab] = useState('info');
   const [showPredictionAlert, setShowPredictionAlert] = useState(false);
 
-  // Get current session details
   const currentSession = sessions.find(s => s.session_key.toString() === selectedSession);
   const isRaceSession = currentSession?.session_type === "Race";
   const isFinal = viewMode === "final";
 
-  // Check if predictions can be enabled
   const canEnablePrediction = selectedSession && selectedDriver && isRaceSession && !isFinal;
 
-  const handleTabChange = (tabName) => {
+  const handleTabChange = (tabName: string) => {
     if (tabName === 'predictions') {
       if (!canEnablePrediction) {
         setShowPredictionAlert(true);
         return;
       }
 
-      // Check if any prediction widgets are visible
       const hasPredictions = Object.entries(widgetComponents)
         .filter(([key]) => key.startsWith('prediction-'))
         .some(([key]) => widgetConfig.visibility[key]);
@@ -290,7 +311,6 @@ const MobileView = ({
   return (
     <div className="min-h-screen bg-[#1B1C1D]">
       <div className="container mx-auto px-4 py-16">
-        {/* Header section - simplified for mobile */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -306,7 +326,6 @@ const MobileView = ({
           </p>
         </motion.div>
 
-        {/* Race Selection - Full width on mobile */}
         <div className="mb-8">
           <RaceSelectionMobile
             meetings={meetings}
@@ -331,7 +350,6 @@ const MobileView = ({
           />
         </div>
 
-        {/* Mobile Navigation Tabs */}
         <div className="flex mb-4 border-b border-gray-800">
           <button
             className={`flex-1 py-2 text-sm font-medium ${activeTab === 'info'
@@ -362,7 +380,6 @@ const MobileView = ({
           </button>
         </div>
 
-        {/* Content based on active tab */}
         <div className="space-y-4">
           {activeTab === 'info' && (
             <>
@@ -392,7 +409,7 @@ const MobileView = ({
               {Object.entries(widgetComponents)
                 .filter(([key]) => key.startsWith('prediction-'))
                 .map(([key, component]) =>
-                  widgetConfig.visibility[key] && <div key={key}>{component}</div>
+                  widgetConfig.visibility[key] ? <div key={key}>{component}</div> : null
                 )}
             </>
           )}
@@ -429,7 +446,7 @@ const RaceControlEvents = () => {
   const [vitalStats, setVitalStats] = useState<VitalStatistics | null>(null);
   const isMobile = useIsMobile();
   const [hasMounted, setHasMounted] = useState(false);
-  const [currentStandings, setCurrentStandings] = useState<{ position: number, acronym: string }[]>([]);
+  const [currentStandings, setCurrentStandings] = useState<{ position: number; acronym: string }[]>([]);
 
   const [globalLoading, setGlobalLoading] = useState<GlobalLoadingState>({
     meetings: false,
@@ -453,7 +470,6 @@ const RaceControlEvents = () => {
     setGlobalLoading(prev => ({ ...prev, [key]: value }));
   };
 
-  // Helper pour mettre à jour l'état d'erreur
   const setErrorState = (key: keyof GlobalErrorState, value: string | null) => {
     setGlobalError(prev => ({ ...prev, [key]: value }));
   };
@@ -523,7 +539,6 @@ const RaceControlEvents = () => {
           const latestMeeting = sortedMeetings[0];
           setSelectedMeeting(latestMeeting.meeting_key.toString());
 
-          // Fetch initial sessions
           const sessionsData = await fetchWithRetry(
             `https://api.openf1.org/v1/sessions?meeting_key=${latestMeeting.meeting_key}`
           );
@@ -582,7 +597,6 @@ const RaceControlEvents = () => {
     loadVitalStatistics(selectedMeeting);
   }, [selectedMeeting]);
 
-  // Dans le useEffect qui gère selectedSession
   useEffect(() => {
     const fetchEventsAndLaps = async () => {
       if (!selectedSession) return;
@@ -590,13 +604,11 @@ const RaceControlEvents = () => {
       setLoadingState('events', true);
       setLoadingState('lapsData', true);
       try {
-        // Fetch des événements et des tours en parallèle
         const [eventsData, lapsData] = await Promise.all([
           fetchWithRetry(`/api/race-selection?session_key=${selectedSession}`),
           fetchWithRetry(`https://api.openf1.org/v1/laps?session_key=${selectedSession}`)
         ]);
 
-        // Traitement des événements
         setEvents(
           eventsData.sort(
             (a: RaceControlEvent, b: RaceControlEvent) =>
@@ -604,15 +616,12 @@ const RaceControlEvents = () => {
           )
         );
 
-        // Traitement des tours
         setLapsData(lapsData);
 
         const sessionDetails = sessions.find(
           (s) => s.session_key.toString() === selectedSession
         );
 
-        // Calculer le nombre total de tours en prenant le maximum entre
-        // les tours de la session et les tours dans lapsData
         let maxLapsFromData = 0;
         if (lapsData && Array.isArray(lapsData) && lapsData.length > 0) {
           maxLapsFromData = Math.max(...lapsData.map((lap: LapData) => lap?.lap_number || 0));
@@ -759,7 +768,6 @@ const RaceControlEvents = () => {
     );
   };
 
-  // Composant d'affichage des erreurs
   const GlobalErrorDisplay = () => {
     const errors = Object.entries(globalError)
       .filter(([, error]) => error !== null)
@@ -832,7 +840,7 @@ const RaceControlEvents = () => {
     }));
   };
 
-  const widgetComponents: { [key: string]: JSX.Element } = {
+  const widgetComponents: { [key: string]: ReactElement | null } = {
     'driver-profile': (
       <DriverProfile
         selectedDriver={selectedDriver}
@@ -897,29 +905,33 @@ const RaceControlEvents = () => {
         viewMode={viewMode}
       />
     ),
-    'stint-visualizer': (
-      <StintVisualizer
-        sessionKey={parseInt(selectedSession)}
-        lap={viewMode === "final" || currentLap === totalLaps ? null : currentLap}
-      />
+    'stint-visualizer':
+      viewMode === "final" || currentLap === totalLaps ? null : (
+        <StintVisualizer
+          sessionKey={parseInt(selectedSession)}
+          lap={currentLap}
+        />
     ),
-    'speed-visualizer': (
-      <SpeedVisualizer
-        sessionKey={parseInt(selectedSession)}
-        lap={viewMode === "final" || currentLap === totalLaps ? null : currentLap}
-      />
+    'speed-visualizer':
+       viewMode === "final" || currentLap === totalLaps ? null : (
+        <SpeedVisualizer
+          sessionKey={parseInt(selectedSession)}
+          lap={currentLap}
+        />
     ),
-    'lap-analysis': (
-      <F1LapAnalysis
-        sessionKey={parseInt(selectedSession)}
-        lap={viewMode === "final" || currentLap === totalLaps ? null : currentLap}
-      />
+    'lap-analysis':
+        viewMode === "final" || currentLap === totalLaps ? null : (
+          <F1LapAnalysis
+          sessionKey={parseInt(selectedSession)}
+          lap={currentLap}
+        />
     ),
-    'gap-analysis': (
-      <F1GapAnalysis
-        sessionKey={parseInt(selectedSession)}
-        lap={viewMode === "final" || currentLap === totalLaps ? null : currentLap}
-      />
+    'gap-analysis':
+       viewMode === "final" || currentLap === totalLaps ? null : (
+        <F1GapAnalysis
+          sessionKey={parseInt(selectedSession)}
+          lap={currentLap}
+        />
     ),
     'championship': (
       <ChampionshipWidget_Live
@@ -935,17 +947,17 @@ const RaceControlEvents = () => {
     ),
     ...Object.fromEntries(predictionTypes.map(type => [
       `prediction-${type}`,
-      selectedSession && selectedDriver && isRaceSession && (
+      selectedSession && selectedDriver && isRaceSession ? (
         <PredictionWidget
           key={`prediction-${type}-${currentTime}-${currentLap}`}
           type={type}
           isExpertMode={isExpertMode}
           sessionId={selectedSession}
-          driverId={selectedDriverNumber}
+          driverId={selectedDriverNumber || ""}
           lapNumber={currentLap.toString()}
           viewMode={viewMode}
         />
-      )
+      ) : null
     ]))
   };
 
@@ -986,7 +998,6 @@ const RaceControlEvents = () => {
       <GlobalLoadingOverlay />
       <GlobalErrorDisplay />
       <div className="container mx-auto px-4 py-16">
-        {/* En-tête */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1002,7 +1013,6 @@ const RaceControlEvents = () => {
           </p>
         </motion.div>
 
-        {/* Section de sélection */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -1031,7 +1041,6 @@ const RaceControlEvents = () => {
           />
         </motion.div>
 
-        {/* Widget Customizer */}
         <WidgetCustomizer
           onOrderChange={handleWidgetOrderChange}
           onVisibilityChange={handleWidgetVisibilityChange}
@@ -1041,7 +1050,6 @@ const RaceControlEvents = () => {
           isFinal={viewMode === "final"}
         />
 
-        {/* Widgets Grid */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1049,7 +1057,7 @@ const RaceControlEvents = () => {
         >
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
             {widgetConfig.order.map((widgetId, index) =>
-              widgetConfig.visibility[widgetId] && widgetComponents[widgetId] && (
+              widgetConfig.visibility[widgetId] && widgetComponents[widgetId] ? (
                 <motion.div
                   key={widgetId}
                   initial={{ opacity: 0, y: 20 }}
@@ -1057,7 +1065,6 @@ const RaceControlEvents = () => {
                   transition={{ delay: index * 0.05 }}
                   className="break-inside-avoid"
                 >
-                  {/* Rendu conditionnel pour chaque type de widget */}
                   {widgetId === 'driver-profile' && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -1191,7 +1198,6 @@ const RaceControlEvents = () => {
                     </motion.div>
                   )}
 
-                  {/* Gestion des widgets de prédiction */}
                   {widgetId.startsWith('prediction-') && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -1200,20 +1206,20 @@ const RaceControlEvents = () => {
                       className="break-inside-avoid"
                     >
                       {selectedSession && selectedDriver && isRaceSession && (
-                        <PredictionWidget
-                          key={`${widgetId}-${viewMode === 'chrono' ? currentLap : currentTime}-${currentLap}`}
-                          type={widgetId.replace('prediction-', '')}
-                          isExpertMode={isExpertMode}
-                          sessionId={selectedSession}
-                          driverId={selectedDriverNumber}
-                          lapNumber={currentLap.toString()}
-                          viewMode={viewMode}
-                        />
+                         <PredictionWidget
+                            key={`${widgetId}-${viewMode === 'chrono' ? currentLap : currentTime}-${currentLap}`}
+                            type={widgetId.replace('prediction-', '')}
+                            isExpertMode={isExpertMode}
+                            sessionId={selectedSession}
+                            driverId={selectedDriverNumber  || ""}
+                            lapNumber={currentLap.toString()}
+                            viewMode={viewMode}
+                         />
                       )}
                     </motion.div>
                   )}
                 </motion.div>
-              )
+              ) : null
             )}
           </div>
         </motion.div>

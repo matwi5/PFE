@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles } from 'lucide-react';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../../../firebaseConfig';
-import { PredictionData } from '../../types';
+import { PredictionData, LaptimeConfig } from '../../types';
 import { PREDICTION_TITLES, PREDICTION_METRICS, LAPTIME_CONFIG } from '../../constants';
 import { SimplePredictionDisplay } from './SimplePredictionDisplay';
 import { BarChartPrediction } from './BarChartPrediction';
@@ -29,14 +29,27 @@ interface LapDataCache {
     [key: string]: PredictionData;
 }
 
-export const PredictionWidget = ({ 
-    type, 
-    isExpertMode, 
-    sessionId, 
-    driverId, 
+// Define a type for the modified LaptimeConfig with FUTURE_LAPS
+interface ModifiedLaptimeConfig extends LaptimeConfig {
+    FUTURE_LAPS: number;
+}
+
+const predictFutureLaptimesTyped = (
+    validLaps: any[], // Replace 'any[]' with your actual type for validLaps
+    currentLapNumber: number,
+    config: ModifiedLaptimeConfig
+): PredictionData => {
+    return predictFutureLaptimes(validLaps, currentLapNumber, config);
+};
+
+export const PredictionWidget = ({
+    type,
+    isExpertMode,
+    sessionId,
+    driverId,
     lapNumber,
     viewMode,
-    className 
+    className
 }: PredictionWidgetProps) => {
     const [dataCache, setDataCache] = useState<LapDataCache>({});
     const [loading, setLoading] = useState(true);
@@ -57,10 +70,10 @@ export const PredictionWidget = ({
                 const response = await fetch(
                     `https://api.openf1.org/v1/laps?session_key=${sessionId}&driver_number=${driverId}`
                 );
-                
+
                 if (!response.ok) throw new Error('OpenF1 fetch failed');
                 const openF1Data = await response.json();
-                
+
                 const lapsData = openF1Data
                     .filter((lap: any) => lap.lap_duration !== null)
                     .map((lap: any) => ({
@@ -70,10 +83,10 @@ export const PredictionWidget = ({
                     }));
 
                 const lapsCollectionRef = collection(
-                    db, 
-                    "predictions_ia", 
-                    "version 1", 
-                    "sessions", 
+                    db,
+                    "predictions_ia",
+                    "version 1",
+                    "sessions",
                     sessionId,
                     "drivers",
                     driverId,
@@ -89,9 +102,9 @@ export const PredictionWidget = ({
                     const maxLap = Math.max(...lapsData.map((l: any) => l.lap_number), 0);
 
                     if (currentLapNumber >= maxLap || lapsData.length === 0) {
-                        newCache[lapNumber] = { 
-                            predictions: { prediction: 0 }, 
-                            lap_predictions: [] 
+                        newCache[lapNumber] = {
+                            predictions: { prediction: 0 },
+                            lap_predictions: []
                         };
                         continue;
                     }
@@ -110,31 +123,40 @@ export const PredictionWidget = ({
                             maxLap - currentLapNumber
                         );
 
-                        const predictions = predictFutureLaptimes(
+                        // Create a new configuration object with the modified FUTURE_LAPS property
+                        const modifiedLaptimeConfig: ModifiedLaptimeConfig = {
+                            ...LAPTIME_CONFIG,
+                            FUTURE_LAPS: futureLaps
+                        };
+
+                        const predictions = predictFutureLaptimesTyped(
                             validLaps,
                             currentLapNumber,
-                            { ...LAPTIME_CONFIG, FUTURE_LAPS: futureLaps }
+                            modifiedLaptimeConfig
                         );
 
-                        predictions.lap_predictions = predictions.lap_predictions.map((pred: any) => ({
-                            ...pred,
-                            actual_time: lapsData.find((l: any) => l.lap_number === pred.lap_number)?.lap_duration
-                        }));
+
+                        if (predictions.lap_predictions) {
+                            predictions.lap_predictions = predictions.lap_predictions.map((pred: any) => ({
+                                ...pred,
+                                actual_time: lapsData.find((l: any) => l.lap_number === pred.lap_number)?.lap_duration
+                            }));
+                        }
 
                         newCache[lapNumber] = predictions;
                     } else {
-                        newCache[lapNumber] = { 
-                            predictions: { prediction: 0 }, 
-                            lap_predictions: [] 
+                        newCache[lapNumber] = {
+                            predictions: { prediction: 0 },
+                            lap_predictions: []
                         };
                     }
                 }
             } else {
                 const lapsCollectionRef = collection(
-                    db, 
-                    "predictions_ia", 
-                    "version 1", 
-                    "sessions", 
+                    db,
+                    "predictions_ia",
+                    "version 1",
+                    "sessions",
                     sessionId,
                     "drivers",
                     driverId,
@@ -148,10 +170,10 @@ export const PredictionWidget = ({
                     lapDocs.map(async (lapDoc) => {
                         const lapNumber = lapDoc.id;
                         const predictionRef = doc(
-                            db, 
-                            "predictions_ia", 
-                            "version 1", 
-                            "sessions", 
+                            db,
+                            "predictions_ia",
+                            "version 1",
+                            "sessions",
                             sessionId,
                             "drivers",
                             driverId,
@@ -181,7 +203,7 @@ export const PredictionWidget = ({
         // Chargement initial et rechargement quand les paramètres clés changent
         loadData();
         setPrevLap(lapNumber);
-    }, [sessionId, driverId, type]); 
+    }, [sessionId, driverId, type]);
 
     useEffect(() => {
         // Load data when lap changes in chrono mode or any lap change in other modes
@@ -190,7 +212,7 @@ export const PredictionWidget = ({
             setPrevLap(lapNumber);
         }
     }, [lapNumber, viewMode]);
-    
+
     const getFlipContainerClass = () => {
         if (!isExpertMode) return "flip-container";
         return "flip-container flipped";
@@ -198,7 +220,7 @@ export const PredictionWidget = ({
 
     const renderContent = () => {
         const flipClass = getFlipContainerClass();
-        
+
         if (loading) {
             return (
                 <div className={flipClass}>

@@ -84,7 +84,7 @@ const CircuitWidget: React.FC<CircuitWidgetProps> = () => {
     const [selectedYear, setSelectedYear] = useState("2024");
 
     // Filtrer les meetings par année sélectionnée
-    const meetingsOfYear = allGPs.filter(meeting => meeting.year.toString() === selectedYear);
+    const meetingsOfYear = allGPs.filter((meeting: Meeting) => meeting.year.toString() === selectedYear);
 
     // Fetch initial data (meetings, grand prix, drivers)
     useEffect(() => {
@@ -111,13 +111,13 @@ const CircuitWidget: React.FC<CircuitWidgetProps> = () => {
                 setDbDrivers(driversData.data);
 
                 if (gpsData.data && gpsData.data.length > 0) {
-                    const initialMeetingOfYear = gpsData.data.find(meeting => meeting.year.toString() === selectedYear);
+                    const initialMeetingOfYear = gpsData.data.find((meeting: Meeting) => meeting.year.toString() === selectedYear);
                     if (initialMeetingOfYear) {
                         setSelectedMeetingName(initialMeetingOfYear.meeting_name);
                         setSelectedMeetingKey(initialMeetingOfYear.meeting_key);
 
                         const initialGrandPrixName = initialMeetingOfYear.grand_prix;
-                        const initialGrandPrixData = GrandPData.data.find(g => g.grand_prix === initialGrandPrixName);
+                        const initialGrandPrixData = GrandPData.data.find((g: GrandPrix) => g.grand_prix === initialGrandPrixName);
                         setSelectedCircuitImage(initialGrandPrixData?.image_circuit || "/images/circuit-singapour.png");
 
                         setScale(initialMeetingOfYear.Zoom ?? 1.18);
@@ -173,7 +173,7 @@ const CircuitWidget: React.FC<CircuitWidgetProps> = () => {
         setRaceDateStart(null);
         baseTimestampRef.current = null;
     };
-    
+
     const resetCircuitData = () => {
         setSelectedMeetingName(null);
         setSelectedMeetingKey(null);
@@ -268,12 +268,12 @@ const CircuitWidget: React.FC<CircuitWidgetProps> = () => {
         const selectedMeetingNameFromDropdown = event.target.value;
         setSelectedMeetingName(selectedMeetingNameFromDropdown);
 
-        const selectedMeeting = meetingsOfYear.find(meeting => meeting.meeting_name === selectedMeetingNameFromDropdown);
+        const selectedMeeting = meetingsOfYear.find((meeting: Meeting) => meeting.meeting_name === selectedMeetingNameFromDropdown);
         if (selectedMeeting) {
             setSelectedMeetingKey(selectedMeeting.meeting_key);
 
             const grandPrixName = selectedMeeting.grand_prix;
-            const selectedGrandPrixData = gp.find(gpItem => gpItem.grand_prix === grandPrixName);
+            const selectedGrandPrixData = gp.find((gpItem: GrandPrix) => gpItem.grand_prix === grandPrixName);
             setSelectedCircuitImage(selectedGrandPrixData?.image_circuit || "/images/circuit-singapour.png");
 
             setScale(selectedMeeting.Zoom ?? 1.18);
@@ -326,7 +326,7 @@ const CircuitWidget: React.FC<CircuitWidgetProps> = () => {
                         {meetingsOfYear.length === 0 ? (
                             <option>Aucun Grand Prix disponible pour {selectedYear}</option>
                         ) : (
-                            meetingsOfYear.map((meeting) => (
+                            meetingsOfYear.map((meeting: Meeting) => (
                                 <option key={meeting.meeting_key} value={meeting.meeting_name}>
                                     {meeting.meeting_name}
                                 </option>
@@ -339,7 +339,7 @@ const CircuitWidget: React.FC<CircuitWidgetProps> = () => {
             <div className="bg-gray-700 rounded-lg p-6 mb-4">
                 <div className="relative">
                     <img
-                        src={selectedCircuitImage}
+                        src={selectedCircuitImage ?? "/images/circuit-singapour.png"}
                         className="rounded-md w-full h-auto"
                         alt={selectedMeetingName || "Circuit"}
                     />

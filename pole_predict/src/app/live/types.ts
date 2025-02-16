@@ -58,6 +58,7 @@ export interface ExpertModeToggleProps {
 
 // Nouvelles interfaces pour les calculs de temps au tour
 export interface LaptimeConfig {
+    FUTURE_LAPS: number;
     SHORT_WINDOW: number;
     MEDIUM_WINDOW: number;
     SHORT_TERM_WEIGHT: number;

@@ -94,7 +94,7 @@ export function predictFutureLaptimes(
   const shortWindow = Math.min(config.SHORT_WINDOW, validTimes.length);
   const mediumWindow = Math.min(config.MEDIUM_WINDOW, validTimes.length);
   
-  const futureLapsCount = Math.min(config.FUTURE_LAPS, 10);
+  const futureLapsCount = Math.min(config.FUTURE_LAPS, 10); // Utilisation de config.FUTURE_LAPS
 
   const predictions = [];
   for (let lapOffset = 1; lapOffset <= futureLapsCount; lapOffset++) {
