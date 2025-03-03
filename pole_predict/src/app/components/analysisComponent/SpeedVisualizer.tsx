@@ -46,19 +46,19 @@ const fetchWithRetry = async (url: string, maxRetries = 5): Promise<any> => {
 
 const LoadingState = () => {
     const [loadingPhase, setLoadingPhase] = useState(0);
-    
+
     useEffect(() => {
         const phases = ['Fetching lap times...', 'Loading driver info...', 'Processing speed data...'];
         let currentPhase = 0;
-        
+
         const interval = setInterval(() => {
             currentPhase = (currentPhase + 1) % phases.length;
             setLoadingPhase(currentPhase);
         }, 2000);
-        
+
         return () => clearInterval(interval);
     }, []);
-    
+
     const phases = ['Fetching lap times...', 'Loading driver info...', 'Processing speed data...'];
 
     return (
@@ -103,7 +103,7 @@ const ErrorState = ({ error }: { error: string }) => (
     </Card>
 );
 
-const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number | null}) => {
+const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number | null }) => {
     const [driverData, setDriverData] = useState<DriverSpeedData>({});
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -111,6 +111,7 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
     const [maxAverageSpeed, setMaxAverageSpeed] = useState(0);
     const [minAverageSpeed, setMinAverageSpeed] = useState(0);
     const [totalSessionLaps, setTotalSessionLaps] = useState(0);
+    const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
     useEffect(() => {
         const fetchAllData = async () => {
@@ -190,7 +191,7 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
                 if (maxLap === 0) throw new Error('No valid lap data found');
 
                 const validDrivers = Object.entries(processedData)
-                    .filter(([, data]) => data.totalLaps > maxLap-2 && data.speeds.length > 0);
+                    .filter(([, data]) => data.totalLaps > maxLap - 2 && data.speeds.length > 0);
 
                 if (validDrivers.length === 0) throw new Error('No drivers with complete data found');
 
@@ -198,7 +199,7 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
                 validDrivers.forEach(([, data]) => {
                     const validSpeeds = data.speeds.filter((speed: number) => !isNaN(speed));
                     if (validSpeeds.length === 0) return;
-                    
+
                     data.averageSpeed = Number(
                         (validSpeeds.reduce((a: any, b: any) => a + b, 0) / validSpeeds.length).toFixed(1)
                     );
@@ -219,10 +220,14 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
 
                 setDriverData(filteredData);
                 setError(null);
+                setHasLoadedOnce(true);
 
             } catch (err) {
                 console.error('Error in fetchAllData:', err);
-                setError(err instanceof Error ? err.message : 'Failed to fetch data');
+                if (!hasLoadedOnce) {
+                    // Seulement afficher l'erreur si nous n'avons jamais chargé de données avec succès
+                    setError(err instanceof Error ? err.message : 'Failed to fetch data');
+                }
             } finally {
                 setIsInitialLoad(false);
                 setIsRefreshing(false);
@@ -244,8 +249,8 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
 
     if (!sessionKey) return <ErrorState error="No session key provided" />;
     if (isInitialLoad) return <LoadingState />;
-    if (error) return <ErrorState error={error} />;
-    if (sortedDrivers.length === 0) return <ErrorState error="No speed data available" />;
+    if (error && !hasLoadedOnce) return <ErrorState error={error} />;
+    if (sortedDrivers.length === 0 && !hasLoadedOnce) return <ErrorState error="No speed data available" />;
 
     return (
         <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[570px]">
@@ -274,7 +279,7 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
             </CardHeader>
             <CardContent className="relative h-[490px]">
                 <div className="h-full overflow-y-auto pr-6 scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out">
-                    <motion.div 
+                    <motion.div
                         className="pr-2 space-y-4"
                         initial="hidden"
                         animate="visible"
@@ -282,9 +287,9 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
                             hidden: { opacity: 0 },
                             visible: {
                                 opacity: 1,
-                                transition: { 
-                                    staggerChildren: 0.05, 
-                                    delayChildren: 0.1 
+                                transition: {
+                                    staggerChildren: 0.05,
+                                    delayChildren: 0.1
                                 }
                             }
                         }}
@@ -292,7 +297,7 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
                         <AnimatePresence mode="popLayout">
                             {sortedDrivers.map(([driverNumber, data], index) => {
                                 const width = calculateWidth(data.averageSpeed);
-                                
+
                                 return (
                                     <motion.div
                                         key={driverNumber}
@@ -312,20 +317,19 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
                                         }}
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className={`text-lg font-bold ${
-                                                index === 0 
-                                                    ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent' 
+                                            <div className={`text-lg font-bold ${index === 0
+                                                    ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent'
                                                     : 'text-gray-400'
-                                            }`}>
+                                                }`}>
                                                 {index + 1}
                                             </div>
-                                            <span 
+                                            <span
                                                 className="font-medium"
                                                 style={{ color: `#${data.teamColor}` }}
                                             >
                                                 {data.acronym}
                                             </span>
-                                            
+
                                             <div className="flex-1 relative h-6">
                                                 <motion.div
                                                     className="absolute inset-0 rounded-lg bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] opacity-20"
@@ -340,7 +344,7 @@ const SpeedVisualizer = ({ sessionKey, lap }: { sessionKey: number, lap: number 
                                                     transition={{ duration: 1, delay: index * 0.1 }}
                                                 />
                                             </div>
-                                            
+
                                             <span className="text-sm font-medium text-gray-200">
                                                 {data.averageSpeed} km/h
                                             </span>

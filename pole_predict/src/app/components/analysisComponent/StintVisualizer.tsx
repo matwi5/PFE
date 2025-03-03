@@ -125,19 +125,19 @@ const TyreCompoundsLegend = () => {
 const LoadingState = () => {
     const LoadingProgress = () => {
         const [loadingPhase, setLoadingPhase] = useState(0);
-        
+
         useEffect(() => {
             const phases = ['Fetching stints...', 'Loading driver info...', 'Getting positions...'];
             let currentPhase = 0;
-            
+
             const interval = setInterval(() => {
                 currentPhase = (currentPhase + 1) % phases.length;
                 setLoadingPhase(currentPhase);
             }, 2000);
-            
+
             return () => clearInterval(interval);
         }, []);
-        
+
         const phases = ['Fetching stints...', 'Loading driver info...', 'Getting positions...'];
         return <span>{phases[loadingPhase]}</span>;
     };
@@ -191,6 +191,7 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
     useEffect(() => {
         const fetchAllData = async () => {
@@ -286,9 +287,13 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                 setDriverStints(stintsByDriver);
                 setMaxLaps(Math.max(...stintsData.map(stint => stint.lap_end || 0)));
                 setError(null);
+                setHasLoadedOnce(true);
             } catch (err) {
                 console.error('Error in fetchAllData:', err);
-                setError(err instanceof Error ? err.message : 'Failed to fetch data');
+                if (!hasLoadedOnce) {
+                    // Only show error if we haven't successfully loaded data before
+                    setError(err instanceof Error ? err.message : 'Failed to fetch data');
+                }
             } finally {
                 setIsInitialLoad(false);
                 setIsRefreshing(false);
@@ -310,8 +315,8 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
 
     if (!sessionKey) return <ErrorState error="No session key provided" />;
     if (isInitialLoad) return <LoadingState />;
-    if (error) return <ErrorState error={error} />;
-    if (sortedDrivers.length === 0) return <ErrorState error="No stint data available" />;
+    if (error && !hasLoadedOnce) return <ErrorState error={error} />;
+    if (sortedDrivers.length === 0 && !hasLoadedOnce) return <ErrorState error="No stint data available" />;
 
     return (
         <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[600px]">
@@ -331,7 +336,7 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
             </CardHeader>
             <CardContent className="relative h-[500px]">
                 <div className="h-full overflow-y-auto pr-6 scrollbar-thin scrollbar-track-gray-800/50 scrollbar-thumb-[#5382ec]/80 hover:scrollbar-thumb-[#2dd4bf]/80 transition-all duration-200 ease-out">
-                <motion.div
+                    <motion.div
                         className="pr-2 space-y-4"
                         initial="hidden"
                         animate="visible"
@@ -366,11 +371,10 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                                     }}
                                 >
                                     <div className="flex items-center gap-4 mb-2">
-                                        <div className={`text-lg font-bold ${
-                                            finalPosition === 1
+                                        <div className={`text-lg font-bold ${finalPosition === 1
                                                 ? 'bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent'
                                                 : 'text-gray-400'
-                                        }`}>
+                                            }`}>
                                             {finalPosition}
                                         </div>
                                         <div className="font-medium" style={{ color: `#${teamColor}` }}>
@@ -380,13 +384,13 @@ const StintVisualizer = ({ sessionKey, lap }: StintVisualizerProps) => {
                                             {totalLaps} laps
                                         </div>
                                     </div>
-    
+
                                     <div className="flex items-center gap-1 min-h-[2rem] relative w-full">
                                         {stints.map((stint: any, index: any) => {
                                             if (!stint?.compound || !stint?.lap_start || !stint?.lap_end) return null;
                                             const width = calculateWidth(stint.lap_start, stint.lap_end);
                                             const lapCount = stint.lap_end - stint.lap_start + 1;
-    
+
                                             return (
                                                 <motion.div
                                                     key={index}

@@ -140,58 +140,70 @@ const ChampionshipWidget_Live = ({ currentStandings, meeting_key }: Championship
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch initial data
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!isInitialLoad) {
-                setIsRefreshing(true);
-            }
-            setError(null);
+    const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-            try {
-                // Fetch both drivers and meetings data in parallel
-                const [driversSnapshot, meetingsSnapshot] = await Promise.all([
-                    fetchWithRetry(() => getDocs(collection(firestore, 'drivers'))),
-                    fetchWithRetry(() => getDocs(collection(firestore, 'meetings')))
-                ]);
+  // Fetch initial data
+  useEffect(() => {
+    const fetchData = async () => {
+        if (!isInitialLoad) {
+            setIsRefreshing(true);
+        }
+        setError(null);
 
-                // Process drivers data
-                const driversMapping: Record<string, string> = {};
-                const newDriversData: DriverData[] = [];
+        try {
+            // Fetch both drivers and meetings data in parallel
+            const [driversSnapshot, meetingsSnapshot] = await Promise.all([
+                fetchWithRetry(() => getDocs(collection(firestore, 'drivers'))),
+                fetchWithRetry(() => getDocs(collection(firestore, 'meetings')))
+            ]);
 
-                driversSnapshot.forEach(doc => {
-                    const data = doc.data() as DriverData;
-                    if (data?.last_name && data?.broadcast_name) {
-                        driversMapping[data.last_name] = data.broadcast_name;
-                        newDriversData.push(data);
-                    }
-                });
+            // Process drivers data
+            const driversMapping: Record<string, string> = {};
+            const newDriversData: DriverData[] = [];
 
+            driversSnapshot.forEach(doc => {
+                const data = doc.data() as DriverData;
+                if (data?.last_name && data?.broadcast_name) {
+                    driversMapping[data.last_name] = data.broadcast_name;
+                    newDriversData.push(data);
+                }
+            });
+
+            // Ne mettre à jour les données que si nous avons reçu des données valides
+            if (Object.keys(driversMapping).length > 0) {
                 setDriversMap(driversMapping);
                 setDriversData(newDriversData);
-
-                // Process meetings data
-                const meetings = meetingsSnapshot.docs
-                    .map(doc => {
-                        const data = doc.data() as MeetingData;
-                        return data?.meeting_key ? data : null;
-                    })
-                    .filter((meeting): meeting is MeetingData => meeting !== null);
-
-                setMeetingsData(meetings);
-                setError(null);
-
-            } catch (err) {
-                console.error('Error fetching data:', err);
-                setError(handleFirestoreError(err));
-            } finally {
-                setIsInitialLoad(false);
-                setIsRefreshing(false);
             }
-        };
 
-        fetchData();
-    }, [isInitialLoad]);
+            // Process meetings data
+            const meetings = meetingsSnapshot.docs
+                .map(doc => {
+                    const data = doc.data() as MeetingData;
+                    return data?.meeting_key ? data : null;
+                })
+                .filter((meeting): meeting is MeetingData => meeting !== null);
+
+            if (meetings.length > 0) {
+                setMeetingsData(meetings);
+            }
+
+            setError(null);
+            setHasLoadedOnce(true);
+
+        } catch (err) {
+            console.error('Error fetching data:', err);
+            if (!hasLoadedOnce) {
+                // Seulement afficher l'erreur si nous n'avons jamais chargé de données avec succès
+                setError(handleFirestoreError(err));
+            }
+        } finally {
+            setIsInitialLoad(false);
+            setIsRefreshing(false);
+        }
+    };
+
+    fetchData();
+}, [isInitialLoad]);
 
     // Calculate championship standings
     useEffect(() => {
@@ -296,8 +308,8 @@ const ChampionshipWidget_Live = ({ currentStandings, meeting_key }: Championship
     };
 
     if (isInitialLoad) return <LoadingState />;
-    if (error) return <ErrorState error={error} />;
-    if (!championshipData.length) return <ErrorState error="No championship data available" />;
+    if (error && !hasLoadedOnce) return <ErrorState error={error} />;
+    if (!championshipData.length && !hasLoadedOnce) return <ErrorState error="No championship data available" />;
 
     return (
         <Card className="group perspective-1000 overflow-hidden bg-[#282a2c] border border-gray-800 hover:border-[#5382ec] transition-all duration-300 ease-out h-[750px]">

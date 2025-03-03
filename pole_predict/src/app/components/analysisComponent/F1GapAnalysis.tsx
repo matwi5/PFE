@@ -168,7 +168,6 @@ const ErrorState = ({ error }: { error: string }) => (
     </Card>
 );
 
-
 const fetchDriversData = async (sessionKey: number): Promise<DriverData> => {
   try {
     const url = `https://api.openf1.org/v1/drivers?session_key=${sessionKey}`;
@@ -222,9 +221,7 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
   const [lapData, setLapData] = useState<LapData[]>([]);
   const [gapData, setGapData] = useState<GapData[]>([]);
   const [selectedMode, setSelectedMode] = useState<DropdownOption | null>(null);
-  const [referenceDriver, setReferenceDriver] = useState<DropdownOption | null>(
-    null
-  );
+  const [referenceDriver, setReferenceDriver] = useState<DropdownOption | null>(null);
   const [selectedDrivers, setSelectedDrivers] = useState<DropdownOption[]>([]);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [driverOptions, setDriverOptions] = useState<DropdownOption[]>([]);
@@ -240,21 +237,26 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
     laps: false,
     gaps: false,
   });
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const modeOptions: DropdownOption[] = [
     { label: "Gap to Leader", value: "gapToLeader" },
     { label: "Interval", value: "interval" },
   ];
 
+  // Main effect for loading all data
   useEffect(() => {
     const loadAllData = async () => {
-      if (!sessionKey) return;
-
-      setLoading(true);
-      setError(null);
+      if (!sessionKey) {
+        setError("No session key provided");
+        setIsInitialLoad(false);
+        return;
+      }
 
       try {
-        // Charger les données des pilotes
+        // Fetch drivers data
         setDataLoadingStatus((prev) => ({ ...prev, drivers: true }));
         const driversData = await fetchDriversData(sessionKey);
         setDriverData(driversData);
@@ -280,26 +282,29 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
         setGapData(gapsData);
         setDataLoadingStatus((prev) => ({ ...prev, gaps: false }));
 
+        setError(null);
+        setHasLoadedOnce(true);
         setLoading(false);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch data");
+        console.error('Error in loadAllData:', err);
+        if (!hasLoadedOnce) {
+          // Only show error if we never loaded data successfully
+          setError(err instanceof Error ? err.message : 'Failed to fetch data');
+        }
+      } finally {
+        setIsInitialLoad(false);
+        setIsRefreshing(false);
         setLoading(false);
       }
     };
 
     loadAllData();
-  }, [sessionKey, lap]);
+  }, [sessionKey, lap, isInitialLoad, hasLoadedOnce]);
 
   useEffect(() => {
-    if (
-      selectedMode &&
-      gapData.length > 0 &&
-      lapData.length > 0 &&
-      driverData
-    ) {
+    if (selectedMode && gapData.length > 0 && lapData.length > 0 && driverData) {
       try {
-        const minLap =
-          minLapInput === "" ? 1 : Math.max(1, parseInt(minLapInput, 10));
+        const minLap = minLapInput === "" ? 1 : Math.max(1, parseInt(minLapInput, 10));
         const maxLap =
           maxLapInput === "" || maxLapInput === "Infinity"
             ? Infinity
@@ -451,15 +456,15 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
         return currentTimeDiff < closestTimeDiff ? current : closest;
       }, null as GapData | null);
 
-            const closestGap2Item = driver2GapData.reduce((closest, current) => {
-                if (!current?.date) return closest;
+      const closestGap2Item = driver2GapData.reduce((closest, current) => {
+        if (!current?.date) return closest;
                 
-                const currentDate = new Date(current.date);
-                const closestDate = closest ? new Date(closest.date) : null;
-                const currentTimeDiff = Math.abs(lapStartDate.getTime() - currentDate.getTime());
-                const closestTimeDiff = closestDate
-                    ? Math.abs(lapStartDate.getTime() - closestDate.getTime())
-                    : Infinity;
+        const currentDate = new Date(current.date);
+        const closestDate = closest ? new Date(closest.date) : null;
+        const currentTimeDiff = Math.abs(lapStartDate.getTime() - currentDate.getTime());
+        const closestTimeDiff = closestDate
+            ? Math.abs(lapStartDate.getTime() - closestDate.getTime())
+            : Infinity;
 
         return currentTimeDiff < closestTimeDiff ? current : closest;
       }, null as GapData | null);
@@ -489,46 +494,21 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
     return intervalData.sort((a, b) => a.lap_number - b.lap_number);
   };
 
-  const getDriverName = (driverNumber: number | string) => {
-    const driverNum =
-      typeof driverNumber === "string"
-        ? parseInt(driverNumber, 10)
-        : driverNumber;
-    return driverData[driverNum]?.name_acronym || `Driver ${driverNumber}`;
+  // Helper function to get driver name by driver number
+  const getDriverName = (driverNumber: string | number): string => {
+    const driver = driverData[Number(driverNumber)];
+    return driver?.name_acronym || `Driver ${driverNumber}`;
   };
 
-  const renderTooltipContent = (o: any) => {
-    if (o?.payload?.[0]?.payload) {
-      const data = o.payload[0].payload;
-      return (
-        <div className="p-2 bg-gray-800 text-white rounded-md shadow-md">
-          <p className="font-bold">{`Lap ${data.lap_number}`}</p>
-          {selectedMode?.value === "gapToLeader" && (
-            <p>{`Gap to Leader: ${data.gap.toFixed(3)}s`}</p>
-          )}
-          {selectedMode?.value === "interval" && (
-            <p>{`Interval: ${data.interval.toFixed(3)}s`}</p>
-          )}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const gradientTextStyle = {
-    background: "linear-gradient(90deg, #5382ec 0%, #d56676 100%)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    backgroundClip: "text",
-    fontWeight: "bold",
-  };
+  if (!sessionKey) return <ErrorState error="Please provide a valid session key" />;
+  if (isInitialLoad) return <LoadingState />;
+  if (error && !hasLoadedOnce) return <ErrorState error={error} />;
+  if (Object.keys(driverData).length === 0 && !hasLoadedOnce) {
+    return <ErrorState error="No data available" />;
+  }
 
   if (loading) {
     return <LoadingCard loadingStatus={dataLoadingStatus} />;
-  }
-
-  if (!sessionKey) {
-    return <ErrorCard error="Please provide a valid session key" />;
   }
 
   return (
@@ -538,8 +518,6 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
       }`}
     >
       <CardHeader className="pb-2 relative z-50">
-        {" "}
-        {/* Added relative and z-50 */}
         <div className="flex items-center justify-between mb-4">
           <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
             Gap Analysis
@@ -553,8 +531,6 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
         >
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-[200px] relative z-[60]">
-              {" "}
-              {/* Increased z-index */}
               <CustomDropdown_single
                 options={modeOptions}
                 selectedGroup={selectedMode}
@@ -567,8 +543,6 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
 
             {selectedMode?.value === "gapToLeader" && (
               <div className="flex-1 min-w-[200px] relative z-[60]">
-                {" "}
-                {/* Increased z-index */}
                 <CustomDropdown_single
                   options={driverOptions}
                   selectedGroup={referenceDriver}
@@ -582,8 +556,6 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
 
             {selectedMode?.value === "interval" && (
               <div className="flex-1 min-w-[200px] relative z-[60]">
-                {" "}
-                {/* Increased z-index */}
                 <CustomDropdown_multiple
                   options={driverOptions}
                   selectedGroups={selectedDrivers}
@@ -732,7 +704,7 @@ const F1GapAnalysis: React.FC<F1GapAnalysisProps> = ({ sessionKey, lap }) => {
                       type="monotone"
                       dataKey="gap"
                       stroke={`#${
-                        driverData[parseInt(referenceDriver.value)]
+                        driverData[parseInt(referenceDriver.value as string)]
                           ?.team_colour || "FFFFFF"
                       }`}
                       strokeWidth={2}
