@@ -19,9 +19,22 @@ import SpeedVisualizer from "../components/analysisComponent/SpeedVisualizer";
 import StintVisualizer from "../components/analysisComponent/StintVisualizer";
 
 import { useDataFetching } from "../components/pastComponent/dataFetching";
-import { GP, Driver, Team } from "../components/pastComponent/types";
+import { GP, Driver, Team, GrandPrix, Meeting } from "../components/pastComponent/types";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+
+// Function to extend GP with sessionKey for compatibility
+const extendGP = (gp: GP): GP & { sessionKey: number } => {
+  return {
+    ...gp,
+    sessionKey: gp.session_key
+  };
+};
+
+// Function to convert object map to array
+const objectToArray = <T,>(obj: { [key: number]: T }): T[] => {
+  return Object.values(obj);
+};
 
 const useIsMobile = () => {
     const [isMobile, setIsMobile] = useState(false);
@@ -43,25 +56,25 @@ const useIsMobile = () => {
 };
 
 interface MobileViewProps {
-    mainGP: GP | null;
-    allGPs: GP[];
+    mainGP: (GP & { sessionKey: number }) | null;
+    allGPs: (GP & { sessionKey: number })[];
     selectedYear: number;
     showDropdown: boolean;
     hoveredCard: number | null;
     setShowDropdown: React.Dispatch<React.SetStateAction<boolean>>;
     setHoveredCard: React.Dispatch<React.SetStateAction<number | null>>;
-    handleGPSelect: (gp: GP) => void;
+    handleGPSelect: (gp: GP) => Promise<void>;
     handleYearChange: (year: string) => void;
     drivers: Driver[];
     teams: Team[];
     selectedMeeting: GP | null;
-    driverData: any; // Replace 'any' with a more specific type if possible
-    teamData: any;   // Replace 'any' with a more specific type if possible
+    driverData: any[];
+    teamData: any[];
     selectedDrivers: Driver[];
     selectedTeamsForComparison: Team[];
     setSelectedDrivers: React.Dispatch<React.SetStateAction<Driver[]>>;
     setSelectedTeamsForComparison: React.Dispatch<React.SetStateAction<Team[]>>;
-    coordinates: { lat: number | null; lon: number | null } | null;
+    coordinates: { lat: number; lon: number } | null;
     setIsMapVisible: React.Dispatch<React.SetStateAction<boolean>>;
     isImageVisible: boolean;
     selectedImageUrl: string;
@@ -78,8 +91,8 @@ interface MobileViewProps {
     setShowAllQualif: React.Dispatch<React.SetStateAction<boolean>>;
     isMapVisible: boolean;
     setIsFlagAnimating: React.Dispatch<React.SetStateAction<boolean>>;
-    gp: GP[];
-    sessionKey: number | null; // Ajout de sessionKey aux props
+    gp: GrandPrix[];
+    sessionKey: number | null;
 }
 
 const MobileView: React.FC<MobileViewProps> = ({
@@ -119,13 +132,13 @@ const MobileView: React.FC<MobileViewProps> = ({
     isMapVisible,
     setIsFlagAnimating,
     gp,
-    sessionKey // sessionKey récupéré des props
+    sessionKey
 }) => {
     const [activeTab, setActiveTab] = useState('info');
-    const [isOpen, setIsOpen] = useState(false); // Etat pour la modale de comparaison Pilotes
-    const [isTeamComparisonOpen, setIsTeamComparisonOpen] = useState(false); // Etat pour la modale de comparaison Teams
-    const toggleTab = () => setIsOpen(!isOpen); // Fonction pour ouvrir/fermer la modale Pilotes
-    const toggleTeamTab = () => setIsTeamComparisonOpen(!isTeamComparisonOpen); // Fonction pour ouvrir/fermer la modale Teams
+    const [isOpen, setIsOpen] = useState(false);
+    const [isTeamComparisonOpen, setIsTeamComparisonOpen] = useState(false);
+    const toggleTab = () => setIsOpen(!isOpen);
+    const toggleTeamTab = () => setIsTeamComparisonOpen(!isTeamComparisonOpen);
 
     return (
         <div className="min-h-screen bg-[#1B1C1D]">
@@ -203,7 +216,7 @@ const MobileView: React.FC<MobileViewProps> = ({
                                 setHoveredCard={setHoveredCard}
                             />
                             <InformationsCard
-                                mainGP={mainGP}
+                                mainGP={mainGP as unknown as GrandPrix}
                                 hoveredCard={hoveredCard}
                                 gp={gp}
                                 setHoveredCard={setHoveredCard}
@@ -225,7 +238,7 @@ const MobileView: React.FC<MobileViewProps> = ({
                                 handleTeamClick={handleTeamClick}
                             />
                             <LocalisationCard
-                                coordinates={coordinates}
+                                coordinates={coordinates as { lat: number; lon: number } | null}
                                 hoveredCard={hoveredCard}
                                 setHoveredCard={setHoveredCard}
                                 setIsMapVisible={setIsMapVisible}
@@ -233,13 +246,13 @@ const MobileView: React.FC<MobileViewProps> = ({
                         </>
                     )}
 
-                    {activeTab === 'analysis' && (
+                    {activeTab === 'analysis' && mainGP && (
                         <>
                             <Championship meeting_name={mainGP.meeting_name} year={selectedYear.toString()} />
-                            <F1GapAnalysis sessionKey={mainGP.sessionKey} lap={null} />
-                            <F1LapAnalysis sessionKey={mainGP.sessionKey} lap={null} />
-                            <SpeedVisualizer sessionKey={mainGP.sessionKey} lap={null} />
-                            <StintVisualizer sessionKey={mainGP.sessionKey} lap={null} />
+                            <F1GapAnalysis sessionKey={mainGP.session_key} lap={0} />
+                            <F1LapAnalysis sessionKey={mainGP.session_key} lap={0} />
+                            <SpeedVisualizer sessionKey={mainGP.session_key} lap={0} />
+                            <StintVisualizer sessionKey={mainGP.session_key} lap={0} />
                         </>
                     )}
 
@@ -248,13 +261,13 @@ const MobileView: React.FC<MobileViewProps> = ({
                             <ComparerPilotesCard
                                 hoveredCard={hoveredCard}
                                 setHoveredCard={setHoveredCard}
-                                toggleTab={toggleTab} // Passe la fonction pour ouvrir la modale Pilotes
+                                toggleTab={toggleTab}
                             />
                             <ComparerEcuriesCard
                                 hoveredCard={hoveredCard}
                                 selectedTeam={null}
                                 setHoveredCard={setHoveredCard}
-                                toggleTeamTab={toggleTeamTab} // Passe la fonction pour ouvrir la modale Teams
+                                toggleTeamTab={toggleTeamTab}
                             />
                         </>
                     )}
@@ -358,8 +371,12 @@ const MobileView: React.FC<MobileViewProps> = ({
                     teamData={teamData}
                     selectedDrivers={selectedDrivers}
                     selectedTeamsForComparison={selectedTeamsForComparison}
-                    setSelectedDrivers={setSelectedDrivers}
-                    setSelectedTeamsForComparison={setSelectedTeamsForComparison}
+                    setSelectedDrivers={(drivers) => {
+                        setSelectedDrivers(Array.isArray(drivers) ? drivers : objectToArray(drivers));
+                    }}
+                    setSelectedTeamsForComparison={(teams) => {
+                        setSelectedTeamsForComparison(Array.isArray(teams) ? teams : objectToArray(teams));
+                    }}
                 />
             </div>
         </div>
@@ -406,17 +423,31 @@ const GrandPrixCards = () => {
     const [isImageVisible, setIsImageVisible] = useState(false);
     const [selectedImageUrl, setSelectedImageUrl] = useState("");
 
-    const [isOpen, setIsOpen] = useState(false); // Etat pour la modale de comparaison Pilotes
-    const [isTeamComparisonOpen, setIsTeamComparisonOpen] = useState(false); // Etat pour la modale de comparaison Teams
+    const [isOpen, setIsOpen] = useState(false);
+    const [isTeamComparisonOpen, setIsTeamComparisonOpen] = useState(false);
     const [comparisonType, setComparisonType] = useState("driver");
-    const [isDropdownOpenMeeting, setIsDropdownOpenMeeting] = useState<boolean>(
-        false
-    );
+    const [isDropdownOpenMeeting, setIsDropdownOpenMeeting] = useState<boolean>(false);
     const [averageSector1, setAverageSector1] = useState<number | null>(null);
     const [sessionDuration, setSessionDuration] = useState<string | null>(null);
     const [selectedMeetingIndex, setSelectedMeetingIndex] = useState<number>(0);
     const [isDropdownOpenYear, setIsDropdownOpenYear] = useState<boolean>(false);
     const isMobile = useIsMobile();
+
+    // Convert GP objects to add sessionKey property for compatibility
+    const extendedMainGP = mainGP ? extendGP(mainGP) : null;
+    const extendedAllGPs = allGPs.map(extendGP);
+
+    // Convert object maps to arrays if needed
+    const driverDataArray = Array.isArray(driverData) ? driverData : objectToArray(driverData);
+    const teamDataArray = Array.isArray(teamData) ? teamData : objectToArray(teamData);
+    const selectedDriversArray = Array.isArray(selectedDrivers) ? selectedDrivers : objectToArray(selectedDrivers);
+    const selectedTeamsForComparisonArray = Array.isArray(selectedTeamsForComparison) ? selectedTeamsForComparison : objectToArray(selectedTeamsForComparison);
+
+    // Ensure coordinates have the correct type
+    const safeCoordinates = coordinates ? {
+        lat: coordinates.lat ?? 0,
+        lon: coordinates.lon ?? 0
+    } : null;
 
     const formatDate = (date: string, offset: string) => {
         if (!date) return "Date à venir";
@@ -459,8 +490,8 @@ const GrandPrixCards = () => {
         setIsImageVisible(true);
     };
 
-    const toggleTab = () => setIsOpen(!isOpen); // Fonction pour ouvrir/fermer la modale Pilotes
-    const toggleTeamTab = () => setIsTeamComparisonOpen(!isTeamComparisonOpen); // Fonction pour ouvrir/fermer la modale Teams
+    const toggleTab = () => setIsOpen(!isOpen);
+    const toggleTeamTab = () => setIsTeamComparisonOpen(!isTeamComparisonOpen);
 
     const toggleDropdownMeeting = () => {
         setIsDropdownOpenMeeting(!isDropdownOpenMeeting);
@@ -523,14 +554,14 @@ const GrandPrixCards = () => {
         );
     };
 
-    // Assuming sessionKey should be derived from selectedMeeting.meeting_key
-    const sessionKey = selectedMeeting?.meeting_key || null;
+    // Use session_key instead of sessionKey
+    const sessionKey = selectedMeeting?.session_key || null;
 
     if (isMobile) {
         return (
             <MobileView
-                mainGP={mainGP}
-                allGPs={allGPs}
+                mainGP={extendedMainGP}
+                allGPs={extendedAllGPs}
                 selectedYear={selectedYear}
                 showDropdown={showDropdown}
                 hoveredCard={hoveredCard}
@@ -541,13 +572,13 @@ const GrandPrixCards = () => {
                 drivers={drivers}
                 teams={teams}
                 selectedMeeting={selectedMeeting}
-                driverData={driverData}
-                teamData={teamData}
-                selectedDrivers={selectedDrivers}
-                selectedTeamsForComparison={selectedTeamsForComparison}
+                driverData={driverDataArray}
+                teamData={teamDataArray}
+                selectedDrivers={selectedDriversArray}
+                selectedTeamsForComparison={selectedTeamsForComparisonArray}
                 setSelectedDrivers={setSelectedDrivers}
                 setSelectedTeamsForComparison={setSelectedTeamsForComparison}
-                coordinates={coordinates}
+                coordinates={safeCoordinates}
                 setIsMapVisible={setIsMapVisible}
                 isImageVisible={isImageVisible}
                 selectedImageUrl={selectedImageUrl}
@@ -565,7 +596,7 @@ const GrandPrixCards = () => {
                 setShowAllQualif={setShowAllQualif}
                 setIsFlagAnimating={setIsFlagAnimating}
                 gp={gp}
-                sessionKey={sessionKey} // Passer sessionKey à MobileView
+                sessionKey={sessionKey}
             />
         );
     }
@@ -598,8 +629,8 @@ const GrandPrixCards = () => {
                     className="flex justify-center w-full"
                 >
                     <GrandPrixCard
-                        mainGP={mainGP}
-                        allGPs={allGPs}
+                        mainGP={extendedMainGP}
+                        allGPs={extendedAllGPs}
                         selectedYear={selectedYear}
                         showDropdown={showDropdown}
                         hoveredCard={hoveredCard}
@@ -618,7 +649,7 @@ const GrandPrixCards = () => {
                             className="break-inside-avoid"
                         >
                             <DetailsCard
-                                mainGP={mainGP}
+                                mainGP={extendedMainGP}
                                 hoveredCard={hoveredCard}
                                 setHoveredCard={setHoveredCard}
                             />
@@ -630,7 +661,7 @@ const GrandPrixCards = () => {
                             className="break-inside-avoid"
                         >
                             <InformationsCard
-                                mainGP={mainGP}
+                                mainGP={mainGP as unknown as GrandPrix}
                                 hoveredCard={hoveredCard}
                                 gp={gp}
                                 setHoveredCard={setHoveredCard}
@@ -647,7 +678,7 @@ const GrandPrixCards = () => {
                             className="break-inside-avoid"
                         >
                             <LocalisationCard
-                                coordinates={coordinates}
+                                coordinates={safeCoordinates}
                                 hoveredCard={hoveredCard}
                                 setHoveredCard={setHoveredCard}
                                 setIsMapVisible={setIsMapVisible}
@@ -660,7 +691,7 @@ const GrandPrixCards = () => {
                             className="break-inside-avoid"
                         >
                             <ResultatsCard
-                                mainGP={mainGP}
+                                mainGP={extendedMainGP}
                                 drivers={drivers}
                                 hoveredCard={hoveredCard}
                                 showAllPodium={showAllPodium}
@@ -678,7 +709,7 @@ const GrandPrixCards = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="break-inside-avoid"
                         >
-                            {mainGP && <StintVisualizer sessionKey={mainGP.sessionKey} lap={null}/>}
+                            {mainGP && <StintVisualizer sessionKey={mainGP.session_key} lap={0}/>}
                         </motion.div>
 
                         <motion.div
@@ -689,7 +720,7 @@ const GrandPrixCards = () => {
                             <ComparerPilotesCard
                                 hoveredCard={hoveredCard}
                                 setHoveredCard={setHoveredCard}
-                                toggleTab={toggleTab} // Passe la fonction pour ouvrir la modale Pilotes
+                                toggleTab={toggleTab}
                             />
                         </motion.div>
 
@@ -719,7 +750,7 @@ const GrandPrixCards = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="break-inside-avoid"
                         >
-                            {mainGP && <F1GapAnalysis sessionKey={mainGP.sessionKey} lap={null} />}
+                            {mainGP && <F1GapAnalysis sessionKey={mainGP.session_key} lap={0} />}
                         </motion.div>
 
                         <motion.div
@@ -727,7 +758,7 @@ const GrandPrixCards = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="break-inside-avoid"
                         >
-                            {mainGP && <F1LapAnalysis sessionKey={mainGP.sessionKey} lap={null} />}
+                            {mainGP && <F1LapAnalysis sessionKey={mainGP.session_key} lap={0} />}
                         </motion.div>
 
                         <motion.div
@@ -735,7 +766,7 @@ const GrandPrixCards = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="break-inside-avoid"
                         >
-                            {mainGP && <SpeedVisualizer sessionKey={mainGP.sessionKey} lap={null} />}
+                            {mainGP && <SpeedVisualizer sessionKey={mainGP.session_key} lap={0} />}
                         </motion.div>
                     </div>
 
@@ -833,12 +864,16 @@ const GrandPrixCards = () => {
                     drivers={drivers}
                     teams={teams}
                     selectedMeeting={selectedMeeting}
-                    driverData={driverData}
-                    teamData={teamData}
-                    selectedDrivers={selectedDrivers}
-                    selectedTeamsForComparison={selectedTeamsForComparison}
-                    setSelectedDrivers={setSelectedDrivers}
-                    setSelectedTeamsForComparison={setSelectedTeamsForComparison}
+                    driverData={driverDataArray}
+                    teamData={teamDataArray}
+                    selectedDrivers={selectedDriversArray}
+                    selectedTeamsForComparison={selectedTeamsForComparisonArray}
+                    setSelectedDrivers={(drivers) => {
+                        setSelectedDrivers(Array.isArray(drivers) ? drivers : objectToArray(drivers));
+                    }}
+                    setSelectedTeamsForComparison={(teams) => {
+                        setSelectedTeamsForComparison(Array.isArray(teams) ? teams : objectToArray(teams));
+                    }}
                 />
             </div>
         </div>

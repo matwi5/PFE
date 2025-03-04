@@ -72,7 +72,7 @@ interface LoadingStatus {
 }
 
 // Fonction utilitaire pour retry les appels API avec un délai exponentiel
-const fetchWithRetry = async (url: string, maxRetries = 5, delay = 1000): Promise<any> => {
+const fetchWithRetry = async <T,>(url: string, maxRetries = 5, delay = 1000): Promise<T> => {
   let retries = 0;
   while (retries < maxRetries) {
     try {
@@ -82,7 +82,7 @@ const fetchWithRetry = async (url: string, maxRetries = 5, delay = 1000): Promis
       }
       const data = await response.json();
       if (!data) throw new Error('No data received');
-      return data;
+      return data as T;
     } catch (error) {
       retries++;
       if (retries === maxRetries) throw error;
@@ -91,6 +91,7 @@ const fetchWithRetry = async (url: string, maxRetries = 5, delay = 1000): Promis
       await new Promise(resolve => setTimeout(resolve, exponentialDelay));
     }
   }
+  throw new Error('Max retries reached');
 };
 
 const useIsMobile = () => {
@@ -189,7 +190,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
         }
 
         // Fetch drivers
-        const driversData = await fetchWithRetry('https://api.openf1.org/v1/drivers');
+        const driversData = await fetchWithRetry<Driver[]>('https://api.openf1.org/v1/drivers');
         if (isMounted) {
           const uniqueDrivers = Array.from(
             new Map(
@@ -198,13 +199,13 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
                 .map((driver: Driver) => [driver.driver_number, driver])
             ).values()
           );
-          setDrivers(uniqueDrivers);
+          setDrivers(uniqueDrivers as Driver[]);
           setLoadingStatus((prev) => ({ ...prev, drivers: true }));
         }
 
         // Fetch positions
         const positionsUrl = `https://api.openf1.org/v1/position?session_key=${sessionKey}&meeting_key=${meetingKey}`;
-        const positionsData = await fetchWithRetry(positionsUrl);
+        const positionsData = await fetchWithRetry<DriverPosition[]>(positionsUrl);
         if (isMounted) {
           const validPositions = positionsData.filter(
             (pos: DriverPosition) => pos?.driver_number && pos?.position && pos?.date
@@ -215,7 +216,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
         // Fetch intervals
         const intervalsUrl = `https://api.openf1.org/v1/intervals?session_key=${sessionKey}`;
-        const intervalsData = await fetchWithRetry(intervalsUrl);
+        const intervalsData = await fetchWithRetry<Interval[]>(intervalsUrl);
         if (isMounted) {
           const validIntervals = intervalsData.filter(
             (int: Interval) =>
@@ -227,7 +228,7 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
         // Fetch lap times
         const lapTimesUrl = `https://api.openf1.org/v1/laps?session_key=${sessionKey}`;
-        const lapTimesData = await fetchWithRetry(lapTimesUrl);
+        const lapTimesData = await fetchWithRetry<LapTime[]>(lapTimesUrl);
         if (isMounted) {
           const validLapTimes = lapTimesData.filter(
             (lap: LapTime) => lap?.driver_number && lap?.lap_number && lap?.date_start
@@ -240,11 +241,11 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
         if (isMounted) {
           const lapStartMap = new Map<number, string>();
           const sortedLapTimes = [...lapTimesData].sort(
-            (a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
+            (a: LapTime, b: LapTime) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
           );
 
           const sortedPositions = [...positionsData].sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+            (a: DriverPosition, b: DriverPosition) => new Date(a.date).getTime() - new Date(b.date).getTime()
           );
 
           if (sortedPositions.length > 0) {
@@ -258,8 +259,8 @@ const DriverStandings: React.FC<DriverStandingsProps> = ({
 
             if (positions.length > 0) {
               const leaderPosition = positions
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .find((pos) => pos.position === 1);
+                .sort((a: DriverPosition, b: DriverPosition) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .find((pos: DriverPosition) => pos.position === 1);
 
               if (leaderPosition && leaderPosition.driver_number === lap.driver_number) {
                 lapStartMap.set(lap.lap_number, lap.date_start);

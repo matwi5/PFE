@@ -4,6 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from 'framer-motion';
 import { Cog } from 'lucide-react';
+import { Race } from '../types';
 
 interface TyreStrategyWidgetProps {
   insights: Race['tyre_strategy_insight'];

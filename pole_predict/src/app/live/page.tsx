@@ -71,6 +71,7 @@ export default function PredictionDisplayPage() {
   const [playbackSpeed] = useState(3000);
   const [isExpertMode, setIsExpertMode] = useState(false);
   const [vitalStats, setVitalStats] = useState<VitalStatistics | null>(null);
+  const [viewMode, setViewMode] = useState<"chrono" | "lap" | "final">("chrono");
 
   const router = useRouter();
 
@@ -335,6 +336,7 @@ export default function PredictionDisplayPage() {
                       sessionId={selectedSession}
                       driverId={selectedDriver}
                       lapNumber={selectedLap}
+                      viewMode={viewMode}
                     />
                   </motion.div>
                 </div>

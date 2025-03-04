@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import DetailCard from "../generalDataComponent/DetailCard";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { FileText } from 'lucide-react';
 

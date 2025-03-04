@@ -4,6 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from 'framer-motion';
 import { Calendar } from 'lucide-react';
+import { Race } from '../types';
 
 interface RaceDatesWidgetProps {
   dates: Race['dates'];

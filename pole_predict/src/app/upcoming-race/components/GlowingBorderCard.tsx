@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { Card } from "@/components/ui/card";
 
-const GlowingBorderCard = ({ children, className = "" }) => {
+interface GlowingBorderCardProps {
+  children: ReactNode;
+  className?: string;
+}
+
+const GlowingBorderCard = ({ children, className = "" }: GlowingBorderCardProps) => {
   return (
     <div className="relative group">
       <Card className={`

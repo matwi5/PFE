@@ -55,6 +55,25 @@ interface GrandPrix {
   record_de_circuit: string;
   recordman_circuit: string;
   image_circuit: string;
+  // Additional properties required by GPDetailCard
+  pays: string;
+  type: string;
+  pace: string;
+  requirement: string;
+  elevation: string;
+}
+
+// Create a type for card data item
+interface CardDataItem<T> {
+  icon: JSX.Element;
+  title: string;
+  content: string;
+  onClick: () => void;
+  linkText: string;
+  showList: boolean;
+  data: T[];
+  DetailComponent: React.ComponentType<any>;
+  customColors: string[];
 }
 
 const HomePage: React.FC = () => {
@@ -159,7 +178,12 @@ const HomePage: React.FC = () => {
     setIsHoveringCardIndex(null);
   };
 
-  const cardData = [
+  // Using proper typing for the card data
+  const cardData: [
+    CardDataItem<GrandPrix>,
+    CardDataItem<Team>,
+    CardDataItem<Driver>
+  ] = [
     {
       icon: <Info className="mr-2" />,
       title: "GRAND PRIX",
@@ -328,10 +352,10 @@ const HomePage: React.FC = () => {
                             height: "100%",
                             minHeight: "180px",
                             margin: "0 auto",
-                            background: index === 1 && item.color
+                            background: index === 1 && 'color' in item
                               ? `${item.color}40` // Ajoute une transparence de 40%
-                              : index === 2 && item.flagColors && item.flagColors.length > 0
-                                ? `linear-gradient(45deg, ${item.flagColors.map(color => color + '40').join(', ')})`
+                              : index === 2 && 'flagColors' in item && item.flagColors.length > 0
+                                ? `linear-gradient(45deg, ${item.flagColors.map((color: string) => color + '40').join(', ')})`
                                 : "rgba(45, 45, 45, 0.6)",
                             backdropFilter: "blur(10px)",
                             borderRadius: "16px",
@@ -339,18 +363,11 @@ const HomePage: React.FC = () => {
                             overflow: "hidden",
                             position: "relative",
                             transition: "all 0.3s ease",
-                            '&:hover': {
-                              background: index === 1 && item.color
-                                ? item.color
-                                : index === 2 && item.flagColors && item.flagColors.length > 0
-                                  ? `linear-gradient(45deg, ${item.flagColors.join(', ')})`
-                                  : "rgba(45, 45, 45, 0.9)",
-                            }
                           }}
                           getHoverStyles={(e, isEntering) => {
                             const target = e.currentTarget;
-                            const customColor = index === 1 ? item.color : null;
-                            const customGradient = index === 2 && item.flagColors ? item.flagColors : null;
+                            const customColor = index === 1 && 'color' in item ? item.color : null;
+                            const customGradient = index === 2 && 'flagColors' in item ? item.flagColors : null;
 
                             if (isEntering) {
                               target.style.background = customColor
@@ -362,7 +379,7 @@ const HomePage: React.FC = () => {
                               target.style.background = customColor
                                 ? `${customColor}40`
                                 : customGradient
-                                  ? `linear-gradient(45deg, ${customGradient.map(color => color + '40').join(', ')})`
+                                  ? `linear-gradient(45deg, ${customGradient.map((color: string) => color + '40').join(', ')})`
                                   : 'rgba(45, 45, 45, 0.6)';
                             }
                           }}
@@ -382,17 +399,17 @@ const HomePage: React.FC = () => {
                                 <img
                                   src={
                                     index === 0
-                                      ? item.pays_flag
+                                      ? (item as GrandPrix).pays_flag
                                       : index === 1
-                                        ? item.logo_url
-                                        : item.headshot_url
+                                        ? (item as Team).logo_url
+                                        : (item as Driver).headshot_url
                                   }
                                   alt={
                                     index === 0
-                                      ? item.grand_prix
+                                      ? (item as GrandPrix).grand_prix
                                       : index === 1
-                                        ? `${item.name} logo`
-                                        : `${item.name} headshot`
+                                        ? `${(item as Team).name} logo`
+                                        : `${(item as Driver).name} headshot`
                                   }
                                   className={`w-30 h-30 sm:w-20 sm:h-20 object-cover ${index === 2 ? "rounded-full ring-2 ring-opacity-50 ring-white" : "rounded-lg"
                                     } mb-1 shadow-lg transition-transform duration-300 group-hover:shadow-2xl`}
@@ -402,10 +419,10 @@ const HomePage: React.FC = () => {
                               <div className="relative z-10">
                                 <span className="text-center break-words font-bold sm:font-medium text-xl sm:text-base bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent transition-all duration-300 group-hover:from-blue-400 group-hover:to-teal-300">
                                   {index === 0
-                                    ? item.grand_prix
+                                    ? (item as GrandPrix).grand_prix
                                     : index === 1
-                                      ? item.name
-                                      : item.name}
+                                      ? (item as Team).name
+                                      : (item as Driver).name}
                                 </span>
                               </div>
 
@@ -417,22 +434,20 @@ const HomePage: React.FC = () => {
                             </motion.div>
                           }
                           customColors={
-                            index === 1
+                            index === 1 && 'color' in item
                               ? [item.color]
-                              : index === 2
+                              : index === 2 && 'flagColors' in item
                                 ? item.flagColors
                                 : undefined
                           }
                         >
-                          <card.DetailComponent
-                            {...{
-                              [index === 0
-                                ? "gp"
-                                : index === 1
-                                  ? "team"
-                                  : "driver"]: item,
-                            }}
-                          />
+                          {index === 0 ? (
+                            <GPDetailCard gp={item as GrandPrix} />
+                          ) : index === 1 ? (
+                            <TeamDetailCard team={item as Team} />
+                          ) : (
+                            <DriverDetailCard driver={item as Driver} />
+                          )}
                         </CustomDialog>
                       </motion.div>
                     ))

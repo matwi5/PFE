@@ -5,6 +5,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info } from 'lucide-react';
+import { Race } from '../types';
 
 interface VitalStatisticsWidgetProps {
   stats: Race['vital_statistics'];
