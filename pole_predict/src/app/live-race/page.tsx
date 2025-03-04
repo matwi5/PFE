@@ -1,8 +1,9 @@
 /* eslint-disable */
 
+
 'use client';
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, ReactElement } from "react";
 import RaceSelectionMobile from "../components/raceComponent/RaceSelectionMobile";
 import EventDisplay from "../components/raceComponent/EventDisplay";
 import DriverStandings from "../components/raceComponent/DriverStanding";
@@ -30,10 +31,22 @@ import F1GapAnalysis from "../components/analysisComponent/F1GapAnalysis";
 import ChampionshipWidget_Live from "../components/analysisComponent/ChampionshipWidget_Live";
 
 import { Loader2 } from "lucide-react";
-import WeatherMap from "@/app/components/weatherComponent/WeatherMap";
 
-import DriverMap from "../components/raceComponent/DriverMap";
-import { ReactElement } from "react";
+// Dynamically import components that use window
+const WeatherMap = dynamic(
+  () => import("@/app/components/weatherComponent/WeatherMap"),
+  { ssr: false }
+);
+
+const DriverMap = dynamic(
+  () => import("../components/raceComponent/DriverMap"),
+  { ssr: false }
+);
+
+const RaceSelectionDesktop = dynamic(
+  () => import('../components/raceComponent/RaceSelectionDesktop'),
+  { ssr: false }
+);
 
 // Correctly typed PredictionAlert component
 const PredictionAlert = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
@@ -71,11 +84,6 @@ const PredictionAlert = ({ open, onClose }: { open: boolean; onClose: () => void
     </div>
   );
 };
-
-const RaceSelectionDesktop = dynamic(
-  () => import('../components/raceComponent/RaceSelectionDesktop'),
-  { ssr: false }
-);
 
 interface WidgetConfig {
   order: string[];
@@ -177,19 +185,24 @@ interface CarData {
   throttle: number;
 }
 
+// Fixed useIsMobile hook to be SSR-safe
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    return () => window.removeEventListener('resize', checkIsMobile);
+    
+    // Only access window after component has mounted
+    if (typeof window !== 'undefined') {
+      const checkIsMobile = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+      
+      checkIsMobile();
+      window.addEventListener('resize', checkIsMobile);
+      return () => window.removeEventListener('resize', checkIsMobile);
+    }
   }, []);
 
   return hasMounted ? isMobile : false;

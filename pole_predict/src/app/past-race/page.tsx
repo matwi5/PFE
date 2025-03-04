@@ -9,7 +9,7 @@ import ErrorDisplay from "./components/ui/ErrorDisplay";
 import MapModal from "./components/modals/MapModal";
 import ImageModal from "./components/modals/ImageModal";
 import ComparisonModal from "../components/pastComponent/ComparisonModal";
-import { Driver, Team, GP, Meeting } from "../components/pastComponent/types";
+import { Driver, Team, GP } from "../components/pastComponent/types";
 
 // Interface pour adapter Meeting à GP
 interface ExtendedGP extends GP {
@@ -26,7 +26,6 @@ const GrandPrixCards = () => {
     drivers,
     teams,
     selectedYear,
-    meetings,
     selectedMeeting,
     driverData,
     teamData,
@@ -37,12 +36,7 @@ const GrandPrixCards = () => {
     setSelectedYear,
     setSelectedDrivers,
     setSelectedTeamsForComparison,
-    availableYears,
-    setAvailableYears,
-    setMeetings,
-    setDrivers,
-    coordinates,
-    fetchCoordinates
+    coordinates
   } = useDataFetching();
 
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
@@ -58,7 +52,12 @@ const GrandPrixCards = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isTeamComparisonOpen, setIsTeamComparisonOpen] = useState(false);
 
+  console.log(selectedDriver)
+  console.log(selectedTeam)
+  console.log(isFlagAnimating)
+
   const formatDate = (date: string, offset: string) => {
+    console.log(offset)
     if (!date) return "Date à venir";
     const d = new Date(date);
     return d.toLocaleDateString("fr-FR", {
@@ -107,7 +106,7 @@ const GrandPrixCards = () => {
     setMainGP(gp);
     
     // Convertir GP en Meeting ou créer un Meeting à partir des données de GP
-    // @ts-ignore - Gérer l'incompatibilité de type ici
+    // @ts-expect-error - Gérer l'incompatibilité de type ici
     setSelectedMeeting(gp);
     
     setShowDropdown(false);
@@ -135,12 +134,12 @@ const GrandPrixCards = () => {
   
   // Wrapper pour les fonctions de mise à jour des pilotes/équipes sélectionnés
   const handleSetSelectedDrivers = (drivers: { [key: number]: Driver | null }) => {
-    // @ts-ignore - Adapter la signature pour la compatibilité
+    // @ts-expect-error - Adapter la signature pour la compatibilité
     setSelectedDrivers(drivers);
   };
   
   const handleSetSelectedTeamsForComparison = (teams: { [key: number]: Team | null }) => {
-    // @ts-ignore - Adapter la signature pour la compatibilité
+    // @ts-expect-error - Adapter la signature pour la compatibilité
     setSelectedTeamsForComparison(teams);
   };
 

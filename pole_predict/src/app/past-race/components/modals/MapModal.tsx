@@ -1,5 +1,6 @@
 import React from "react";
 import { Globe } from "lucide-react";
+import Image from 'next/image'
 
 interface MapModalProps {
   isMapVisible: boolean;
@@ -43,7 +44,7 @@ const MapModal: React.FC<MapModalProps> = ({
           <Globe className="mr-2 icon-widget" /> Localisation du Grand Prix
         </h2>
         <div className="flex justify-center">
-          <img
+          <Image
             src={`https://static-maps.yandex.ru/1.x/?lang=en_US&ll=${coordinates?.lon},${coordinates?.lat}&z=1&l=map&size=600,400&pt=${coordinates?.lon},${coordinates?.lat},pm2rdm`}
             alt="Map of Circuit Location"
             className="w-full h-96 object-cover rounded-lg border-2 border-[#5382ec] map-popup-image icon-widget"

@@ -1,4 +1,5 @@
 import React from "react";
+import Image from 'next/image'
 
 interface ImageModalProps {
   isImageVisible: boolean;
@@ -41,7 +42,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
         <h2 className="text-2xl font-bold text-white mb-4 flex items-center modal-title">
           Circuit of the Grand Prix
         </h2>
-        <img
+        <Image
           src={selectedImageUrl}
           alt="Grand Prix Circuit"
           className="w-full h-full object-cover rounded-lg circuit-popup-image icon-widget border-2 border-[#5382ec]"

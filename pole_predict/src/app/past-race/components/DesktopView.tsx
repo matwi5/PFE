@@ -12,7 +12,7 @@ import F1GapAnalysis from "../../components/analysisComponent/F1GapAnalysis";
 import F1LapAnalysis from "../../components/analysisComponent/F1LapAnalysis";
 import SpeedVisualizer from "../../components/analysisComponent/SpeedVisualizer";
 import StintVisualizer from "../../components/analysisComponent/StintVisualizer";
-import { GP as ImportedGP, Driver, Team, GrandPrix } from "../../components/pastComponent/types";
+import { GP as ImportedGP, Driver, Team } from "../../components/pastComponent/types";
 
 // Type augmenté pour soutenir l'API réelle utilisée dans le code
 interface GP extends ImportedGP {
@@ -74,19 +74,8 @@ const DesktopView: React.FC<DesktopViewProps> = ({
   handleGPSelect,
   handleYearChange,
   drivers,
-  teams,
-  selectedMeeting,
-  driverData,
-  teamData,
-  selectedDrivers,
-  selectedTeamsForComparison,
-  setSelectedDrivers,
-  setSelectedTeamsForComparison,
   coordinates,
   setIsMapVisible,
-  isImageVisible,
-  selectedImageUrl,
-  setIsImageVisible,
   formatDate,
   getCircuitParticularites,
   getCircuitImageUrl,
@@ -97,14 +86,9 @@ const DesktopView: React.FC<DesktopViewProps> = ({
   showAllQualif,
   setShowAllPodium,
   setShowAllQualif,
-  isMapVisible,
-  setIsFlagAnimating,
   gp,
-  sessionKey,
   toggleTab,
   toggleTeamTab,
-  isOpen,
-  isTeamComparisonOpen
 }) => {
   // Adapter coordinates pour le type attendu par LocalisationCard
   const adaptedCoordinates = coordinates 
@@ -135,7 +119,6 @@ const DesktopView: React.FC<DesktopViewProps> = ({
   const wrappedHandleGPSelect = async (gp: GP): Promise<void> => {
     // S'assurer que le GP a toujours une sessionKey
     if (gp.session_key && !gp.sessionKey) {
-      // @ts-ignore - Ajouter dynamiquement sessionKey pour compatibilité
       gp.sessionKey = gp.session_key.toString();
     }
     
