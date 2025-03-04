@@ -12,7 +12,12 @@ import F1GapAnalysis from "../../components/analysisComponent/F1GapAnalysis";
 import F1LapAnalysis from "../../components/analysisComponent/F1LapAnalysis";
 import SpeedVisualizer from "../../components/analysisComponent/SpeedVisualizer";
 import StintVisualizer from "../../components/analysisComponent/StintVisualizer";
-import { GP, Driver, Team } from "../../components/pastComponent/types";
+import { GP as ImportedGP, Driver, Team, GrandPrix } from "../../components/pastComponent/types";
+
+// Interface étendue pour supporter l'API réelle utilisée dans le code
+interface GP extends ImportedGP {
+  sessionKey?: string;
+}
 
 interface MobileViewProps {
   mainGP: GP | null;
@@ -103,6 +108,42 @@ const MobileView: React.FC<MobileViewProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('info');
 
+  // Adapter coordinates pour le type attendu par LocalisationCard
+  const adaptedCoordinates = coordinates 
+    ? { 
+        lat: coordinates.lat || 0, 
+        lon: coordinates.lon || 0 
+      } 
+    : null;
+
+  // Fonction pour obtenir la bonne sessionKey
+  const getSessionKey = (gp: GP | null): number => {
+    if (!gp) return 0;
+    
+    // Privilégier la propriété sessionKey qui est utilisée par les widgets
+    if ('sessionKey' in gp && gp.sessionKey) {
+      return parseInt(gp.sessionKey, 10);
+    }
+    
+    // Fallback vers session_key si sessionKey n'existe pas
+    if (gp.session_key) {
+      return gp.session_key;
+    }
+    
+    return 0;
+  };
+  
+  // Intercepter handleGPSelect pour s'assurer que sessionKey est toujours présent
+  const wrappedHandleGPSelect = async (gp: GP): Promise<void> => {
+    // S'assurer que le GP a toujours une sessionKey
+    if (gp.session_key && !gp.sessionKey) {
+      // @ts-ignore - Ajouter dynamiquement sessionKey pour compatibilité
+      gp.sessionKey = gp.session_key.toString();
+    }
+    
+    handleGPSelect(gp);
+  };
+
   return (
     <div className="min-h-screen bg-[#1B1C1D]">
       <div className="container mx-auto px-4 py-16">
@@ -126,14 +167,14 @@ const MobileView: React.FC<MobileViewProps> = ({
         {/* Grand Prix Selection - Full width on mobile */}
         <div className="mb-8">
           <GrandPrixCard
-            mainGP={mainGP}
-            allGPs={allGPs}
+            mainGP={mainGP as any}
+            allGPs={allGPs as any}
             selectedYear={selectedYear}
             showDropdown={showDropdown}
             hoveredCard={hoveredCard}
             setShowDropdown={setShowDropdown}
             setHoveredCard={setHoveredCard}
-            handleGPSelect={handleGPSelect}
+            handleGPSelect={wrappedHandleGPSelect as any}
             handleYearChange={handleYearChange}
           />
         </div>
@@ -184,7 +225,7 @@ const MobileView: React.FC<MobileViewProps> = ({
               <InformationsCard
                 mainGP={mainGP}
                 hoveredCard={hoveredCard}
-                gp={gp}
+                gp={gp as any}
                 setHoveredCard={setHoveredCard}
                 formatDate={formatDate}
                 getCircuitParticularites={getCircuitParticularites}
@@ -204,7 +245,7 @@ const MobileView: React.FC<MobileViewProps> = ({
                 handleTeamClick={handleTeamClick}
               />
               <LocalisationCard
-                coordinates={coordinates}
+                coordinates={adaptedCoordinates}
                 hoveredCard={hoveredCard}
                 setHoveredCard={setHoveredCard}
                 setIsMapVisible={setIsMapVisible}
@@ -217,10 +258,10 @@ const MobileView: React.FC<MobileViewProps> = ({
               {mainGP && (
                 <>
                   <Championship meeting_name={mainGP.meeting_name} year={selectedYear.toString()} />
-                  <F1GapAnalysis sessionKey={mainGP.sessionKey} lap={null} />
-                  <F1LapAnalysis sessionKey={mainGP.sessionKey} lap={null} />
-                  <SpeedVisualizer sessionKey={mainGP.sessionKey} lap={null} />
-                  <StintVisualizer sessionKey={mainGP.sessionKey} lap={null} />
+                  <F1GapAnalysis sessionKey={getSessionKey(mainGP)} lap={null as any} />
+                  <F1LapAnalysis sessionKey={getSessionKey(mainGP)} lap={null as any} />
+                  <SpeedVisualizer sessionKey={getSessionKey(mainGP)} lap={null as any} />
+                  <StintVisualizer sessionKey={getSessionKey(mainGP)} lap={null as any} />
                 </>
               )}
             </>

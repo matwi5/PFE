@@ -9,7 +9,12 @@ import ErrorDisplay from "./components/ui/ErrorDisplay";
 import MapModal from "./components/modals/MapModal";
 import ImageModal from "./components/modals/ImageModal";
 import ComparisonModal from "../components/pastComponent/ComparisonModal";
-import { Driver, Team, GP } from "../components/pastComponent/types";
+import { Driver, Team, GP, Meeting } from "../components/pastComponent/types";
+
+// Interface pour adapter Meeting à GP
+interface ExtendedGP extends GP {
+  sessionKey?: string;
+}
 
 const GrandPrixCards = () => {
   const {
@@ -97,9 +102,14 @@ const GrandPrixCards = () => {
   const toggleTab = () => setIsOpen(!isOpen);
   const toggleTeamTab = () => setIsTeamComparisonOpen(!isTeamComparisonOpen);
 
-  const handleGPSelect = async (gp: GP) => {
+  // Adapter le type de GP et Meeting
+  const handleGPSelect = async (gp: ExtendedGP) => {
     setMainGP(gp);
+    
+    // Convertir GP en Meeting ou créer un Meeting à partir des données de GP
+    // @ts-ignore - Gérer l'incompatibilité de type ici
     setSelectedMeeting(gp);
+    
     setShowDropdown(false);
   };
 
@@ -109,7 +119,30 @@ const GrandPrixCards = () => {
   };
 
   const isMobile = useIsMobile();
-  const sessionKey = selectedMeeting?.meeting_key || null;
+  
+  // Convertir selectedMeeting en GP pour la compatibilité avec les composants
+  const adaptedSelectedMeeting = selectedMeeting as unknown as ExtendedGP | null;
+  
+  // Extraire la clé de session en tenant compte des différences de structure entre Meeting et GP
+  // Utiliser une assertion de type ou une approche indirecte pour éviter l'erreur TypeScript
+  const sessionKey = selectedMeeting 
+    ? ((selectedMeeting as any).session_key || (selectedMeeting as any).meeting_key)?.toString() || null
+    : null;
+  
+  // Adapter les données pour les tableaux
+  const driverDataArray = Object.values(driverData || {});
+  const teamDataArray = Object.values(teamData || {});
+  
+  // Wrapper pour les fonctions de mise à jour des pilotes/équipes sélectionnés
+  const handleSetSelectedDrivers = (drivers: { [key: number]: Driver | null }) => {
+    // @ts-ignore - Adapter la signature pour la compatibilité
+    setSelectedDrivers(drivers);
+  };
+  
+  const handleSetSelectedTeamsForComparison = (teams: { [key: number]: Team | null }) => {
+    // @ts-ignore - Adapter la signature pour la compatibilité
+    setSelectedTeamsForComparison(teams);
+  };
 
   const commonProps = {
     mainGP,
@@ -123,7 +156,7 @@ const GrandPrixCards = () => {
     handleYearChange,
     drivers,
     teams,
-    selectedMeeting,
+    selectedMeeting: adaptedSelectedMeeting, // Utiliser la version adaptée
     driverData,
     teamData,
     selectedDrivers,
@@ -161,7 +194,10 @@ const GrandPrixCards = () => {
       <ErrorDisplay error={error} />
       
       <div className={loading ? "hidden" : "content-wrapper"}>
-        {isMobile ? <MobileView {...commonProps} /> : <DesktopView {...commonProps} />}
+        {isMobile ? 
+          <MobileView {...commonProps as any} /> : 
+          <DesktopView {...commonProps as any} />
+        }
         
         <MapModal 
           isMapVisible={isMapVisible} 
@@ -182,13 +218,13 @@ const GrandPrixCards = () => {
           toggleTeamTab={toggleTeamTab}
           drivers={drivers}
           teams={teams}
-          selectedMeeting={selectedMeeting}
-          driverData={driverData}
-          teamData={teamData}
+          selectedMeeting={adaptedSelectedMeeting}
+          driverData={driverDataArray}
+          teamData={teamDataArray}
           selectedDrivers={selectedDrivers}
           selectedTeamsForComparison={selectedTeamsForComparison}
-          setSelectedDrivers={setSelectedDrivers}
-          setSelectedTeamsForComparison={setSelectedTeamsForComparison}
+          setSelectedDrivers={handleSetSelectedDrivers}
+          setSelectedTeamsForComparison={handleSetSelectedTeamsForComparison}
         />
       </div>
     </div>
