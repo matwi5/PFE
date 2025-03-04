@@ -1,5 +1,4 @@
 /* eslint-disable */
-
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -10,6 +9,9 @@ import { User } from 'firebase/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
+import { motion } from 'framer-motion'
+import { History } from 'lucide-react'
+import Typewriter from 'typewriter-effect'
 
 interface Prediction {
   id: string
@@ -21,12 +23,108 @@ interface Prediction {
   createdAt: Date
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.3,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.5 }
+  }
+};
+
+// Composant pour l'affichage mobile des prédictions
+const MobilePredictionCard = ({ prediction }: { prediction: Prediction }) => {
+  return (
+    <Card className="mb-3 bg-[#282a2c] border-gray-800">
+      <CardContent className="p-4">
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-[#5382ec] text-sm font-medium">Grand Prix</span>
+            <span className="text-white text-sm">{prediction.meetingName}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[#5382ec] text-sm font-medium">Session</span>
+            <span className="text-gray-300 text-sm">{prediction.sessionName}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[#5382ec] text-sm font-medium">Pole Position</span>
+            <span className="text-gray-300 text-sm">{prediction.pole}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[#5382ec] text-sm font-medium">Winner</span>
+            <span className="text-gray-300 text-sm">{prediction.winner}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[#5382ec] text-sm font-medium">Fastest Lap</span>
+            <span className="text-gray-300 text-sm">{prediction.fastestLap}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[#5382ec] text-sm font-medium">Date</span>
+            <span className="text-[#2dd4bf] text-sm">{prediction.createdAt.toLocaleDateString()}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 export default function UserPredictionsPage() {
-  
   const [user, setUser] = useState<User | null>(null)
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const predictionsPerPage = 10
   const router = useRouter()
+
+  const indexOfLastPrediction = currentPage * predictionsPerPage
+  const indexOfFirstPrediction = indexOfLastPrediction - predictionsPerPage
+  const currentPredictions = predictions.slice(indexOfFirstPrediction, indexOfLastPrediction)
+  const totalPages = Math.ceil(predictions.length / predictionsPerPage)
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
+
+  const PaginationControls = () => (
+    <div className="flex items-center justify-center space-x-4 mt-6">
+      <Button
+        onClick={goToPreviousPage}
+        disabled={currentPage === 1}
+        className="bg-[#282a2c] hover:bg-[#323436] text-white disabled:opacity-50 text-sm md:text-base py-2 px-3 md:px-4"
+      >
+        Previous
+      </Button>
+      <span className="text-white text-sm md:text-base">
+        Page {currentPage} of {totalPages}
+      </span>
+      <Button
+        onClick={goToNextPage}
+        disabled={currentPage === totalPages}
+        className="bg-[#282a2c] hover:bg-[#323436] text-white disabled:opacity-50 text-sm md:text-base py-2 px-3 md:px-4"
+      >
+        Next
+      </Button>
+    </div>
+  )
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -72,50 +170,119 @@ export default function UserPredictionsPage() {
   }
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Chargement...</div>
+    return (
+      <div className="min-h-screen bg-[#1B1C1D] flex justify-center items-center">
+        <div className="text-[#5382ec] text-xl md:text-2xl">Loading...</div>
+      </div>
+    )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">Mes Prédictions</CardTitle>
-          <CardDescription>Historique de toutes vos prédictions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {predictions.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Grand Prix</TableHead>
-                  <TableHead>Session</TableHead>
-                  <TableHead>Pole Position</TableHead>
-                  <TableHead>Vainqueur</TableHead>
-                  <TableHead>Tour le plus rapide</TableHead>
-                  <TableHead>Date de prédiction</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {predictions.map((prediction) => (
-                  <TableRow key={prediction.id}>
-                    <TableCell>{prediction.meetingName}</TableCell>
-                    <TableCell>{prediction.sessionName}</TableCell>
-                    <TableCell>{prediction.pole}</TableCell>
-                    <TableCell>{prediction.winner}</TableCell>
-                    <TableCell>{prediction.fastestLap}</TableCell>
-                    <TableCell>{prediction.createdAt.toLocaleDateString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p className="text-center py-4">Vous n&apos;avez pas encore fait de prédictions.</p>
-          )}
-        </CardContent>
-      </Card>
-      <div className="mt-4 text-center">
-        <Button onClick={() => router.push('/prediction')}>Faire une nouvelle prédiction</Button>
-      </div>
-    </div>
+    <motion.div
+      className="min-h-screen bg-[#1B1C1D] text-white py-12 px-4 md:py-24 md:px-8"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <motion.main 
+        className="flex flex-col items-center justify-center"
+        variants={containerVariants}
+      >
+        <motion.div variants={itemVariants}>
+          <History className="w-16 h-16 md:w-24 md:h-24 mb-6 md:mb-8 text-[#5382ec]" />
+        </motion.div>
+
+        <motion.h1
+          className="text-3xl md:text-4xl lg:text-6xl font-bold mb-8 md:mb-12 bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent text-center h-16 md:h-20"
+          variants={itemVariants}
+        >
+          <Typewriter
+            options={{
+              strings: [
+                "My Predictions",
+                "Prediction History",
+                "Past Bets",
+              ],
+              autoStart: true,
+              loop: true,
+            }}
+          />
+        </motion.h1>
+
+        <motion.div className="w-full max-w-6xl px-4 md:px-0" variants={itemVariants}>
+          <Card className="bg-[#1d1f20] border-gray-800 hover:border-[#5382ec] transition-all duration-300">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-xl md:text-2xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+                Predictions History
+              </CardTitle>
+              <CardDescription className="text-gray-400 text-sm md:text-base">
+                View all your past predictions
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 md:p-6">
+              {predictions.length > 0 ? (
+                <>
+                  {/* Vue mobile */}
+                  <div className="md:hidden space-y-3">
+                    {currentPredictions.map((prediction) => (
+                      <MobilePredictionCard key={prediction.id} prediction={prediction} />
+                    ))}
+                  </div>
+
+                  {/* Vue desktop */}
+                  <div className="hidden md:block rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b border-gray-800">
+                          <TableHead className="text-[#5382ec]">Grand Prix</TableHead>
+                          <TableHead className="text-[#5382ec]">Session</TableHead>
+                          <TableHead className="text-[#5382ec]">Pole Position</TableHead>
+                          <TableHead className="text-[#5382ec]">Winner</TableHead>
+                          <TableHead className="text-[#5382ec]">Fastest Lap</TableHead>
+                          <TableHead className="text-[#5382ec]">Prediction Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {currentPredictions.map((prediction) => (
+                          <TableRow 
+                            key={prediction.id}
+                            className="border-b border-gray-800 hover:bg-[#282a2c] transition-colors"
+                          >
+                            <TableCell className="text-white">{prediction.meetingName}</TableCell>
+                            <TableCell className="text-gray-300">{prediction.sessionName}</TableCell>
+                            <TableCell className="text-gray-300">{prediction.pole}</TableCell>
+                            <TableCell className="text-gray-300">{prediction.winner}</TableCell>
+                            <TableCell className="text-gray-300">{prediction.fastestLap}</TableCell>
+                            <TableCell className="text-[#2dd4bf]">
+                              {prediction.createdAt.toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  {/* Pagination Controls */}
+                  {predictions.length > predictionsPerPage && <PaginationControls />}
+                </>
+              ) : (
+                <p className="text-center py-6 md:py-8 text-gray-400 text-sm md:text-base">
+                  You haven&apos;t made any predictions yet.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="mt-6 md:mt-8 text-center">
+            <Button 
+              onClick={() => router.push('/prediction')}
+              className="bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] text-white hover:opacity-90 transition-opacity text-sm md:text-base py-2 md:py-2.5"
+            >
+              Make a New Prediction
+            </Button>
+          </div>
+        </motion.div>
+      </motion.main>
+    </motion.div>
   )
 }

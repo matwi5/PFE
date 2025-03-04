@@ -11,4 +11,10 @@ module.exports = {
   },
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   transformIgnorePatterns: ['<rootDir>/node_modules/'],
+  dynamicRoutes: {
+    '/api/race-selection': { dynamic: true },
+    '/api/strategy': { dynamic: true },
+    '/api/summary': { dynamic: true },
+    '/api/weather': { dynamic: true },
+  }
 };

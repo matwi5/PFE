@@ -1,0 +1,224 @@
+/* eslint-disable */
+"use client"
+
+import React, { useState, useEffect } from 'react';
+import { doc, getDoc, collection, getDocs, query } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { motion } from 'framer-motion';
+
+// Imports des composants widgets
+import RaceDatesWidget from './components/RaceDatesWidget';
+import VitalStatisticsWidget from './components/VitalStatisticsWidget';
+import LastPoleSittersWidget from './components/LastPoleSittersWidget';
+import LastWinnersWidget from './components/LastWinnersWidget';
+import TyreStrategyWidget from './components/TyreStrategyWidget';
+import CurrentFormWidget from './components/CurrentFormWidget';
+import IconicMomentWidget from './components/IconicMomentWidget';
+import LoadingRaceCard from './components/LoadingRaceCard';
+import QualifyingPredictionsWidget from './components/QualifyingPredictionsWidget';
+import RacePredictionsWidget from './components/RacePredictionsWidget';
+
+interface Meeting {
+  meeting_key: number;
+  meeting_name: string;
+  meeting_official_name: string;
+  circuit_short_name: string;
+  country_name: string;
+  date_start: string;
+}
+
+import { Race } from './types';
+
+interface RaceDisplayPageProps {}
+
+export default function RaceDisplayPage({ }: RaceDisplayPageProps) {
+  const [races, setRaces] = useState<Race[] | null>(null); // Initialisation à null
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [selectedRaceName, setSelectedRaceName] = useState<string>("");
+  const [selectedRaceData, setSelectedRaceData] = useState<Race | null>(null);
+  const [loadingRaceData, setLoadingRaceData] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchMeetings = async () => {
+      try {
+        const response = await fetch('https://api.openf1.org/v1/meetings?year=2024');
+        const data = await response.json();
+        setMeetings(data);
+      } catch (e) {
+        console.error("Error fetching meetings:", e);
+        setError("Failed to load meetings data.");
+      }
+    };
+
+    const fetchRaces = async () => {
+      setError(null);
+      try {
+        const racesCollectionRef = collection(db, "upcoming_races");
+        const racesSnapshot = await getDocs(query(racesCollectionRef));
+        const racesList: Race[] = [];
+        racesSnapshot.forEach(doc => {
+          racesList.push(doc.data() as Race);
+        });
+        setRaces(racesList);
+        if (racesList.length > 0) {
+          setSelectedRaceName(racesList[0].id.toString());
+        }
+      } catch (e: any) {
+        setError("Failed to load races. Please check your connection.");
+        console.error("Error fetching races:", e);
+      }
+    };
+
+    fetchMeetings();
+    fetchRaces();
+  }, []);
+
+  useEffect(() => {
+    const fetchRaceData = async () => {
+      if (!selectedRaceName) {
+        setSelectedRaceData(null);
+        return;
+      }
+
+      setLoadingRaceData(true);
+      setError(null);
+      try {
+        const raceDocRef = doc(db, "upcoming_races", selectedRaceName);
+        const raceDocSnap = await getDoc(raceDocRef);
+        if (raceDocSnap.exists()) {
+          setSelectedRaceData(raceDocSnap.data() as Race);
+        } else {
+          setError("Race data not found.");
+          setSelectedRaceData(null);
+        }
+        setLoadingRaceData(false);
+      } catch (e: any) {
+        setError("Failed to load race data.");
+        console.error("Error fetching race data:", e);
+        setSelectedRaceData(null);
+        setLoadingRaceData(false);
+      }
+    };
+    fetchRaceData();
+  }, [selectedRaceName]);
+
+  const getMeetingName = (id: number) => {
+    const meeting = meetings.find(m => m.meeting_key === Number(id));
+    return meeting ? meeting.meeting_name : `Race ${id}`;
+  };
+
+    // État de chargement global pour RaceDisplayPage
+    const isLoading = races === null; 
+
+    if (isLoading) {
+      return (
+        <div className="min-h-screen bg-[#1B1C1D] flex justify-center items-center">
+          <div className="text-[#5382ec] text-2xl">Loading...</div>
+        </div>
+      );
+    }
+  
+
+  return (
+    <div className="min-h-screen bg-[#1B1C1D]">
+      <div className="container mx-auto px-4 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16 space-y-4"
+        >
+          <h1 className="text-4xl h-20 md:text-6xl font-bold bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent">
+            Upcoming
+          </h1>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Explore detailed information about upcoming Formula 1 races
+          </p>
+        </motion.div>
+
+        {/* Gestion du cas où il n'y a pas de courses ou si les courses sont en cours de chargement */}
+        {races && races.length > 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-md mx-auto mb-12"
+          >
+            <Card className="bg-[#282a2c] border-0">
+              <CardContent className="pt-6">
+                <Select value={selectedRaceName} onValueChange={(value) => setSelectedRaceName(value)}>
+                  <SelectTrigger className="w-full bg-[#1d1f20] border-0 text-white h-12">
+                      <SelectValue placeholder={getMeetingName(Number(selectedRaceName))}/>
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1d1f20] border-0">
+                    {races.map((race) => {
+                      const meetingName = getMeetingName(race.id);
+                      return (
+                        <SelectItem
+                          key={race.id}
+                          value={race.id.toString()}
+                          className="text-white hover:bg-[#282a2c] focus:bg-[#282a2c]"
+                        >
+                          {meetingName}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ) : (
+          <div className="text-center text-gray-400">
+            No upcoming races found.
+          </div>
+        )}
+
+        {selectedRaceData && !loadingRaceData && (
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+            <div className="break-inside-avoid">
+              <VitalStatisticsWidget 
+                stats={selectedRaceData.vital_statistics}
+                circuit_layout={selectedRaceData.circuit_layout}
+                showCircuitLayout={true}
+              />
+            </div>
+            <div className="break-inside-avoid">
+              <RaceDatesWidget dates={selectedRaceData.dates} />
+            </div>
+            <div className="break-inside-avoid">
+              <CurrentFormWidget form={selectedRaceData.current_form} />
+            </div>
+            <div className="break-inside-avoid">
+              <QualifyingPredictionsWidget predictions={selectedRaceData.qualifying_prediction} />
+            </div>
+            <div className="break-inside-avoid">
+              <RacePredictionsWidget predictions={selectedRaceData.race_prediction} />
+            </div>
+            <div className="break-inside-avoid">
+              <LastPoleSittersWidget poleSitters={selectedRaceData.last_five_pole_sitters} />
+            </div>
+            <div className="break-inside-avoid">
+              <LastWinnersWidget winners={selectedRaceData.last_five_winners} />
+            </div>
+            <div className="break-inside-avoid">
+              <TyreStrategyWidget insights={selectedRaceData.tyre_strategy_insight} />
+            </div>
+            <div className="break-inside-avoid">
+              <IconicMomentWidget moment={selectedRaceData.iconic_moment} />
+            </div>
+          </div>
+        )}
+
+        {loadingRaceData && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(7)].map((_, i) => (
+              <LoadingRaceCard key={i} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

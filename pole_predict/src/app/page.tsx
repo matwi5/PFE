@@ -1,149 +1,486 @@
+/* eslint-disable */
 "use client";
 
-import React, { useContext, useState, useEffect } from "react"; // Ajout de useRef et useEffect
+import React, { useState, useEffect } from "react";
+import { Info, BarChart, Medal } from "lucide-react";
 import Typewriter from "typewriter-effect";
-import UserContext from "../context/UserContext";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { ArrowRight, Info, BarChart, Medal } from "lucide-react";
-import { Car3d } from "./components/Car3d";
-import HexagonChart from "./components/HexagonChart";
+import { motion, AnimatePresence } from "framer-motion";
+import CustomDialog from "./components/generalDataComponent/CustomDialog";
+import GeneralDataCard from "./components/generalDataComponent/GeneralDataCard";
+import GPDetailCard from "./components/generalDataComponent/GPDetailCard";
+import DriverDetailCard from "./components/generalDataComponent/DriverDetailCard";
+import TeamDetailCard from "./components/generalDataComponent/TeamDetailCard";
+import FeaturesWidget from "./components/FeaturesWidget";
+import F1Guide from "./components/F1Guide";
 
-import { Environment, OrbitControls } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+interface Driver {
+  flagColors: string[];
+  broadcast_name: string;
+  country_code: string;
+  driver_number: number;
+  first_name: string;
+  headshot_url: string;
+  last_name: string;
+  team_name: string;
+  team_colour: string;
+  name: string;
+  flag_url: string;
+  year: number[];
+  NumberOfPodiums: number;
+  NumberOfVictories: number;
+  WorldChampionships: number;
+}
 
-const Home: React.FC = () => {
-  const { user, loading } = useContext(UserContext);
-  const [stats, setStats] = useState([60, 70, 50, 80, 40, 60]);
-  const [stats2, setStats2] = useState([40, 70, 80, 50, 100, 60]);
+interface Team {
+  name: string;
+  color: string;
+  logo_url: string;
+  base: string;
+  team_principal: string;
+  championships: number;
+  power_unit: string;
+  country: string;
+  country_flag: string;
+  pilote1_url: string;
+  pilote2_url: string;
+  car_image: string;
+}
 
-  /* eslint-disable */
+interface GrandPrix {
+  grand_prix: string;
+  pays_flag: string;
+  ville: string;
+  nombre_de_tours: number;
+  particularites: string;
+  record_de_circuit: string;
+  recordman_circuit: string;
+  image_circuit: string;
+  // Additional properties required by GPDetailCard
+  pays: string;
+  type: string;
+  pace: string;
+  requirement: string;
+  elevation: string;
+}
+
+// Create a type for card data item
+interface CardDataItem<T> {
+  icon: JSX.Element;
+  title: string;
+  content: string;
+  onClick: () => void;
+  linkText: string;
+  showList: boolean;
+  data: T[];
+  DetailComponent: React.ComponentType<any>;
+  customColors: string[];
+}
+
+const HomePage: React.FC = () => {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [showTeams, setShowTeams] = useState(false);
+  const [showGPs, setShowGPs] = useState(false);
+  const [showDrivers, setShowDrivers] = useState(false);
+  const [hoveredButton, setHoveredButton] = useState<number | null>(null);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [gp, setGP] = useState<GrandPrix[]>([]);
+  const [error, setError] = useState('');
+  const [selectedYear, setSelectedYear] = useState<number>(2024);
+  const [filteredDrivers, setFilteredDrivers] = useState<Driver[]>([]);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isHoveringCardIndex, setIsHoveringCardIndex] = useState<number | null>(null);
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setStats(stats.map((stat) => Math.floor(Math.random() * 100)));
-      setStats2(stats2.map((stat) => Math.floor(Math.random() * 100)));
-    }, 1000); // Update stats every 2 seconds
+    const fetchData = async () => {
+      try {
+        const driversResponse = await fetch('/api/drivers');
+        if (!driversResponse.ok) throw new Error('Erreur lors de la récupération des pilotes');
+        const driversData = await driversResponse.json();
+        setDrivers(driversData.data);
 
-    return () => clearInterval(interval);
+        const teamsResponse = await fetch('/api/teams');
+        if (!teamsResponse.ok) throw new Error('Erreur lors de la récupération des équipes');
+        const teamsData = await teamsResponse.json();
+        setTeams(teamsData.data);
+
+        const gpsResponse = await fetch('/api/gp');
+        if (!gpsResponse.ok) throw new Error('Erreur lors de la récupération des grands prix');
+        const gpsData = await gpsResponse.json();
+        setGP(gpsData.data);
+
+      } catch (error) {
+        setError("Impossible de récupérer les données.");
+        console.error("Erreur lors de la récupération des données :", error);
+      }
+    };
+
+    fetchData();
   }, []);
-  /* eslint-enable */
-  
+
+  useEffect(() => {
+    const filtered = drivers.filter(driver =>
+      Array.isArray(driver.year) && driver.year.includes(selectedYear)
+    );
+    setFilteredDrivers(filtered);
+  }, [drivers, selectedYear]);
+
+  const buttonStyle: React.CSSProperties = {
+    background: "none",
+    border: "1px solid white",
+    color: "white",
+    padding: "0.5rem 1rem",
+    margin: "0.25rem",
+    fontSize: "0.9rem",
+    fontWeight: "bold",
+    cursor: "pointer",
+    transition: "background 0.3s, color 0.3s, transform 0.3s",
+    borderRadius: "4px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  };
+
+  const getHoverStyles = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    isEntering: boolean,
+    customColors?: string[]
+  ) => {
+    const target = e.currentTarget;
+    if (customColors && customColors.length > 1) {
+      target.style.background = isEntering
+        ? `linear-gradient(to right, ${customColors.join(", ")})`
+        : "none";
+      target.style.color = "white";
+    } else if (customColors && customColors.length === 1) {
+      target.style.background = isEntering ? customColors[0] : "none";
+      target.style.color = customColors[0] === "#FFFFFF" ? "black" : "white";
+    } else {
+      target.style.background = isEntering ? "orange" : "none";
+      target.style.color = isEntering ? "black" : "white";
+    }
+  };
+
+  const handleMouseMove = (
+    e: React.MouseEvent<HTMLDivElement>,
+    index: number
+  ) => {
+    const cardRect = e.currentTarget.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - cardRect.left,
+      y: e.clientY - cardRect.top,
+    });
+    setIsHoveringCardIndex(index);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHoveringCardIndex(null);
+  };
+
+  // Using proper typing for the card data
+  const cardData: [
+    CardDataItem<GrandPrix>,
+    CardDataItem<Team>,
+    CardDataItem<Driver>
+  ] = [
+    {
+      icon: <Info className="mr-2" />,
+      title: "GRAND PRIX",
+      content: "Know more about Grand Prix",
+      onClick: () => setShowGPs(!showGPs),
+      linkText: "See GPs",
+      showList: showGPs,
+      data: gp,
+      DetailComponent: GPDetailCard,
+      customColors: [],
+    },
+    {
+      icon: <Medal className="mr-2" />,
+      title: "TEAMS",
+      content: "Infos about the teams on the grid",
+      onClick: () => setShowTeams(!showTeams),
+      linkText: "See Teams",
+      showList: showTeams,
+      data: teams,
+      DetailComponent: TeamDetailCard,
+      customColors: [],
+    },
+    {
+      icon: <BarChart className="mr-2" />,
+      title: "DRIVERS",
+      content: "Have a look on the drivers",
+      onClick: () => setShowDrivers(!showDrivers),
+      linkText: "See Drivers",
+      showList: showDrivers,
+      data: filteredDrivers,
+      DetailComponent: DriverDetailCard,
+      customColors: [],
+    },
+  ];
+
+  // Variantes d'animation modifiées
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.4 }
+    }
+  };
+
+  const mobileCardListVariants = {
+    hidden: { height: 0, opacity: 0 },
+    visible: {
+      height: "auto",
+      opacity: 1,
+      transition: {
+        height: { duration: 0.3 },
+        opacity: { duration: 0.2 }
+      }
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-center items-center space-x-6 mb-5 -mt-32">
-        <div className="hidden lg:block flex-shrink-0 w-75 h-75 mt-32">
-          <HexagonChart stats={stats} />
-        </div>
-        <div className="w-[400px] h-[400px]">
-          <Canvas>
-            <Environment preset="studio" />
-            <OrbitControls
-              enableZoom={false}
-              enablePan={false}
-              enableRotate={false}
-            />
-            <perspectiveCamera />
-            <Car3d />
-          </Canvas>
-        </div>
-        <div className="hidden lg:block flex-shrink-0 w-75 h-75 mt-32">
-          <HexagonChart stats={stats2} /> {/*peut être changer par un autre diagramme si on developpe le comosant*/}
-        </div>
-      </div>
-      <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-6xl font-bold mb-4">
+    <motion.div
+      className="min-h-screen bg-[#1B1C1D] text-white py-16 px-4 sm:py-24 sm:px-8"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <motion.main
+        className="flex flex-col items-center justify-center h-full"
+        variants={containerVariants}
+      >
+        <motion.div
+          variants={itemVariants}
+          className="w-full max-w-[90vw] sm:max-w-[40rem] mx-auto"
+        >
+          <img
+            src="/images/f1car.png"
+            alt="F1 Car"
+            className="w-full mb-12 sm:mb-20 transition-transform duration-500 hover:scale-110"
+          />
+        </motion.div>
+
+        <motion.h1
+          className="pb-1 text-3xl sm:text-4xl md:text-6xl font-bold mb-8 text-center bg-gradient-to-r from-[#5382ec] to-[#2dd4bf] bg-clip-text text-transparent"
+          variants={itemVariants}
+        >
           <Typewriter
             options={{
               strings: [
-                "Le site de prédiction F1",
-                "Anticipez les résultats",
-                "Analysez les performances",
+                "Ready to be an expert in F1?",
+                "Anticipate Results",
+                "Analyse performances",
               ],
               autoStart: true,
               loop: true,
             }}
           />
-        </h1>
-        <p className="text-xl mb-8 text-muted-foreground">
-          Découvrez les analyses et les prédictions en temps réel pour les
-          courses de Formule 1.
-        </p>
+        </motion.h1>
+      </motion.main>
 
-        {loading ? (
-          <div className="animate-pulse bg-muted h-12 w-48 mx-auto rounded"></div>
-        ) : user ? (
-          <Card className="max-w-sm mx-auto bg-green-500 text-white">
-            <CardHeader>
-              <CardTitle>Bienvenue, {user.username} !</CardTitle>
-              <CardDescription className="text-white">
-                Vous êtes connecté.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        ) : (
-          <Button asChild size="lg">
-            <a href="/login">
-              Se connecter <ArrowRight className="ml-2 h-4 w-4" />
-            </a>
-          </Button>
-        )}
-      </div>
+      <motion.section
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 sm:mt-12 mb-8 sm:mb-12 max-w-6xl mx-auto"
+        variants={containerVariants}
+      >
+        {cardData.map((card, index) => (
+          <motion.div
+            key={index}
+            variants={itemVariants}
+            className="flex flex-col"
+          >
+            <GeneralDataCard
+              icon={card.icon}
+              title={card.title}
+              content={card.content}
+              linkText={card.linkText}
+              onClick={card.onClick}
+              index={index}
+              selectedYear={selectedYear}
+              setSelectedYear={setSelectedYear}
+              hoveredCard={hoveredCard}
+              setHoveredCard={setHoveredCard}
+              isHoveringCardIndex={isHoveringCardIndex}
+              setIsHoveringCardIndex={setIsHoveringCardIndex}
+              handleMouseMove={handleMouseMove}
+              mousePos={mousePos}
+            />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Info className="mr-2" /> À propos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>En savoir plus sur notre projet et notre équipe.</p>
-            <Button variant="outline" className="mt-4" asChild>
-              <a href="/about">
-                En savoir plus <ArrowRight className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Medal className="mr-2" /> Prédiction
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Nos prédictions en temps réel.</p>
-            <Button variant="outline" className="mt-4" asChild>
-              <a href="/prediction">
-                Voir les prédictions <ArrowRight className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BarChart className="mr-2" /> Analyse
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Regarder les dernières analyses.</p>
-            <Button variant="outline" className="mt-4" asChild>
-              <a href="/analyse">
-                Voir les analyses <ArrowRight className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            <AnimatePresence>
+              {card.showList && (
+                <motion.div
+                  variants={mobileCardListVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-hidden w-full auto-rows-fr"
+                >
+                  {card.data.length > 0 ? (
+                    card.data.map((item, itemIndex) => (
+                      <motion.div
+                        key={itemIndex}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{
+                          duration: 0.3,
+                          delay: itemIndex * 0.1,
+                          ease: [0.4, 0, 0.2, 1]
+                        }}
+                      >
+                        <CustomDialog
+                          buttonStyle={{
+                            ...buttonStyle,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: "0",
+                            width: "100%",
+                            height: "100%",
+                            minHeight: "180px",
+                            margin: "0 auto",
+                            background: index === 1 && 'color' in item
+                              ? `${item.color}40` // Ajoute une transparence de 40%
+                              : index === 2 && 'flagColors' in item && item.flagColors.length > 0
+                                ? `linear-gradient(45deg, ${item.flagColors.map((color: string) => color + '40').join(', ')})`
+                                : "rgba(45, 45, 45, 0.6)",
+                            backdropFilter: "blur(10px)",
+                            borderRadius: "16px",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                            overflow: "hidden",
+                            position: "relative",
+                            transition: "all 0.3s ease",
+                          }}
+                          getHoverStyles={(e, isEntering) => {
+                            const target = e.currentTarget;
+                            const customColor = index === 1 && 'color' in item ? item.color : null;
+                            const customGradient = index === 2 && 'flagColors' in item ? item.flagColors : null;
+
+                            if (isEntering) {
+                              target.style.background = customColor
+                                ? customColor
+                                : customGradient
+                                  ? `linear-gradient(45deg, ${customGradient.join(', ')})`
+                                  : 'rgba(45, 45, 45, 0.9)';
+                            } else {
+                              target.style.background = customColor
+                                ? `${customColor}40`
+                                : customGradient
+                                  ? `linear-gradient(45deg, ${customGradient.map((color: string) => color + '40').join(', ')})`
+                                  : 'rgba(45, 45, 45, 0.6)';
+                            }
+                          }}
+                          triggerContent={
+                            <motion.div
+                              className="w-full h-full flex flex-col items-center justify-center gap-2 text-lg sm:text-base p-4 relative group"
+                              whileHover={{ scale: 1.02 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+
+                              <motion.div
+                                className="relative"
+                                whileHover={{ scale: 1.05 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <img
+                                  src={
+                                    index === 0
+                                      ? (item as GrandPrix).pays_flag
+                                      : index === 1
+                                        ? (item as Team).logo_url
+                                        : (item as Driver).headshot_url
+                                  }
+                                  alt={
+                                    index === 0
+                                      ? (item as GrandPrix).grand_prix
+                                      : index === 1
+                                        ? `${(item as Team).name} logo`
+                                        : `${(item as Driver).name} headshot`
+                                  }
+                                  className={`w-30 h-30 sm:w-20 sm:h-20 object-cover ${index === 2 ? "rounded-full ring-2 ring-opacity-50 ring-white" : "rounded-lg"
+                                    } mb-1 shadow-lg transition-transform duration-300 group-hover:shadow-2xl`}
+                                />
+                              </motion.div>
+
+                              <div className="relative z-10">
+                                <span className="text-center break-words font-bold sm:font-medium text-xl sm:text-base bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent transition-all duration-300 group-hover:from-blue-400 group-hover:to-teal-300">
+                                  {index === 0
+                                    ? (item as GrandPrix).grand_prix
+                                    : index === 1
+                                      ? (item as Team).name
+                                      : (item as Driver).name}
+                                </span>
+                              </div>
+
+                              <motion.div
+                                className="absolute inset-0 bg-white rounded-lg opacity-0 group-hover:opacity-5 transition-opacity duration-300"
+                                initial={false}
+                                whileHover={{ scale: 1.05 }}
+                              />
+                            </motion.div>
+                          }
+                          customColors={
+                            index === 1 && 'color' in item
+                              ? [item.color]
+                              : index === 2 && 'flagColors' in item
+                                ? item.flagColors
+                                : undefined
+                          }
+                        >
+                          {index === 0 ? (
+                            <GPDetailCard gp={item as GrandPrix} />
+                          ) : index === 1 ? (
+                            <TeamDetailCard team={item as Team} />
+                          ) : (
+                            <DriverDetailCard driver={item as Driver} />
+                          )}
+                        </CustomDialog>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <motion.p
+                      variants={itemVariants}
+                      className="col-span-full text-center py-4"
+                    >
+                      Loading {card.title.toLowerCase()}...
+                    </motion.p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        ))}
+      </motion.section>
+      <motion.section
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <FeaturesWidget />
+      </motion.section>
+      <motion.section
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+      >
+        <F1Guide />
+      </motion.section>
+    </motion.div>
   );
 };
 
-export default Home;
+export default HomePage;

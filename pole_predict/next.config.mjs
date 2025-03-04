@@ -18,6 +18,9 @@ const nextConfig = {
       },
     ];
   },
+  images: {
+    domains: ["www.automobile-magazine.fr", "media.formula1.com", "www.thesportsdb.com"],
+  },
 };
 
 export default nextConfig;
