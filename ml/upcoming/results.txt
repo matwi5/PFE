@@ -1,0 +1,53 @@
+=== Évaluation des modèles finaux ===
+Early stopping, best iteration is:
+[302]	valid_0's l2: 15.0898
+2025-01-27 00:19:01 - INFO - 
+Performances sur l'ensemble d'entraînement:
+2025-01-27 00:19:01 - INFO - 
+Résultats pour Modèle de qualification (Train):
+2025-01-27 00:19:01 - INFO - MAE: 2.921
+2025-01-27 00:19:01 - INFO - RMSE: 3.730
+2025-01-27 00:19:01 - INFO - R²: 0.586
+2025-01-27 00:19:01 - INFO - 
+Résultats pour Modèle de course (Train):
+2025-01-27 00:19:01 - INFO - MAE: 2.562
+2025-01-27 00:19:01 - INFO - RMSE: 3.339
+2025-01-27 00:19:01 - INFO - R²: 0.665
+2025-01-27 00:19:02 - INFO - 
+Performances sur l'ensemble de validation:
+2025-01-27 00:19:02 - INFO - 
+Résultats pour Modèle de qualification (Validation):
+2025-01-27 00:19:02 - INFO - MAE: 3.468
+2025-01-27 00:19:02 - INFO - RMSE: 4.540
+2025-01-27 00:19:02 - INFO - R²: 0.379
+2025-01-27 00:19:02 - INFO - 
+Résultats pour Modèle de course (Validation):
+2025-01-27 00:19:02 - INFO - MAE: 3.071
+2025-01-27 00:19:02 - INFO - RMSE: 3.885
+2025-01-27 00:19:02 - INFO - R²: 0.546
+2025-01-27 00:19:02 - INFO - 
+Top 10 features importantes pour la qualification:
+2025-01-27 00:19:02 - INFO -                  feature  importance
+243            team_rank          11
+3             position_0           8
+1            constructor           8
+8                 grid_0           8
+20                grid_2           8
+14                grid_1           7
+21            position_3           6
+249      dnf_rate_last40           5
+244  avg_position_last40           5
+140              grid_22           4
+2025-01-27 00:19:02 - INFO - 
+Top 10 features importantes pour la course:
+2025-01-27 00:19:02 - INFO -                     feature  importance
+243               team_rank         285
+1               constructor         241
+0                    driver         168
+3                position_0         116
+14                   grid_1          89
+68                  grid_10          77
+245  median_position_last40          67
+38                   grid_5          67
+255         grid_std_last40          63
+20                   grid_2          60

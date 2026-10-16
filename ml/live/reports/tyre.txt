@@ -1,0 +1,12 @@
+              precision    recall  f1-score   support
+
+        HARD       0.94      0.94      0.94      2880
+INTERMEDIATE       0.78      0.77      0.78       458
+      MEDIUM       0.87      0.93      0.90       967
+        SOFT       0.98      0.19      0.32       589
+     Unknown       0.89      0.97      0.93      5505
+         WET       0.00      0.00      0.00       113
+
+    accuracy                           0.90     10512
+   macro avg       0.74      0.64      0.64     10512
+weighted avg       0.89      0.90      0.88     10512
